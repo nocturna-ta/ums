@@ -1,0 +1,106 @@
+basePath: /
+definitions:
+  controller.errorResponse:
+    properties:
+      error_code:
+        type: integer
+      error_message:
+        type: string
+    type: object
+  controller.jsonResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        $ref: '#/definitions/controller.errorResponse'
+      message:
+        type: string
+    type: object
+  response.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      nik:
+        type: string
+      no_telephone:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: User Management System Service.
+  title: UMS Service
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Ping to check health
+      parameters:
+      - description: user that make request
+        in: header
+        name: X-User-Id
+        type: string
+      - default: web
+        description: channel where request comes from
+        in: header
+        name: X-Channel-Id
+        type: string
+      - description: request unique identifier
+        in: header
+        name: X-Request-Id
+        type: string
+      - description: user account
+        in: header
+        name: X-Account-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.jsonResponse'
+      summary: Ping
+      tags:
+      - Health
+  /v1/users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get User BY ID
+      parameters:
+      - default: web
+        description: channel where request comes from
+        in: header
+        name: X-Channel-Id
+        type: string
+      - description: request unique identifier
+        in: header
+        name: X-Request-Id
+        type: string
+      - description: user id
+        in: header
+        name: X-User-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserResponse'
+              type: object
+      summary: Get User By ID
+      tags:
+      - users
+swagger: "2.0"

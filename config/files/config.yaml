@@ -1,0 +1,20 @@
+Server:
+  Port: 8900
+  ReadTimeout: 15s
+  WriteTimeout: 15s
+
+API:
+  BasePath: ""
+  APITimeout: 15s
+  EnableSwagger: true
+
+Database:
+  SlaveDSN: "postgres://postgres:1235813@localhost:5432/ums-votechain?sslmode=disable"
+  MasterDSN: "postgres://postgres:1235813@localhost:5432/ums-votechain?sslmode=disable"
+  RetryInterval: 10
+  MaxIdleConn: 10
+  MaxConn: 10
+  ConnMaxLifetime: 10s
+
+JWT:
+  Secret: "^87adb2&91hnGaWd7"
