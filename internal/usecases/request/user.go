@@ -10,3 +10,8 @@ type UserLoginRequest struct {
 	NIK      string `json:"nik"`
 	Password string `json:"password"`
 }
+
+type UserRegisterRequest struct {
+	NIK  string `json:"nik"`
+	Name string `json:"name"`
+}

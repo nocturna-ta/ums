@@ -7,3 +7,7 @@ type UserResponse struct {
 	NoTelephone string `json:"no_telephone,omitempty"`
 	Email       string `json:"email,omitempty"`
 }
+
+type UserRegistrationResponse struct {
+	NIK string `json:"nik,omitempty"`
+}

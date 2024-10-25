@@ -16,5 +16,17 @@ Database:
   MaxConn: 10
   ConnMaxLifetime: 10s
 
+Kafka:
+  Producer:
+    Brokers:
+      - localhost:9092
+    MaxAttempt: 5
+    Idempotent: true
+  Topics:
+    MasterDataUser:
+      Value: "ums.masterdata-users"
+      ErrorHandler: "Phase1"
+      WithBackOff: true
+
 JWT:
   Secret: "^87adb2&91hnGaWd7"

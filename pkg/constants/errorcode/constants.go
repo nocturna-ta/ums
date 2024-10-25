@@ -4,3 +4,10 @@ type ErrorDefinition struct {
 	Code    int
 	Message string
 }
+
+var (
+	NotFound = ErrorDefinition{
+		Code:    40005,
+		Message: "Not Found",
+	}
+)

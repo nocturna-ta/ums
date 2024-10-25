@@ -81,12 +81,6 @@
                     },
                     {
                         "type": "string",
-                        "description": "request unique identifier",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
                         "description": "user id",
                         "name": "X-User-Id",
                         "in": "header"

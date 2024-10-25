@@ -80,10 +80,6 @@ paths:
         in: header
         name: X-Channel-Id
         type: string
-      - description: request unique identifier
-        in: header
-        name: X-Request-Id
-        type: string
       - description: user id
         in: header
         name: X-User-Id

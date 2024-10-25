@@ -39,7 +39,7 @@ func newContainer(opts *options) *container {
 		UserRepo: userRepo,
 	})
 
-	jwtSvc := jwtsvc
+	//jwtSvc := jwtsvc
 
 	return &container{
 		Cfg:    *opts.Cfg,
