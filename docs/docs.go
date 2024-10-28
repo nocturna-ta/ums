@@ -66,6 +66,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/login": {
+            "post": {
+                "description": "Login user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Login User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "web",
+                        "description": "channel where request comes from",
+                        "name": "X-Channel-Id",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Login Payload",
+                        "name": "users",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UserLoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/register": {
             "post": {
                 "description": "Register new user",
@@ -89,7 +142,7 @@ const docTemplate = `{
                     },
                     {
                         "description": "Register Request",
-                        "name": "request",
+                        "name": "users",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -248,6 +301,17 @@ const docTemplate = `{
                 }
             }
         },
+        "request.UserLoginRequest": {
+            "type": "object",
+            "properties": {
+                "nik": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "request.UserRegisterRequest": {
             "type": "object",
             "properties": {
@@ -255,6 +319,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "nik": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.UserLoginResponse": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "token": {
                     "type": "string"
                 }
             }

@@ -10,4 +10,8 @@ var (
 		Code:    40005,
 		Message: "Not Found",
 	}
+	WrongPassword = ErrorDefinition{
+		Code:    40006,
+		Message: "Wrong Password",
+	}
 )

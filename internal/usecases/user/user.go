@@ -3,6 +3,8 @@ package user
 import (
 	"context"
 	"errors"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/log"
@@ -10,9 +12,12 @@ import (
 	"github.com/nocturna-ta/golib/tracing"
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/interfaces/dao"
+	"github.com/nocturna-ta/ums/internal/interfaces/jwtsvc"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
+	"github.com/nocturna-ta/ums/pkg/constants/errorcode"
 	"github.com/nocturna-ta/ums/pkg/utils"
+	"time"
 )
 
 func (m *Module) GetUserByID(ctx context.Context) (*response.UserResponse, error) {
@@ -105,10 +110,53 @@ func (m *Module) Register(ctx context.Context, req *request.UserRegisterRequest)
 		}
 
 	}
-	return nil, err
+	return &response.UserRegistrationResponse{
+		NIK: req.NIK,
+	}, err
 }
 
 func (m *Module) Login(ctx context.Context, req *request.UserLoginRequest) (*response.UserLoginResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	span, ctx := tracing.StartSpanFromContext(ctx, "[UserUseCases.Login]")
+	defer span.End()
+
+	existing, err := m.userRepo.GetByNIK(ctx, req.NIK)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":   err,
+			"request": req,
+		}).ErrorWithCtx(ctx, "[UserUseCases.Login] Failed to get user by nik")
+		return nil, err
+	}
+
+	password := utils.PasswordHash(req.Password, existing.PasswordSalt)
+	if password != existing.Password {
+		return nil, &custerr.ErrChain{
+			Message: errorcode.WrongPassword.Message,
+			Code:    errorcode.WrongPassword.Code,
+		}
+	}
+
+	expiresAt := jwt.NewNumericDate(time.Now().Add(24 * 7 * time.Hour))
+	token, err := m.jwtSvc.GenerateToken(ctx, &jwtsvc.AccessClaims{
+		RegisteredClaims: &jwt.RegisteredClaims{
+			ExpiresAt: expiresAt,
+			ID:        uuid.New().String(),
+		},
+		JwtData: &jwtsvc.JwtData{
+			UserID: existing.ID.String(),
+		},
+	})
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":   err,
+			"request": req,
+		}).ErrorWithCtx(ctx, "[UserUseCases.Login] Failed to generate token")
+		return nil, err
+	}
+
+	return &response.UserLoginResponse{
+		Token:     token,
+		ExpiresAt: &expiresAt.Time,
+	}, nil
 }

@@ -17,11 +17,25 @@ definitions:
       message:
         type: string
     type: object
+  request.UserLoginRequest:
+    properties:
+      nik:
+        type: string
+      password:
+        type: string
+    type: object
   request.UserRegisterRequest:
     properties:
       name:
         type: string
       nik:
+        type: string
+    type: object
+  response.UserLoginResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
         type: string
     type: object
   response.UserRegistrationResponse:
@@ -81,6 +95,38 @@ paths:
       summary: Ping
       tags:
       - Health
+  /v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Login user
+      parameters:
+      - default: web
+        description: channel where request comes from
+        in: header
+        name: X-Channel-Id
+        type: string
+      - description: Login Payload
+        in: body
+        name: users
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserLoginResponse'
+              type: object
+      summary: Login User
+      tags:
+      - users
   /v1/register:
     post:
       consumes:
@@ -94,7 +140,7 @@ paths:
         type: string
       - description: Register Request
         in: body
-        name: request
+        name: users
         required: true
         schema:
           $ref: '#/definitions/request.UserRegisterRequest'

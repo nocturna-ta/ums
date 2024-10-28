@@ -50,3 +50,22 @@ func (req *UserRegisterRequest) ValidateRegisterRequest() error {
 
 	return nil
 }
+
+func (req *UserLoginRequest) ValidateLoginRequest() error {
+	if req == nil {
+		return &custerr.ErrChain{
+			Message: "Request cannot be nil",
+			Code:    400,
+			Type:    response.ErrBadRequest,
+		}
+	}
+
+	if !utils.IsValidNIK(req.NIK) {
+		return &custerr.ErrChain{
+			Message: "NIK is not valid",
+			Code:    400,
+			Type:    response.ErrBadRequest,
+		}
+	}
+	return nil
+}

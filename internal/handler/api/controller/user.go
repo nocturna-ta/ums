@@ -66,7 +66,7 @@ func (api *API) GetUserByNIK(ctx context.Context, req *router.Request) (*rest.JS
 // @Tags		users
 // @Accept		json
 // @Param		X-Channel-Id	header		string	false 	"channel where request comes from"	default(web)
-// @Param		request		body 		request.UserRegisterRequest	true	"Register Request"
+// @Param		users		body 		request.UserRegisterRequest	true	"Register Request"
 // @Produce	json
 // @Success	200	{object}	jsonResponse{data=response.UserRegistrationResponse}
 // @Router		/v1/register [post]
@@ -84,6 +84,39 @@ func (api *API) Register(ctx context.Context, req *router.Request) (*rest.JSONRe
 	err = regisReq.ValidateRegisterRequest()
 
 	res, err := api.userUc.Register(ctx, &regisReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}
+
+// Login godoc
+// @Summary 	Login User
+// @Description Login user
+// @Tags		users
+// @Accept		json
+// @Param		X-Channel-Id	header		string							false 	"channel where request comes from"	default(web)
+// @Param		users			body 		request.UserLoginRequest		true	"Login Payload"
+// @Produce	json
+// @Success	200	{object}					jsonResponse{data=response.UserLoginResponse}
+// @Router		/v1/login [post]
+func (api *API) Login(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.Login")
+	defer span.End()
+
+	var loginReq request.UserLoginRequest
+	err := json.Unmarshal(req.RawBody(), &loginReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	err = loginReq.ValidateLoginRequest()
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	res, err := api.userUc.Login(ctx, &loginReq)
 	if err != nil {
 		return cutresp.CustomErrorResponse(err)
 	}

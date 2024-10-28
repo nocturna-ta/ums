@@ -56,6 +56,7 @@ func (api *API) RegisterRoute() *router.FastRouter {
 	myRouter.GET("/health", api.Ping, router.MustAuthorized(false))
 	myRouter.Group("/v1", func(v1 *router.FastRouter) {
 		v1.POST("/register", api.Register, router.MustAuthorized(false))
+		v1.POST("/login", api.Login, router.MustAuthorized(false))
 		v1.Group("/users", func(user *router.FastRouter) {
 			user.GET("/me", api.GetUserByID, router.MustAuthorized(false))
 			user.GET("/:nik", api.GetUserByNIK, router.MustAuthorized(false))
