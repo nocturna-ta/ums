@@ -12,7 +12,9 @@ type (
 		API        APIConfig        `yaml:"API"`
 		Database   DBConfig         `yaml:"Database"`
 		Blockchain BlockchainConfig `yaml:"BlockchainConfig"`
-		JWTConfig  JWTConfig        `yaml:"JWT"`
+		JWT        JWTConfig        `yaml:"JWT"`
+		Kafka      KafkaConfig      `yaml:"Kafka"`
+		Encryption EncryptionConfig `yaml:"Encryption"`
 	}
 	ServerConfig struct {
 		Port         uint          `yaml:"Port" env:"SERVER_PORT"`
@@ -57,6 +59,9 @@ type (
 		Value        string `yaml:"Value" env:"KAFKA_TOPIC_VALUE"`
 		ErrorHandler string `yaml:"ErrorHandler"`
 		WithBackOff  bool   `yaml:"WithBackOff"`
+	}
+	EncryptionConfig struct {
+		Key string `yaml:"Key" env:"ENCRYPTION_KEY"`
 	}
 )
 

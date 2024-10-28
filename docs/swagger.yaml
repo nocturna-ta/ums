@@ -17,6 +17,18 @@ definitions:
       message:
         type: string
     type: object
+  request.UserRegisterRequest:
+    properties:
+      name:
+        type: string
+      nik:
+        type: string
+    type: object
+  response.UserRegistrationResponse:
+    properties:
+      nik:
+        type: string
+    type: object
   response.UserResponse:
     properties:
       email:
@@ -69,6 +81,69 @@ paths:
       summary: Ping
       tags:
       - Health
+  /v1/register:
+    post:
+      consumes:
+      - application/json
+      description: Register new user
+      parameters:
+      - default: web
+        description: channel where request comes from
+        in: header
+        name: X-Channel-Id
+        type: string
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserRegistrationResponse'
+              type: object
+      summary: Register User
+      tags:
+      - users
+  /v1/users/{nik}:
+    get:
+      consumes:
+      - application/json
+      description: Get User BY NIK
+      parameters:
+      - default: web
+        description: channel where request comes from
+        in: header
+        name: X-Channel-Id
+        type: string
+      - description: user nik
+        in: path
+        name: NIK
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserResponse'
+              type: object
+      summary: Get User By NIK
+      tags:
+      - users
   /v1/users/me:
     get:
       consumes:

@@ -2,11 +2,17 @@ package user
 
 import (
 	"context"
+	"errors"
 	libCtx "github.com/nocturna-ta/golib/context"
+	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/log"
+	response2 "github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/tracing"
+	"github.com/nocturna-ta/ums/internal/domain/model"
+	"github.com/nocturna-ta/ums/internal/interfaces/dao"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
+	"github.com/nocturna-ta/ums/pkg/utils"
 )
 
 func (m *Module) GetUserByID(ctx context.Context) (*response.UserResponse, error) {
@@ -30,7 +36,7 @@ func (m *Module) GetUserByID(ctx context.Context) (*response.UserResponse, error
 	return &response.UserResponse{
 		ID:          user.ID.String(),
 		Name:        user.Name,
-		NIK:         user.NIK,
+		NIK:         utils.Encryption(user.NIK),
 		NoTelephone: user.NoTelephone.String,
 		Email:       user.Email.String,
 	}, nil
@@ -58,9 +64,51 @@ func (m *Module) GetUserByNIK(ctx context.Context, nik string) (*response.UserRe
 	return &response.UserResponse{
 		ID:          user.ID.String(),
 		Name:        user.Name,
-		NIK:         user.NIK,
+		NIK:         utils.Encryption(user.NIK),
 		NoTelephone: user.NoTelephone.String,
 		Email:       user.Email.String,
 	}, nil
 
+}
+
+func (m *Module) Register(ctx context.Context, req *request.UserRegisterRequest) (*response.UserRegistrationResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "[UserUseCases.Register]")
+	defer span.End()
+
+	var (
+		user *model.User
+		err  error
+	)
+
+	user = model.ConstructRegistration(req)
+
+	if err := m.userRepo.Insert(ctx, user); err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"user":  user,
+		}).ErrorWithCtx(ctx, "[UserUseCases.Register] Failed to insert user")
+
+		if errors.Is(err, dao.ErrDuplicate) {
+			return nil, &custerr.ErrChain{
+				Message: "User already exists",
+				Code:    400,
+				Cause:   err,
+				Type:    response2.ErrBadRequest,
+			}
+		}
+
+		return nil, &custerr.ErrChain{
+			Message: "Failed to insert user",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+
+	}
+	return nil, err
+}
+
+func (m *Module) Login(ctx context.Context, req *request.UserLoginRequest) (*response.UserLoginResponse, error) {
+	//TODO implement me
+	panic("implement me")
 }

@@ -132,10 +132,20 @@ func (repo *UserRepository) GetByNIK(ctx context.Context, nik string) (*model.Us
 		err  error
 	)
 
-	selectQuery := "users.id as id, users.nik as nik, users.no_telephone as no_telephone, users.email as email, users.name as name, users.password as password, users.password_salt as password.salt, users.created_at as created_at, users.updated_at as updated_at"
-	whereQuery := " AND users.nik = $1 AND users.id_deleted = false"
+	selectQuery := `
+        users.id as id,
+        users.nik as nik,
+        users.no_telephone as no_telephone,
+        users.email as email,
+        users.name as name,
+        users.password as password,
+        users.password_salt as password_salt,
+        users.created_at as created_at,
+        users.updated_at as updated_at
+    `
+	whereQuery := " AND users.nik = $1 AND users.is_deleted = false"
 	joinQuery := ""
-	args = append(args, nik)
+	args = []any{nik}
 
 	query := fmt.Sprintf(selectUser, selectQuery, joinQuery, whereQuery)
 
@@ -153,7 +163,7 @@ func (repo *UserRepository) GetByNIK(ctx context.Context, nik string) (*model.Us
 			"nik":   nik,
 		}).ErrorWithCtx(ctx, "[UserRepository.GetByNIK] Failed to get user by nik")
 	}
-	return &user, err
+	return &user, nil
 }
 
 func (repo *UserRepository) ChangePassword(ctx context.Context, id uuid.UUID, newPass string) error {

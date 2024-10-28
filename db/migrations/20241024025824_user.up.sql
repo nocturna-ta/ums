@@ -1,6 +1,6 @@
 CREATE TABLE "users"(
     id uuid NOT NULL PRIMARY KEY,
-    nik varchar(16) NOT NULL,
+    nik varchar(16) NOT NULL UNIQUE,
     no_telephone varchar(20),
     email varchar(100),
     name varchar(255) NOT NULL,

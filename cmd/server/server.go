@@ -38,9 +38,15 @@ func run(cmd *cobra.Command, args []string) error {
 		ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
 	}, sql.DriverPostgres)
 
+	//publisher, err := kafka.NewPublisher(context.Background(), cfg.Kafka.Producer)
+	//if err != nil {
+	//	log.Fatalf("Failed to create kafka publisher: %v", err)
+	//}
+
 	appContainer := newContainer(&options{
 		Cfg: cfg,
 		DB:  database,
+		//Publisher: publisher,
 	})
 
 	server := api.New(&api.Options{

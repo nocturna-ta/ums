@@ -66,6 +66,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/register": {
+            "post": {
+                "description": "Register new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Register User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "web",
+                        "description": "channel where request comes from",
+                        "name": "X-Channel-Id",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Register Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserRegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UserRegistrationResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/users/me": {
             "get": {
                 "description": "Get User BY ID",
@@ -115,6 +168,57 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/users/{nik}": {
+            "get": {
+                "description": "Get User BY NIK",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get User By NIK",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "web",
+                        "description": "channel where request comes from",
+                        "name": "X-Channel-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "user nik",
+                        "name": "NIK",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -140,6 +244,25 @@ const docTemplate = `{
                     "$ref": "#/definitions/controller.errorResponse"
                 },
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UserRegisterRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "nik": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.UserRegistrationResponse": {
+            "type": "object",
+            "properties": {
+                "nik": {
                     "type": "string"
                 }
             }

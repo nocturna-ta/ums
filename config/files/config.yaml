@@ -30,3 +30,7 @@ Kafka:
 
 JWT:
   Secret: "^87adb2&91hnGaWd7"
+
+
+Encryption:
+  Key : "NZkrqmVGg6Bi4QbqGXbH9wz3Q0+NCGvMKA2j8hqD5eM="

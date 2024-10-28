@@ -1,5 +1,7 @@
 package response
 
+import "time"
+
 type UserResponse struct {
 	ID          string `json:"id,omitempty"`
 	Name        string `json:"name,omitempty"`
@@ -10,4 +12,9 @@ type UserResponse struct {
 
 type UserRegistrationResponse struct {
 	NIK string `json:"nik,omitempty"`
+}
+
+type UserLoginResponse struct {
+	Token     *string    `json:"token"`
+	ExpiresAt *time.Time `json:"expires_at"`
 }
