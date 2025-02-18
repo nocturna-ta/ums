@@ -17,43 +17,64 @@ definitions:
       message:
         type: string
     type: object
-  request.UserLoginRequest:
+  request.KPUBranchRegistrationRequest:
     properties:
-      nik:
+      branch_address:
         type: string
-      password:
-        type: string
-    type: object
-  request.UserRegisterRequest:
-    properties:
+      is_active:
+        type: boolean
       name:
         type: string
+      region:
+        type: string
+    type: object
+  request.VoterRegistrationRequest:
+    properties:
+      is_registered:
+        type: boolean
       nik:
         type: string
-    type: object
-  response.UserLoginResponse:
-    properties:
-      expires_at:
+      region:
         type: string
-      token:
+      voter_address:
         type: string
     type: object
-  response.UserRegistrationResponse:
+  response.KPUBranchRegistrationResponse:
     properties:
-      nik:
+      branch_address:
         type: string
+      is_active:
+        type: boolean
     type: object
-  response.UserResponse:
+  response.KPUBranchResponse:
     properties:
-      email:
+      branch_address:
         type: string
       id:
         type: string
-      name:
+      is_active:
+        type: boolean
+      region:
         type: string
+    type: object
+  response.VoterRegistrationResponse:
+    properties:
+      is_registered:
+        type: boolean
+    type: object
+  response.VoterResponse:
+    properties:
+      has_voted:
+        type: boolean
+      id:
+        type: string
+      is_registered:
+        type: boolean
       nik:
         type: string
-      no_telephone:
+      region:
+        type: string
+      voter_address:
         type: string
     type: object
 info:
@@ -95,23 +116,11 @@ paths:
       summary: Ping
       tags:
       - Health
-  /v1/login:
-    post:
+  /v1/kpu-branch:
+    get:
       consumes:
       - application/json
-      description: Login user
-      parameters:
-      - default: web
-        description: channel where request comes from
-        in: header
-        name: X-Channel-Id
-        type: string
-      - description: Login Payload
-        in: body
-        name: users
-        required: true
-        schema:
-          $ref: '#/definitions/request.UserLoginRequest'
+      description: Get All KPU Branch
       produces:
       - application/json
       responses:
@@ -122,28 +131,49 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.UserLoginResponse'
+                  $ref: '#/definitions/response.KPUBranchResponse'
               type: object
-      summary: Login User
+      summary: Get All KPU Branch
       tags:
-      - users
-  /v1/register:
+      - kpu_branch
+  /v1/kpu-branch/address/{address}:
+    get:
+      consumes:
+      - application/json
+      description: Get KPU Branch By Address
+      parameters:
+      - description: Address
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUBranchResponse'
+              type: object
+      summary: Get KPU Branch By Address
+      tags:
+      - kpu_branch
+  /v1/kpu-branch/register:
     post:
       consumes:
       - application/json
-      description: Register new user
+      description: Register KPU Branch
       parameters:
-      - default: web
-        description: channel where request comes from
-        in: header
-        name: X-Channel-Id
-        type: string
       - description: Register Request
         in: body
         name: users
         required: true
         schema:
-          $ref: '#/definitions/request.UserRegisterRequest'
+          $ref: '#/definitions/request.KPUBranchRegistrationRequest'
       produces:
       - application/json
       responses:
@@ -154,25 +184,40 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.UserRegistrationResponse'
+                  $ref: '#/definitions/response.KPUBranchRegistrationResponse'
               type: object
-      summary: Register User
+      summary: Register KPU Branch
       tags:
-      - users
-  /v1/users/{nik}:
+      - kpu_branch
+  /v1/voter:
     get:
       consumes:
       - application/json
-      description: Get User BY NIK
+      description: Get All Voter
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.VoterResponse'
+              type: object
+      summary: Get All Voter
+      tags:
+      - voters
+  /v1/voter/{nik}:
+    get:
+      consumes:
+      - application/json
+      description: Get Voter By NIK
       parameters:
-      - default: web
-        description: channel where request comes from
-        in: header
-        name: X-Channel-Id
-        type: string
-      - description: user nik
+      - description: NIK
         in: path
-        name: NIK
+        name: nik
         required: true
         type: string
       produces:
@@ -185,25 +230,21 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.UserResponse'
+                  $ref: '#/definitions/response.VoterResponse'
               type: object
-      summary: Get User By NIK
+      summary: Get Voter By NIK
       tags:
-      - users
-  /v1/users/me:
+      - voters
+  /v1/voter/address/{address}:
     get:
       consumes:
       - application/json
-      description: Get User BY ID
+      description: Get Voter By Address
       parameters:
-      - default: web
-        description: channel where request comes from
-        in: header
-        name: X-Channel-Id
-        type: string
-      - description: user id
-        in: header
-        name: X-User-Id
+      - description: Address
+        in: path
+        name: address
+        required: true
         type: string
       produces:
       - application/json
@@ -215,9 +256,62 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.UserResponse'
+                  $ref: '#/definitions/response.VoterResponse'
               type: object
-      summary: Get User By ID
+      summary: Get Voter By Address
       tags:
-      - users
+      - voters
+  /v1/voter/region/{region}:
+    get:
+      consumes:
+      - application/json
+      description: Get Voter By Region
+      parameters:
+      - description: Region
+        in: path
+        name: region
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.VoterResponse'
+              type: object
+      summary: Get Voter By Region
+      tags:
+      - voters
+  /v1/voter/register:
+    post:
+      consumes:
+      - application/json
+      description: Register Voter
+      parameters:
+      - description: Register Request
+        in: body
+        name: users
+        required: true
+        schema:
+          $ref: '#/definitions/request.VoterRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.VoterRegistrationResponse'
+              type: object
+      summary: Register Voter
+      tags:
+      - voters
 swagger: "2.0"

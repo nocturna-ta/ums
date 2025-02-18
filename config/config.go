@@ -15,6 +15,7 @@ type (
 		JWT        JWTConfig        `yaml:"JWT"`
 		Kafka      KafkaConfig      `yaml:"Kafka"`
 		Encryption EncryptionConfig `yaml:"Encryption"`
+		Cors       CorsConfig       `yaml:"Cors"`
 	}
 	ServerConfig struct {
 		Port         uint          `yaml:"Port" env:"SERVER_PORT"`
@@ -37,7 +38,6 @@ type (
 	BlockchainConfig struct {
 		GanacheURL      string `yaml:"GanacheURL" env:"GANACHE_URL"`
 		ContractAddress string `yaml:"ContractAddress" env:"CONTRACT_ADDRESS"`
-		Port            uint   `yaml:"Port" env:"PORT"`
 	}
 	JWTConfig struct {
 		Secret string `yaml:"Secret" env:"JWT_SECRET"`
@@ -62,6 +62,14 @@ type (
 	}
 	EncryptionConfig struct {
 		Key string `yaml:"Key" env:"ENCRYPTION_KEY"`
+	}
+	CorsConfig struct {
+		AllowOrigins     string `yaml:"AllowOrigins"`
+		AllowMethods     string `yaml:"AllowMethods"`
+		AllowHeaders     string `yaml:"AllowHeaders"`
+		AllowCredentials bool   `yaml:"AllowCredentials"`
+		ExposeHeaders    string `yaml:"ExposeHeaders"`
+		MaxAge           int    `yaml:"MaxAge"`
 	}
 )
 

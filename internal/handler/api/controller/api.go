@@ -15,7 +15,9 @@ type API struct {
 	writeTimeout   time.Duration
 	requestTimeout time.Duration
 	enableSwagger  bool
-	userUc         usecases.UserUseCases
+	corsConfig     *router.CorsConfig
+	voterUc        usecases.VoterUseCases
+	kpuBranchUc    usecases.KPUBranchUseCases
 }
 
 type Options struct {
@@ -25,7 +27,9 @@ type Options struct {
 	WriteTimeout   time.Duration
 	RequestTimeout time.Duration
 	EnableSwagger  bool
-	UserUc         usecases.UserUseCases
+	CorsConfig     *router.CorsConfig
+	VoterUc        usecases.VoterUseCases
+	KpuBranchUc    usecases.KPUBranchUseCases
 }
 
 func New(opts *Options) *API {
@@ -36,7 +40,9 @@ func New(opts *Options) *API {
 		writeTimeout:   opts.WriteTimeout,
 		requestTimeout: opts.RequestTimeout,
 		enableSwagger:  opts.EnableSwagger,
-		userUc:         opts.UserUc,
+		corsConfig:     opts.CorsConfig,
+		voterUc:        opts.VoterUc,
+		kpuBranchUc:    opts.KpuBranchUc,
 	}
 }
 
@@ -47,6 +53,7 @@ func (api *API) RegisterRoute() *router.FastRouter {
 		ReadTimeout:    api.readTimeout,
 		WriteTimeout:   api.writeTimeout,
 		RequestTimeout: api.requestTimeout,
+		CorsConfig:     api.corsConfig,
 	})
 
 	if api.enableSwagger {
@@ -55,11 +62,17 @@ func (api *API) RegisterRoute() *router.FastRouter {
 
 	myRouter.GET("/health", api.Ping, router.MustAuthorized(false))
 	myRouter.Group("/v1", func(v1 *router.FastRouter) {
-		v1.POST("/register", api.Register, router.MustAuthorized(false))
-		v1.POST("/login", api.Login, router.MustAuthorized(false))
-		v1.Group("/users", func(user *router.FastRouter) {
-			user.GET("/me", api.GetUserByID, router.MustAuthorized(false))
-			user.GET("/:nik", api.GetUserByNIK, router.MustAuthorized(false))
+		v1.Group("/voter", func(voter *router.FastRouter) {
+			voter.POST("/register", api.RegisterVoter, router.MustAuthorized(false))
+			voter.GET("/:nik", api.GetVoterByNIK, router.MustAuthorized(false))
+			voter.GET("/address/:address", api.GetVoterByAddress, router.MustAuthorized(false))
+			voter.GET("/region/:region", api.GetVoterByRegion, router.MustAuthorized(false))
+			voter.GET("/", api.GetAllVoter, router.MustAuthorized(false))
+		})
+		v1.Group("/kpu-branch", func(kpuBranch *router.FastRouter) {
+			kpuBranch.GET("/", api.GetAllKPUBranch, router.MustAuthorized(false))
+			kpuBranch.POST("/register", api.RegisterKPUBranch, router.MustAuthorized(false))
+			kpuBranch.GET("/address/:address", api.GetKPUBranchByAddress, router.MustAuthorized(false))
 		})
 	})
 

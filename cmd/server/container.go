@@ -2,8 +2,9 @@ package server
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nocturna-ta/golib/database/sql"
-	"github.com/nocturna-ta/golib/event"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/txmanager"
 	txSql "github.com/nocturna-ta/golib/txmanager/sql"
@@ -11,22 +12,34 @@ import (
 	"github.com/nocturna-ta/ums/internal/interfaces/dao"
 	"github.com/nocturna-ta/ums/internal/interfaces/jwtsvc"
 	"github.com/nocturna-ta/ums/internal/usecases"
-	"github.com/nocturna-ta/ums/internal/usecases/user"
+	"github.com/nocturna-ta/ums/internal/usecases/kpu_branch"
+	"github.com/nocturna-ta/ums/internal/usecases/voter"
 )
 
 type container struct {
-	Cfg    config.MainConfig
-	UserUC usecases.UserUseCases
+	Cfg         config.MainConfig
+	VoterUc     usecases.VoterUseCases
+	KpuBranchUc usecases.KPUBranchUseCases
 }
 
 type options struct {
-	Cfg       *config.MainConfig
-	DB        *sql.Store
-	Publisher event.MessagePublisher
+	Cfg    *config.MainConfig
+	DB     *sql.Store
+	Client *ethclient.Client
 }
 
 func newContainer(opts *options) *container {
-	userRepo := dao.NewUserRepository(&dao.OptsUserRepository{DB: opts.DB})
+	voterRepo := dao.NewVoterRepository(&dao.OptsVoterRepository{
+		DB:              opts.DB,
+		Client:          opts.Client,
+		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.ContractAddress),
+	})
+
+	kpuBranchRepo := dao.NewKPUBranchRepository(&dao.OptsKPUBranchRepository{
+		DB:              opts.DB,
+		Client:          opts.Client,
+		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.ContractAddress),
+	})
 
 	txMgr, err := txmanager.New(context.Background(), &txmanager.DriverConfig{
 		Type: "sql",
@@ -42,17 +55,22 @@ func newContainer(opts *options) *container {
 		Config: opts.Cfg.JWT,
 	})
 
-	userUc := user.New(&user.Opts{
-		UserRepo:  userRepo,
+	voterUc := voter.New(&voter.Opts{
+		VoterRepo: voterRepo,
 		TxMgr:     txMgr,
 		JwtSvc:    jwtSvc,
-		Publisher: opts.Publisher,
-		Topics:    opts.Cfg.Kafka.Topics,
+	})
+
+	kpuBranchUc := kpu_branch.New(&kpu_branch.Opts{
+		KpuBranchRepo: kpuBranchRepo,
+		TxMgr:         txMgr,
+		JwtSvc:        jwtSvc,
 	})
 
 	return &container{
-		Cfg:    *opts.Cfg,
-		UserUC: userUc,
+		Cfg:         *opts.Cfg,
+		VoterUc:     voterUc,
+		KpuBranchUc: kpuBranchUc,
 	}
 
 }
