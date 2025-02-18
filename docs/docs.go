@@ -66,115 +66,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/login": {
-            "post": {
-                "description": "Login user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Login User",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "web",
-                        "description": "channel where request comes from",
-                        "name": "X-Channel-Id",
-                        "in": "header"
-                    },
-                    {
-                        "description": "Login Payload",
-                        "name": "users",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.UserLoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.UserLoginResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/register": {
-            "post": {
-                "description": "Register new user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Register User",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "web",
-                        "description": "channel where request comes from",
-                        "name": "X-Channel-Id",
-                        "in": "header"
-                    },
-                    {
-                        "description": "Register Request",
-                        "name": "users",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.UserRegisterRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.UserRegistrationResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/users/me": {
+        "/v1/kpu-branch": {
             "get": {
-                "description": "Get User BY ID",
+                "description": "Get All KPU Branch",
                 "consumes": [
                     "application/json"
                 ],
@@ -182,24 +76,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "kpu_branch"
                 ],
-                "summary": "Get User By ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "web",
-                        "description": "channel where request comes from",
-                        "name": "X-Channel-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "user id",
-                        "name": "X-User-Id",
-                        "in": "header"
-                    }
-                ],
+                "summary": "Get All KPU Branch",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -212,7 +91,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.UserResponse"
+                                            "$ref": "#/definitions/response.KPUBranchResponse"
                                         }
                                     }
                                 }
@@ -222,9 +101,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/users/{nik}": {
+        "/v1/kpu-branch/address/{address}": {
             "get": {
-                "description": "Get User BY NIK",
+                "description": "Get KPU Branch By Address",
                 "consumes": [
                     "application/json"
                 ],
@@ -232,21 +111,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "kpu_branch"
                 ],
-                "summary": "Get User By NIK",
+                "summary": "Get KPU Branch By Address",
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "web",
-                        "description": "channel where request comes from",
-                        "name": "X-Channel-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "user nik",
-                        "name": "NIK",
+                        "description": "Address",
+                        "name": "address",
                         "in": "path",
                         "required": true
                     }
@@ -263,7 +135,266 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.UserResponse"
+                                            "$ref": "#/definitions/response.KPUBranchResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-branch/register": {
+            "post": {
+                "description": "Register KPU Branch",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kpu_branch"
+                ],
+                "summary": "Register KPU Branch",
+                "parameters": [
+                    {
+                        "description": "Register Request",
+                        "name": "users",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.KPUBranchRegistrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.KPUBranchRegistrationResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/voter": {
+            "get": {
+                "description": "Get All Voter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "voters"
+                ],
+                "summary": "Get All Voter",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.VoterResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/voter/address/{address}": {
+            "get": {
+                "description": "Get Voter By Address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "voters"
+                ],
+                "summary": "Get Voter By Address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "address",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.VoterResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/voter/region/{region}": {
+            "get": {
+                "description": "Get Voter By Region",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "voters"
+                ],
+                "summary": "Get Voter By Region",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Region",
+                        "name": "region",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.VoterResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/voter/register": {
+            "post": {
+                "description": "Register Voter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "voters"
+                ],
+                "summary": "Register Voter",
+                "parameters": [
+                    {
+                        "description": "Register Request",
+                        "name": "users",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.VoterRegistrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.VoterRegistrationResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/voter/{nik}": {
+            "get": {
+                "description": "Get Voter By NIK",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "voters"
+                ],
+                "summary": "Get Voter By NIK",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "NIK",
+                        "name": "nik",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.VoterResponse"
                                         }
                                     }
                                 }
@@ -301,63 +432,95 @@ const docTemplate = `{
                 }
             }
         },
-        "request.UserLoginRequest": {
+        "request.KPUBranchRegistrationRequest": {
             "type": "object",
             "properties": {
-                "nik": {
+                "branch_address": {
                     "type": "string"
                 },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.UserRegisterRequest": {
-            "type": "object",
-            "properties": {
+                "is_active": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
-                "nik": {
+                "region": {
                     "type": "string"
                 }
             }
         },
-        "response.UserLoginResponse": {
+        "request.VoterRegistrationRequest": {
             "type": "object",
             "properties": {
-                "expires_at": {
+                "is_registered": {
+                    "type": "boolean"
+                },
+                "nik": {
                     "type": "string"
                 },
-                "token": {
+                "region": {
+                    "type": "string"
+                },
+                "voter_address": {
                     "type": "string"
                 }
             }
         },
-        "response.UserRegistrationResponse": {
+        "response.KPUBranchRegistrationResponse": {
             "type": "object",
             "properties": {
-                "nik": {
+                "branch_address": {
                     "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
                 }
             }
         },
-        "response.UserResponse": {
+        "response.KPUBranchResponse": {
             "type": "object",
             "properties": {
-                "email": {
+                "branch_address": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "name": {
+                "is_active": {
+                    "type": "boolean"
+                },
+                "region": {
                     "type": "string"
+                }
+            }
+        },
+        "response.VoterRegistrationResponse": {
+            "type": "object",
+            "properties": {
+                "is_registered": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.VoterResponse": {
+            "type": "object",
+            "properties": {
+                "has_voted": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_registered": {
+                    "type": "boolean"
                 },
                 "nik": {
                     "type": "string"
                 },
-                "no_telephone": {
+                "region": {
+                    "type": "string"
+                },
+                "voter_address": {
                     "type": "string"
                 }
             }

@@ -9,8 +9,8 @@ API:
   EnableSwagger: true
 
 Database:
-  SlaveDSN: "postgres://postgres:1235813@localhost:5432/ums-votechain?sslmode=disable"
-  MasterDSN: "postgres://postgres:1235813@localhost:5432/ums-votechain?sslmode=disable"
+  SlaveDSN: "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable"
+  MasterDSN: "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable"
   RetryInterval: 10
   MaxIdleConn: 10
   MaxConn: 10
@@ -34,3 +34,15 @@ JWT:
 
 Encryption:
   Key : "NZkrqmVGg6Bi4QbqGXbH9wz3Q0+NCGvMKA2j8hqD5eM="
+
+BlockchainConfig:
+  GanacheURL: "http://127.0.0.1:7545"
+  ContractAddress: "0x27c685adf6dDFfbbD3357fCC41097531A8c4fa0b"
+
+Cors:
+  AllowOrigins: "*"
+  AllowMethods: "GET,POST,PUT,DELETE,OPTIONS"
+  AllowHeaders: "Content-Type,Authorization"
+  AllowCredentials: false
+  ExposeHeaders: "X-Custom-Header"
+  MaxAge: 3600

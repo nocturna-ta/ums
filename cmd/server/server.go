@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nocturna-ta/golib/database/sql"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/ums/config"
@@ -38,20 +39,21 @@ func run(cmd *cobra.Command, args []string) error {
 		ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
 	}, sql.DriverPostgres)
 
-	//publisher, err := kafka.NewPublisher(context.Background(), cfg.Kafka.Producer)
-	//if err != nil {
-	//	log.Fatalf("Failed to create kafka publisher: %v", err)
-	//}
+	client, err := ethclient.Dial(cfg.Blockchain.GanacheURL)
+	if err != nil {
+		return err
+	}
 
 	appContainer := newContainer(&options{
-		Cfg: cfg,
-		DB:  database,
-		//Publisher: publisher,
+		Cfg:    cfg,
+		DB:     database,
+		Client: client,
 	})
 
 	server := api.New(&api.Options{
-		Cfg:    appContainer.Cfg,
-		UserUc: appContainer.UserUC,
+		Cfg:         appContainer.Cfg,
+		VoterUc:     appContainer.VoterUc,
+		KpuBranchUc: appContainer.KpuBranchUc,
 	})
 
 	go server.Run()

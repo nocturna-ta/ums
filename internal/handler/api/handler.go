@@ -6,11 +6,13 @@ import (
 	"github.com/nocturna-ta/ums/config"
 	"github.com/nocturna-ta/ums/internal/handler/api/controller"
 	"github.com/nocturna-ta/ums/internal/usecases"
+	"github.com/nocturna-ta/ums/pkg/utils"
 )
 
 type Options struct {
-	Cfg    config.MainConfig
-	UserUc usecases.UserUseCases
+	Cfg         config.MainConfig
+	VoterUc     usecases.VoterUseCases
+	KpuBranchUc usecases.KPUBranchUseCases
 }
 
 type Handler struct {
@@ -23,6 +25,7 @@ func New(opts *Options) *Handler {
 	handler := &Handler{
 		opts: opts,
 	}
+
 	handler.myRouter = controller.New(&controller.Options{
 		Prefix:         opts.Cfg.API.BasePath,
 		Port:           opts.Cfg.Server.Port,
@@ -30,7 +33,9 @@ func New(opts *Options) *Handler {
 		WriteTimeout:   opts.Cfg.Server.WriteTimeout,
 		RequestTimeout: opts.Cfg.API.APITimeout,
 		EnableSwagger:  opts.Cfg.API.EnableSwagger,
-		UserUc:         opts.UserUc,
+		CorsConfig:     utils.ConvertToRouterCorsConfig(&opts.Cfg.Cors),
+		VoterUc:        opts.VoterUc,
+		KpuBranchUc:    opts.KpuBranchUc,
 	}).RegisterRoute()
 	return handler
 }

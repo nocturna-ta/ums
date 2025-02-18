@@ -1,4 +1,4 @@
-CREATE TABLE "users"(
+CREATE TABLE "voters"(
     id uuid NOT NULL PRIMARY KEY,
     nik varchar(16) NOT NULL UNIQUE,
     voter_address varchar(255) NOT NULL,
