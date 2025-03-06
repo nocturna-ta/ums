@@ -27,6 +27,8 @@ definitions:
         type: string
       region:
         type: string
+      signed_transaction:
+        type: string
     type: object
   request.VoterRegistrationRequest:
     properties:
@@ -35,6 +37,8 @@ definitions:
       nik:
         type: string
       region:
+        type: string
+      signed_transaction:
         type: string
       voter_address:
         type: string

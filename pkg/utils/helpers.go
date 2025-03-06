@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/nocturna-ta/golib/router"
 	"github.com/nocturna-ta/golib/utils/encryption"
 	"github.com/nocturna-ta/ums/config"
@@ -76,34 +75,17 @@ func IsValidNIK(nik string) bool {
 
 	return matched
 }
-func DecodeSignedTransaction(signedTx string) (*types.Transaction, error) {
-	if signedTx[:2] == "0x" {
-		signedTx = signedTx[2:]
-	}
-	rawTx := common.Hex2Bytes(signedTx)
+
+func StringToTx(signedTx string) (*types.Transaction, error) {
 	tx := new(types.Transaction)
-	err := rlp.DecodeBytes(rawTx, tx)
-	if err != nil {
+	if err := tx.UnmarshalBinary(common.FromHex(signedTx)); err != nil {
 		return nil, err
 	}
+
 	return tx, nil
+
 }
 
-func ExtractSenderAddressFromSignedTx(signedTx string) (common.Address, error) {
-	tx, err := DecodeSignedTransaction(signedTx)
-	if err != nil {
-		return common.Address{}, err
-	}
-
-	signer := types.NewEIP155Signer(tx.ChainId())
-
-	senderAddress, err := types.Sender(signer, tx)
-	if err != nil {
-		return common.Address{}, err
-	}
-
-	return senderAddress, nil
-}
 func ConvertToRouterCorsConfig(configCors *config.CorsConfig) *router.CorsConfig {
 	return &router.CorsConfig{
 		AllowOrigins:     configCors.AllowOrigins,

@@ -6,7 +6,7 @@ import (
 )
 
 type KPUBranchRepository interface {
-	InsertKPUBranch(ctx context.Context, kpuBranch *model.KPUBranch) error
+	InsertKPUBranch(ctx context.Context, kpuBranch *model.KPUBranch, signedTransaction string) error
 	GetAllKPUBranch(ctx context.Context) ([]model.KPUBranch, error)
 	GetKPUBranchByAddress(ctx context.Context, address string) (*model.KPUBranch, error)
 }

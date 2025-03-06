@@ -37,7 +37,7 @@ Encryption:
 
 BlockchainConfig:
   GanacheURL: "http://127.0.0.1:7545"
-  ContractAddress: "0x27c685adf6dDFfbbD3357fCC41097531A8c4fa0b"
+  ContractAddress: "0xE8Bb4a8F1B7e7bE417fbf00B5d238524A482e092"
 
 Cors:
   AllowOrigins: "*"

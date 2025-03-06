@@ -14,6 +14,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
 	"github.com/nocturna-ta/ums/pkg/binding"
+	utils2 "github.com/nocturna-ta/ums/pkg/utils"
 )
 
 type VoterRepository struct {
@@ -47,7 +48,7 @@ const (
 	updateVoter = `UPDATE voters SET %s WHERE TRUE %s`
 )
 
-func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter) error {
+func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, signed_transaction string) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "VoterRepository.InsertVoter")
 	defer span.End()
 
@@ -106,6 +107,22 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter) e
 			"error": err,
 			"voter": voter,
 		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to insert entry")
+		return err
+	}
+
+	tx, err := utils2.StringToTx(signed_transaction)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to convert signed transaction to transaction")
+		return err
+	}
+
+	err = v.client.SendTransaction(ctx, tx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to send transaction")
 		return err
 	}
 	return nil
@@ -185,7 +202,7 @@ func (v *VoterRepository) GetVoterByNIK(ctx context.Context, nik string) (*model
 		args  []any
 	)
 
-	voterContract, err := v.contract.GetVoterByKTP(nil, nik)
+	voterContract, err := v.contract.GetVoterByNIK(nil, nik)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -301,7 +318,7 @@ func (v *VoterRepository) GetVoterByRegion(ctx context.Context, region string) (
 		args        []any
 	)
 
-	voters, err := v.contract.GetVotersByRegion(nil, region)
+	voters, err := v.contract.GetVoterByRegion(nil, region)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,

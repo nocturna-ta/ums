@@ -446,6 +446,9 @@ const docTemplate = `{
                 },
                 "region": {
                     "type": "string"
+                },
+                "signed_transaction": {
+                    "type": "string"
                 }
             }
         },
@@ -459,6 +462,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "region": {
+                    "type": "string"
+                },
+                "signed_transaction": {
                     "type": "string"
                 },
                 "voter_address": {

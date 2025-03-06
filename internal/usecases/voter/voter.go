@@ -24,7 +24,7 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 
 	voter = model.ConstructRegistration(req)
 
-	if err := m.voterRepo.InsertVoter(ctx, voter); err != nil {
+	if err := m.voterRepo.InsertVoter(ctx, voter, req.SignedTransaction); err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[VoterUseCases.RegisterVoter] Failed to register voter")

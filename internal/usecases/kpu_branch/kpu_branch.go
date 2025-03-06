@@ -24,7 +24,7 @@ func (m *Module) RegisterKPUBranch(ctx context.Context, req *request.KPUBranchRe
 
 	kpuBranch = model.ConstructRegistrationKPUBranch(req)
 
-	if err := m.kpuBranchRepo.InsertKPUBranch(ctx, kpuBranch); err != nil {
+	if err := m.kpuBranchRepo.InsertKPUBranch(ctx, kpuBranch, req.SignedTransaction); err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUBranchUseCases.RegisterKPUBranch] Failed to register kpu branch")

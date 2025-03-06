@@ -6,10 +6,11 @@ import (
 )
 
 type KPUBranchRegistrationRequest struct {
-	Name          string `json:"name"`
-	BranchAddress string `json:"branch_address"`
-	Region        string `json:"region"`
-	IsActive      bool   `json:"is_active"`
+	Name              string `json:"name"`
+	BranchAddress     string `json:"branch_address"`
+	Region            string `json:"region"`
+	IsActive          bool   `json:"is_active"`
+	SignedTransaction string `json:"signed_transaction"`
 }
 
 func (req *KPUBranchRegistrationRequest) ValidateRegistrationRequest() error {

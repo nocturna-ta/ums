@@ -14,6 +14,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
 	"github.com/nocturna-ta/ums/pkg/binding"
+	utils2 "github.com/nocturna-ta/ums/pkg/utils"
 )
 
 type KPUBranchRepository struct {
@@ -46,7 +47,7 @@ const (
 	selectKPUBranch = `SELECT %s FROM kpu_branches %s WHERE TRUE %s`
 )
 
-func (K *KPUBranchRepository) InsertKPUBranch(ctx context.Context, kpuBranch *model.KPUBranch) error {
+func (K *KPUBranchRepository) InsertKPUBranch(ctx context.Context, kpuBranch *model.KPUBranch, signedTransaction string) error {
 	spam, ctx := tracing.StartSpanFromContext(ctx, "KPUBranchRepository.InsertKPUBranch")
 	defer spam.End()
 
@@ -79,6 +80,22 @@ func (K *KPUBranchRepository) InsertKPUBranch(ctx context.Context, kpuBranch *mo
 			"error":     err,
 			"kpuBranch": kpuBranch,
 		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to insert kpu branch")
+		return err
+	}
+
+	tx, err := utils2.StringToTx(signedTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to convert signed transaction to transaction")
+		return err
+	}
+
+	err = K.client.SendTransaction(ctx, tx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to send transaction")
 		return err
 	}
 
@@ -152,7 +169,7 @@ func (K *KPUBranchRepository) GetKPUBranchByAddress(ctx context.Context, address
 		args           []any
 	)
 
-	kpuBranches, err := K.contract.GetKPUBranchAddress(nil, common.HexToAddress(address))
+	kpuBranches, err := K.contract.GetBranchByAddress(nil, common.HexToAddress(address))
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,

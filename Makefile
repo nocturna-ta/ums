@@ -10,10 +10,24 @@ run-api: dependency swag-init
 	@echo ">> Running API Server"
 	@go run main.go server-http
 
+generate-abi:
+	@echo  ">> Generating ABI"
+	@solcjs --abi ./pkg/contracts/Votechain.sol -o ./pkg/binding
+
+generate-gobind:
+	@echo ">> Generating Go Bindings"
+	@abigen --abi ./pkg/binding/Votechain.abi --pkg binding --type Votechain --out ./pkg/binding/Votechain.go
+
+change-abi:
+	@mv ./pkg/binding/pkg_contracts_Votechain_sol_Votechain.abi ./pkg/binding/Votechain.abi
 
 migrate-up:
 	@echo ">> Running Migrate Up"
 	@migrate -path db/migrations -database "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable" up
+
+migrate-down:
+	@echo ">> Running Migrate down"
+	@migrate -path db/migrations -database "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable" down
 
 remock:
 	#https://github.com/vektra/mockery
