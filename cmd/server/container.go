@@ -41,6 +41,10 @@ func newContainer(opts *options) *container {
 		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.ContractAddress),
 	})
 
+	usersRepo := dao.NewUserRepository(&dao.OptsUserRepository{
+		DB: opts.DB,
+	})
+
 	txMgr, err := txmanager.New(context.Background(), &txmanager.DriverConfig{
 		Type: "sql",
 		Config: txSql.Config{
