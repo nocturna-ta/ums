@@ -18,6 +18,7 @@ type API struct {
 	corsConfig     *router.CorsConfig
 	voterUc        usecases.VoterUseCases
 	kpuBranchUc    usecases.KPUBranchUseCases
+	userUc         usecases.UserUseCases
 }
 
 type Options struct {
@@ -30,6 +31,7 @@ type Options struct {
 	CorsConfig     *router.CorsConfig
 	VoterUc        usecases.VoterUseCases
 	KpuBranchUc    usecases.KPUBranchUseCases
+	UserUc         usecases.UserUseCases
 }
 
 func New(opts *Options) *API {
@@ -43,6 +45,7 @@ func New(opts *Options) *API {
 		corsConfig:     opts.CorsConfig,
 		voterUc:        opts.VoterUc,
 		kpuBranchUc:    opts.KpuBranchUc,
+		userUc:         opts.UserUc,
 	}
 }
 
@@ -74,6 +77,12 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			kpuBranch.POST("/register", api.RegisterKPUBranch, router.MustAuthorized(false))
 			kpuBranch.GET("/address/:address", api.GetKPUBranchByAddress, router.MustAuthorized(false))
 		})
+		//v1.Group("/user", func(user *router.FastRouter) {
+		//	user.POST("/register", api.RegisterUser, router.MustAuthorized(false))
+		//	user.GET("/:email", api.GetUserByEmail, router.MustAuthorized(false))
+		//	user.GET("/id/:id", api.GetByID, router.MustAuthorized(false))
+		//	user.PUT("/update/:id", api.UpdateUser, router.MustAuthorized(false))
+		//})
 	})
 
 	return myRouter

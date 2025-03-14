@@ -5,6 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nocturna-ta/golib/database/sql"
+	"github.com/nocturna-ta/golib/event"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/txmanager"
 	txSql "github.com/nocturna-ta/golib/txmanager/sql"
@@ -12,7 +13,9 @@ import (
 	"github.com/nocturna-ta/ums/internal/interfaces/dao"
 	"github.com/nocturna-ta/ums/internal/interfaces/jwtsvc"
 	"github.com/nocturna-ta/ums/internal/usecases"
+	"github.com/nocturna-ta/ums/internal/usecases/auth"
 	"github.com/nocturna-ta/ums/internal/usecases/kpu_branch"
+	"github.com/nocturna-ta/ums/internal/usecases/user"
 	"github.com/nocturna-ta/ums/internal/usecases/voter"
 )
 
@@ -20,12 +23,15 @@ type container struct {
 	Cfg         config.MainConfig
 	VoterUc     usecases.VoterUseCases
 	KpuBranchUc usecases.KPUBranchUseCases
+	AuthUc      usecases.AuthUseCases
+	UserUc      usecases.UserUseCases
 }
 
 type options struct {
-	Cfg    *config.MainConfig
-	DB     *sql.Store
-	Client *ethclient.Client
+	Cfg       *config.MainConfig
+	DB        *sql.Store
+	Client    *ethclient.Client
+	Publisher event.MessagePublisher
 }
 
 func newContainer(opts *options) *container {
@@ -71,10 +77,24 @@ func newContainer(opts *options) *container {
 		JwtSvc:        jwtSvc,
 	})
 
+	userUc := user.New(&user.Opts{
+		UserRepo:  usersRepo,
+		TxMgr:     txMgr,
+		JWTSvc:    jwtSvc,
+		Publisher: opts.Publisher,
+		Topics:    opts.Cfg.Kafka.Topics,
+	})
+
+	authUc := auth.New(&auth.Opts{
+		JwtSvc: jwtSvc,
+	})
+
 	return &container{
 		Cfg:         *opts.Cfg,
 		VoterUc:     voterUc,
 		KpuBranchUc: kpuBranchUc,
+		AuthUc:      authUc,
+		UserUc:      userUc,
 	}
 
 }

@@ -16,6 +16,7 @@ type (
 		Kafka      KafkaConfig      `yaml:"Kafka"`
 		Encryption EncryptionConfig `yaml:"Encryption"`
 		Cors       CorsConfig       `yaml:"Cors"`
+		GrpcServer GrpcServerConfig `yaml:"GrpcServer"`
 	}
 	ServerConfig struct {
 		Port         uint          `yaml:"Port" env:"SERVER_PORT"`
@@ -53,7 +54,12 @@ type (
 	}
 
 	KafkaTopics struct {
-		MasterDataUser KafkaTopicConfig `yaml:"MasterDataUser"`
+		MasterDataUser      KafkaTopicConfig `yaml:"MasterDataUser"`
+		MasterDataVoter     KafkaTopicConfig `yaml:"MasterDataVoter"`
+		MasterDataKPUBranch KafkaTopicConfig `yaml:"MasterDataKPUBranch"`
+	}
+	GrpcServerConfig struct {
+		Port uint `yaml:"Port"`
 	}
 	KafkaTopicConfig struct {
 		Value        string `yaml:"Value" env:"KAFKA_TOPIC_VALUE"`

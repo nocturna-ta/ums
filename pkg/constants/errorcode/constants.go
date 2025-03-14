@@ -14,4 +14,32 @@ var (
 		Code:    40006,
 		Message: "Wrong Password",
 	}
+	UsernameEmpty = ErrorDefinition{
+		Code:    40007,
+		Message: "Username cannot be empty",
+	}
+	InvalidEmail = ErrorDefinition{
+		Code:    40008,
+		Message: "Invalid Email",
+	}
+	PasswordTooShort = ErrorDefinition{
+		Code:    40009,
+		Message: "Password too short",
+	}
+	NewPasswordMismatch = ErrorDefinition{
+		Code:    40010,
+		Message: "New password and confirm password mismatch",
+	}
+	UserAlreadyExists = ErrorDefinition{
+		Code:    40011,
+		Message: "User already exists",
+	}
+	InvalidUUID = ErrorDefinition{
+		Code:    40012,
+		Message: "Invalid UUID",
+	}
+	OldPasswordMismatch = ErrorDefinition{
+		Code:    40013,
+		Message: "Old password mismatch",
+	}
 )

@@ -13,6 +13,7 @@ type Options struct {
 	Cfg         config.MainConfig
 	VoterUc     usecases.VoterUseCases
 	KpuBranchUc usecases.KPUBranchUseCases
+	UserUc      usecases.UserUseCases
 }
 
 type Handler struct {
@@ -36,6 +37,7 @@ func New(opts *Options) *Handler {
 		CorsConfig:     utils.ConvertToRouterCorsConfig(&opts.Cfg.Cors),
 		VoterUc:        opts.VoterUc,
 		KpuBranchUc:    opts.KpuBranchUc,
+		UserUc:         opts.UserUc,
 	}).RegisterRoute()
 	return handler
 }

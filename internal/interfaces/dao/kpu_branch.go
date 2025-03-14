@@ -10,6 +10,7 @@ import (
 	"github.com/nocturna-ta/golib/database/sql"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/tracing"
+	"github.com/nocturna-ta/golib/txmanager"
 	"github.com/nocturna-ta/golib/txmanager/utils"
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
@@ -21,12 +22,14 @@ type KPUBranchRepository struct {
 	client   *ethclient.Client
 	contract *binding.Votechain
 	db       *sql.Store
+	txMgr    txmanager.TxManager
 }
 
 type OptsKPUBranchRepository struct {
 	Client          *ethclient.Client
 	ContractAddress common.Address
 	DB              *sql.Store
+	TxMgr           txmanager.TxManager
 }
 
 func NewKPUBranchRepository(opts *OptsKPUBranchRepository) repository.KPUBranchRepository {
@@ -38,12 +41,13 @@ func NewKPUBranchRepository(opts *OptsKPUBranchRepository) repository.KPUBranchR
 		client:   opts.Client,
 		contract: contract,
 		db:       opts.DB,
+		txMgr:    opts.TxMgr,
 	}
 }
 
 const (
-	insertKPUBranch = `INSERT INTO kpu_branches (id, name, branch_address, region, is_active, password, password_salt, created_at, updated_at)
-    						VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`
+	insertKPUBranch = `INSERT INTO kpu_branches (id, name, branch_address, region, is_active, created_at, updated_at)
+    						VALUES($1,$2,$3,$4,$5,$6,$7)`
 	selectKPUBranch = `SELECT %s FROM kpu_branches %s WHERE TRUE %s`
 )
 
@@ -55,47 +59,56 @@ func (K *KPUBranchRepository) InsertKPUBranch(ctx context.Context, kpuBranch *mo
 		err error
 	)
 
-	sqlTrx := utils.GetSqlTx(ctx)
+	transaction := func(txCtx context.Context) (any, error) {
+		sqlTrx := utils.GetSqlTx(txCtx)
 
-	if sqlTrx != nil {
-		_, err = sqlTrx.ExecContext(ctx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.Password, kpuBranch.PasswordSalt, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
-	} else {
-		_, err = K.db.GetMaster().ExecContext(ctx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.Password, kpuBranch.PasswordSalt, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
-	}
-
-	if err != nil {
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) {
-			switch pqErr.Code {
-			case "23505":
-				log.WithFields(log.Fields{
-					"error":     err,
-					"kpuBranch": kpuBranch,
-				}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Duplicate entry")
-				return ErrDuplicate
-			}
+		if sqlTrx != nil {
+			_, err = sqlTrx.ExecContext(txCtx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
+		} else {
+			_, err = K.db.GetMaster().ExecContext(txCtx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
 		}
 
-		log.WithFields(log.Fields{
-			"error":     err,
-			"kpuBranch": kpuBranch,
-		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to insert kpu branch")
-		return err
+		if err != nil {
+			var pqErr *pq.Error
+			if errors.As(err, &pqErr) {
+				switch pqErr.Code {
+				case "23505":
+					log.WithFields(log.Fields{
+						"error":     err,
+						"kpuBranch": kpuBranch,
+					}).ErrorWithCtx(txCtx, "[VoterRepository.InsertVoter] Duplicate entry")
+					return nil, ErrDuplicate
+				}
+			}
+
+			log.WithFields(log.Fields{
+				"error":     err,
+				"kpuBranch": kpuBranch,
+			}).ErrorWithCtx(txCtx, "[KPUBranchRepository.InsertKPUBranch] Failed to insert kpu branch")
+			return nil, err
+		}
+
+		tx, err := utils2.StringToTx(signedTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(txCtx, "[KPUBranchRepository.InsertKPUBranch] Failed to convert signed transaction to transaction")
+			return nil, err
+		}
+
+		err = K.client.SendTransaction(txCtx, tx)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(txCtx, "[KPUBranchRepository.InsertKPUBranch] Failed to send transaction")
+			return nil, err
+		}
+
+		return nil, nil
 	}
 
-	tx, err := utils2.StringToTx(signedTransaction)
+	_, err = K.txMgr.Execute(ctx, transaction, nil)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to convert signed transaction to transaction")
-		return err
-	}
-
-	err = K.client.SendTransaction(ctx, tx)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to send transaction")
 		return err
 	}
 
@@ -119,7 +132,7 @@ func (K *KPUBranchRepository) GetAllKPUBranch(ctx context.Context) ([]model.KPUB
 		}).ErrorWithCtx(ctx, "[KPUBranchRepository.GetAllKPUBranch] Failed to get all kpu branches")
 	}
 
-	selectQuery := `kpu_branches.id, kpu_branches.name, kpu_branches.branch_address, kpu_branches.region, kpu_branches.is_active, kpu_branches.password, kpu_branches.password_salt, kpu_branches.created_at, kpu_branches.updated_at`
+	selectQuery := `kpu_branches.id, kpu_branches.name, kpu_branches.branch_address, kpu_branches.region, kpu_branches.is_active, kpu_branches.created_at, kpu_branches.updated_at`
 	whereQuery := " AND kpu_branches.is_deleted = false"
 	joinQuery := ""
 
@@ -177,7 +190,7 @@ func (K *KPUBranchRepository) GetKPUBranchByAddress(ctx context.Context, address
 		return nil, err
 	}
 
-	selectQuery := `kpu_branches.id, kpu_branches.name, kpu_branches.branch_address, kpu_branches.region, kpu_branches.is_active, kpu_branches.password, kpu_branches.password_salt, kpu_branches.created_at, kpu_branches.updated_at`
+	selectQuery := `kpu_branches.id, kpu_branches.name, kpu_branches.branch_address, kpu_branches.region, kpu_branches.is_active, kpu_branches.created_at, kpu_branches.updated_at`
 	whereQuery := " AND kpu_branches.is_deleted = false AND kpu_branches.branch_address = $1"
 	joinQuery := ""
 	args = append(args, address)

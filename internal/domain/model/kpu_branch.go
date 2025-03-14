@@ -2,10 +2,8 @@ package model
 
 import (
 	"github.com/google/uuid"
-	"github.com/nocturna-ta/golib/utils/randomizer"
+	"github.com/nocturna-ta/common-model/models/event"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
-	"github.com/nocturna-ta/ums/pkg/utils"
-	"math/rand"
 	"time"
 )
 
@@ -16,21 +14,25 @@ type KPUBranch struct {
 	BranchAddress string    `db:"branch_address"`
 	Region        string    `db:"region"`
 	IsActive      bool      `db:"is_active"`
-	Password      string    `db:"password"`
-	PasswordSalt  string    `db:"password_salt"`
+}
+
+func (u *KPUBranch) ToMessageModel() *event.KPUBranchMessage {
+	msg := &event.KPUBranchMessage{
+		BaseModelMessage: event.BaseModelMessage{
+			CreatedAt: u.CreatedAt,
+			UpdatedAt: u.UpdatedAt,
+			IsDeleted: u.IsDeleted,
+		},
+		ID:            u.ID.String(),
+		Name:          u.Name,
+		BranchAddress: u.BranchAddress,
+		Region:        u.Region,
+	}
+	return msg
 }
 
 func ConstructRegistrationKPUBranch(req *request.KPUBranchRegistrationRequest) *KPUBranch {
-
 	now := time.Now()
-
-	n := rand.Intn(10)
-	if n < 6 {
-		n += 4
-	}
-
-	salt := randomizer.RandomString(n)
-
 	user := &KPUBranch{
 		BaseModel: BaseModel{
 			CreatedAt: now,
@@ -42,8 +44,6 @@ func ConstructRegistrationKPUBranch(req *request.KPUBranchRegistrationRequest) *
 		BranchAddress: req.BranchAddress,
 		Region:        req.Region,
 		IsActive:      req.IsActive,
-		Password:      utils.PasswordHash(req.BranchAddress, salt),
-		PasswordSalt:  salt,
 	}
 	return user
 }

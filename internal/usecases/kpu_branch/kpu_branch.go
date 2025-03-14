@@ -11,6 +11,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/interfaces/dao"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
+	"github.com/nocturna-ta/ums/pkg/constants"
 )
 
 func (m *Module) RegisterKPUBranch(ctx context.Context, req *request.KPUBranchRegistrationRequest) (*response.KPUBranchRegistrationResponse, error) {
@@ -19,24 +20,38 @@ func (m *Module) RegisterKPUBranch(ctx context.Context, req *request.KPUBranchRe
 
 	var (
 		kpuBranch *model.KPUBranch
-		err       error
 	)
 
-	kpuBranch = model.ConstructRegistrationKPUBranch(req)
+	transaction := func(txCtx context.Context) (any, error) {
+		kpuBranch = model.ConstructRegistrationKPUBranch(req)
 
-	if err := m.kpuBranchRepo.InsertKPUBranch(ctx, kpuBranch, req.SignedTransaction); err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUBranchUseCases.RegisterKPUBranch] Failed to register kpu branch")
+		errTx := m.kpuBranchRepo.InsertKPUBranch(txCtx, kpuBranch, req.SignedTransaction)
+		if errTx != nil {
+			if errors.Is(errTx, dao.ErrDuplicate) {
+				return nil, &custerr.ErrChain{
+					Message: "KPU Branch already exists",
+					Code:    400,
+					Type:    response2.ErrBadRequest,
+					Cause:   errTx,
+				}
+			}
+
+			return nil, errTx
+		}
+
+		errTx = m.publisher.Publish(txCtx, m.topics.MasterDataKPUBranch.Value, kpuBranch.ID.String(), kpuBranch.ToMessageModel(), map[string]any{
+			constants.MetaDataOperation: constants.Create,
+		})
+		if errTx != nil {
+			return nil, errTx
+		}
+
+		return nil, nil
 	}
 
-	if errors.Is(err, dao.ErrDuplicate) {
-		return nil, &custerr.ErrChain{
-			Message: "KPU Branch already exists",
-			Code:    400,
-			Cause:   err,
-			Type:    response2.ErrBadRequest,
-		}
+	_, err := m.txMgr.Execute(ctx, transaction, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return &response.KPUBranchRegistrationResponse{

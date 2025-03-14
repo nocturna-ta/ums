@@ -11,6 +11,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/interfaces/dao"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
+	"github.com/nocturna-ta/ums/pkg/constants"
 )
 
 func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrationRequest) (*response.VoterRegistrationResponse, error) {
@@ -19,24 +20,38 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 
 	var (
 		voter *model.Voter
-		err   error
 	)
 
-	voter = model.ConstructRegistration(req)
+	transaction := func(txCtx context.Context) (any, error) {
+		voter = model.ConstructRegistration(req)
 
-	if err := m.voterRepo.InsertVoter(ctx, voter, req.SignedTransaction); err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[VoterUseCases.RegisterVoter] Failed to register voter")
+		errTx := m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
+		if errTx != nil {
+			if errors.Is(errTx, dao.ErrDuplicate) {
+				return nil, &custerr.ErrChain{
+					Message: "User already exists",
+					Code:    400,
+					Type:    response2.ErrBadRequest,
+					Cause:   errTx,
+				}
+			}
+
+			return nil, errTx
+		}
+
+		errTx = m.publisher.Publish(txCtx, m.topics.MasterDataVoter.Value, voter.ID.String(), voter.ToMessageModel(), map[string]any{
+			constants.MetaDataOperation: constants.Create,
+		})
+		if errTx != nil {
+			return nil, errTx
+		}
+
+		return nil, nil
 	}
 
-	if errors.Is(err, dao.ErrDuplicate) {
-		return nil, &custerr.ErrChain{
-			Message: "User already exists",
-			Code:    400,
-			Cause:   err,
-			Type:    response2.ErrBadRequest,
-		}
+	_, err := m.txMgr.Execute(ctx, transaction, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return &response.VoterRegistrationResponse{

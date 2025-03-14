@@ -42,8 +42,8 @@ func NewVoterRepository(opts *OptsVoterRepository) repository.VoterRepository {
 }
 
 const (
-	insertVoter = `INSERT INTO voters (id, nik, voter_address, password, password_salt, is_registered, has_voted, voted_at, region, last_login, created_at, updated_at)
-								VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10, $11, $12)`
+	insertVoter = `INSERT INTO voters (id, nik, voter_address, is_registered, has_voted, voted_at, region, last_login, created_at, updated_at)
+								VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10)`
 	selectVoter = `SELECT %s FROM voters %s WHERE TRUE %s`
 	updateVoter = `UPDATE voters SET %s WHERE TRUE %s`
 )
@@ -63,8 +63,6 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 			voter.ID,
 			voter.NIK,
 			voter.VoterAddress,
-			voter.Password,
-			voter.PasswordSalt,
 			voter.IsRegistered,
 			voter.HasVoted,
 			voter.VotedAt,
@@ -78,8 +76,6 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 			voter.ID,
 			voter.NIK,
 			voter.VoterAddress,
-			voter.Password,
-			voter.PasswordSalt,
 			voter.IsRegistered,
 			voter.HasVoted,
 			voter.VotedAt,

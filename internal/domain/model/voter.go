@@ -2,10 +2,8 @@ package model
 
 import (
 	"github.com/google/uuid"
-	"github.com/nocturna-ta/golib/utils/randomizer"
+	"github.com/nocturna-ta/common-model/models/event"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
-	"github.com/nocturna-ta/ums/pkg/utils"
-	"math/rand"
 	"time"
 )
 
@@ -17,21 +15,29 @@ type Voter struct {
 	Region       string    `db:"region"`
 	IsRegistered bool      `db:"is_registered"`
 	HasVoted     bool      `db:"has_voted"`
-	Password     string    `db:"password"`
-	PasswordSalt string    `db:"password_salt"`
 	VotedAt      time.Time `db:"voted_at"`
 	LastLogin    time.Time `db:"last_login"`
+}
+
+func (v *Voter) ToMessageModel() *event.VoterMessage {
+	msg := &event.VoterMessage{
+		BaseModelMessage: event.BaseModelMessage{
+			CreatedAt: v.CreatedAt,
+			UpdatedAt: v.UpdatedAt,
+			IsDeleted: v.IsDeleted,
+		},
+		ID:           v.ID.String(),
+		NIK:          v.NIK,
+		VoterAddress: v.VoterAddress,
+		Region:       v.Region,
+		IsRegistered: v.IsRegistered,
+	}
+	return msg
 }
 
 func ConstructRegistration(req *request.VoterRegistrationRequest) *Voter {
 	now := time.Now()
 
-	n := rand.Intn(10)
-	if n < 6 {
-		n += 4
-	}
-
-	salt := randomizer.RandomString(n)
 	voterId := uuid.New()
 
 	user := &Voter{
@@ -43,8 +49,6 @@ func ConstructRegistration(req *request.VoterRegistrationRequest) *Voter {
 		ID:           voterId,
 		NIK:          req.NIK,
 		VoterAddress: req.VoterAddress,
-		Password:     utils.PasswordHash(req.NIK, salt),
-		PasswordSalt: salt,
 		IsRegistered: req.IsRegistered,
 		HasVoted:     false,
 		VotedAt:      time.Time{},
