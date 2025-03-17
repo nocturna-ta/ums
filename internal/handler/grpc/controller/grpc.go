@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/nocturna-ta/api-gateway-grpc-lib/proto"
+	apiGwProto "github.com/nocturna-ta/api-gateway-grpc-lib/proto"
 	"github.com/nocturna-ta/golib/grpc"
 	"github.com/nocturna-ta/ums/internal/usecases"
 )
@@ -12,7 +12,7 @@ type GRPC struct {
 }
 
 type server struct {
-	proto.AuthServiceServer
+	apiGwProto.AuthServiceServer
 	authUc usecases.AuthUseCases
 }
 
@@ -37,7 +37,7 @@ func (g *GRPC) Register() *grpc.Server {
 		authUc: g.authUc,
 	}
 
-	srv.Register(proto.RegisterAuthServiceServer, grpcServiceServer)
+	srv.Register(apiGwProto.RegisterAuthServiceServer, grpcServiceServer)
 
 	return srv
 }

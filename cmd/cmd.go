@@ -17,7 +17,7 @@ var (
 func Execute() {
 	log.SetFormatter("json")
 	rootCmd.AddCommand(server.ServeHttpCmd())
-	//rootCmd.AddCommand(server.ServeGrpcCmd())
+	rootCmd.AddCommand(server.ServeGrpcCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal("Error: ", err.Error())

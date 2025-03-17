@@ -7,7 +7,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.10.9
-	github.com/nocturna-ta/golib v1.0.4
+	github.com/nocturna-ta/golib v1.0.5
 	github.com/spf13/cobra v1.8.1
 	github.com/swaggo/swag v1.16.4
 )

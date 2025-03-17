@@ -166,6 +166,8 @@ github.com/nocturna-ta/golib v1.0.3 h1:D7nGelWSFlKplarHFanprpuigxpd1+0G5qZsLmcmh
 github.com/nocturna-ta/golib v1.0.3/go.mod h1:PHxSA/fkpTUgKvYKNXNkBtalgiBz9Jd9fgoWbO/uOMM=
 github.com/nocturna-ta/golib v1.0.4 h1:eUTxcrkrxbJdNhgSUwy7jpOyb4mc01epkH2um574RE4=
 github.com/nocturna-ta/golib v1.0.4/go.mod h1:PHxSA/fkpTUgKvYKNXNkBtalgiBz9Jd9fgoWbO/uOMM=
+github.com/nocturna-ta/golib v1.0.5 h1:tP5ragIxbtY2+fH2wBMVYK9Fs/oUDkcHv+d9rKKAO5g=
+github.com/nocturna-ta/golib v1.0.5/go.mod h1:PHxSA/fkpTUgKvYKNXNkBtalgiBz9Jd9fgoWbO/uOMM=
 github.com/pierrec/lz4/v4 v4.1.21 h1:yOVMLb6qSIDP67pl/5F7RepeKYu/VmTyEXvuMI5d9mQ=
 github.com/pierrec/lz4/v4 v4.1.21/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/pingcap/errors v0.11.4 h1:lFuQV/oaUMGcD2tqt+01ROSmJs75VG1ToEOkZIZ4nE4=

@@ -10,7 +10,6 @@ import (
 	"github.com/nocturna-ta/golib/database/sql"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/tracing"
-	"github.com/nocturna-ta/golib/txmanager"
 	"github.com/nocturna-ta/golib/txmanager/utils"
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
@@ -22,14 +21,12 @@ type KPUBranchRepository struct {
 	client   *ethclient.Client
 	contract *binding.Votechain
 	db       *sql.Store
-	txMgr    txmanager.TxManager
 }
 
 type OptsKPUBranchRepository struct {
 	Client          *ethclient.Client
 	ContractAddress common.Address
 	DB              *sql.Store
-	TxMgr           txmanager.TxManager
 }
 
 func NewKPUBranchRepository(opts *OptsKPUBranchRepository) repository.KPUBranchRepository {
@@ -41,7 +38,6 @@ func NewKPUBranchRepository(opts *OptsKPUBranchRepository) repository.KPUBranchR
 		client:   opts.Client,
 		contract: contract,
 		db:       opts.DB,
-		txMgr:    opts.TxMgr,
 	}
 }
 
@@ -58,57 +54,47 @@ func (K *KPUBranchRepository) InsertKPUBranch(ctx context.Context, kpuBranch *mo
 	var (
 		err error
 	)
+	sqlTrx := utils.GetSqlTx(ctx)
 
-	transaction := func(txCtx context.Context) (any, error) {
-		sqlTrx := utils.GetSqlTx(txCtx)
-
-		if sqlTrx != nil {
-			_, err = sqlTrx.ExecContext(txCtx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
-		} else {
-			_, err = K.db.GetMaster().ExecContext(txCtx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
-		}
-
-		if err != nil {
-			var pqErr *pq.Error
-			if errors.As(err, &pqErr) {
-				switch pqErr.Code {
-				case "23505":
-					log.WithFields(log.Fields{
-						"error":     err,
-						"kpuBranch": kpuBranch,
-					}).ErrorWithCtx(txCtx, "[VoterRepository.InsertVoter] Duplicate entry")
-					return nil, ErrDuplicate
-				}
-			}
-
-			log.WithFields(log.Fields{
-				"error":     err,
-				"kpuBranch": kpuBranch,
-			}).ErrorWithCtx(txCtx, "[KPUBranchRepository.InsertKPUBranch] Failed to insert kpu branch")
-			return nil, err
-		}
-
-		tx, err := utils2.StringToTx(signedTransaction)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(txCtx, "[KPUBranchRepository.InsertKPUBranch] Failed to convert signed transaction to transaction")
-			return nil, err
-		}
-
-		err = K.client.SendTransaction(txCtx, tx)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(txCtx, "[KPUBranchRepository.InsertKPUBranch] Failed to send transaction")
-			return nil, err
-		}
-
-		return nil, nil
+	if sqlTrx != nil {
+		_, err = sqlTrx.ExecContext(ctx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
+	} else {
+		_, err = K.db.GetMaster().ExecContext(ctx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
 	}
 
-	_, err = K.txMgr.Execute(ctx, transaction, nil)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
+			switch pqErr.Code {
+			case "23505":
+				log.WithFields(log.Fields{
+					"error":     err,
+					"kpuBranch": kpuBranch,
+				}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Duplicate entry")
+				return ErrDuplicate
+			}
+		}
+
+		log.WithFields(log.Fields{
+			"error":     err,
+			"kpuBranch": kpuBranch,
+		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to insert kpu branch")
+		return err
+	}
+
+	tx, err := utils2.StringToTx(signedTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to convert signed transaction to transaction")
+		return err
+	}
+
+	err = K.client.SendTransaction(ctx, tx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to send transaction")
 		return err
 	}
 

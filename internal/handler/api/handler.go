@@ -39,6 +39,7 @@ func New(opts *Options) *Handler {
 		KpuBranchUc:    opts.KpuBranchUc,
 		UserUc:         opts.UserUc,
 	}).RegisterRoute()
+
 	return handler
 }
 func (h *Handler) Run() {

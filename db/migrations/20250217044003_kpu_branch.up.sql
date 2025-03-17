@@ -4,8 +4,6 @@ CREATE TABLE "kpu_branches"(
     branch_address varchar(255) NOT NULL,
     region varchar(255) NOT NULL,
     is_active bool NOT NULL,
-    password varchar(255) NOT NULL,
-    password_salt varchar(10) NOT NULL,
     created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT now(),
     is_deleted bool NOT NULL DEFAULT FALSE

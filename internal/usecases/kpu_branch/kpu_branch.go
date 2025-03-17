@@ -42,6 +42,7 @@ func (m *Module) RegisterKPUBranch(ctx context.Context, req *request.KPUBranchRe
 		errTx = m.publisher.Publish(txCtx, m.topics.MasterDataKPUBranch.Value, kpuBranch.ID.String(), kpuBranch.ToMessageModel(), map[string]any{
 			constants.MetaDataOperation: constants.Create,
 		})
+
 		if errTx != nil {
 			return nil, errTx
 		}

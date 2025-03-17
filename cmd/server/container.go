@@ -69,12 +69,16 @@ func newContainer(opts *options) *container {
 		VoterRepo: voterRepo,
 		TxMgr:     txMgr,
 		JwtSvc:    jwtSvc,
+		Publisher: opts.Publisher,
+		Topics:    opts.Cfg.Kafka.Topics,
 	})
 
 	kpuBranchUc := kpu_branch.New(&kpu_branch.Opts{
 		KpuBranchRepo: kpuBranchRepo,
 		TxMgr:         txMgr,
 		JwtSvc:        jwtSvc,
+		Publisher:     opts.Publisher,
+		Topics:        opts.Cfg.Kafka.Topics,
 	})
 
 	userUc := user.New(&user.Opts{
