@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nocturna-ta/golib/database/sql"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/ums/config"
+	"github.com/nocturna-ta/ums/ethreum"
 	"github.com/nocturna-ta/ums/internal/handler/api"
 	"github.com/nocturna-ta/ums/internal/infrastructures/kafka"
 	"github.com/spf13/cobra"
@@ -17,8 +17,8 @@ import (
 var (
 	serverHTTPCmd = &cobra.Command{
 		Use:   "server-http",
-		Short: "Blockchain Service HTTP",
-		Long:  "Blockchain Service HTTP",
+		Short: "User Management Service HTTP",
+		Long:  "User Management Service HTTP",
 		RunE:  run,
 	}
 )
@@ -41,14 +41,17 @@ func run(cmd *cobra.Command, args []string) error {
 		ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
 	}, sql.DriverPostgres)
 
-	client, err := ethclient.Dial(cfg.Blockchain.GanacheURL)
+	client, err := ethreum.GetEthereumClient(&cfg.Blockchain)
 	if err != nil {
 		return err
 	}
 
+	defer client.Close()
+
 	publisher, err := kafka.NewPublisher(context.Background(), cfg.Kafka.Producer)
 	if err != nil {
 		log.Fatalf("Failed to instantiate kafka publisher: %w", err)
+		return err
 	}
 
 	appContainer := newContainer(&options{

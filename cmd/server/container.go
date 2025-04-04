@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nocturna-ta/golib/database/sql"
+	"github.com/nocturna-ta/golib/ethereum"
 	"github.com/nocturna-ta/golib/event"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/txmanager"
@@ -30,11 +30,12 @@ type container struct {
 type options struct {
 	Cfg       *config.MainConfig
 	DB        *sql.Store
-	Client    *ethclient.Client
+	Client    ethereum.Client
 	Publisher event.MessagePublisher
 }
 
 func newContainer(opts *options) *container {
+
 	voterRepo := dao.NewVoterRepository(&dao.OptsVoterRepository{
 		DB:              opts.DB,
 		Client:          opts.Client,

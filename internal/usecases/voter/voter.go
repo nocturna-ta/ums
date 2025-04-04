@@ -3,6 +3,7 @@ package voter
 import (
 	"context"
 	"errors"
+	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/log"
 	response2 "github.com/nocturna-ta/golib/response"
@@ -81,15 +82,20 @@ func (m *Module) GetVoterByNIK(ctx context.Context, nik string) (*response.Voter
 	}, err
 }
 
-func (m *Module) GetVoterByAddress(ctx context.Context, address string) (*response.VoterResponse, error) {
+func (m *Module) GetVoterByAddress(ctx context.Context) (*response.VoterResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "VoterUseCases.GetVoterByAddress")
 	defer span.End()
 
-	voter, err := m.voterRepo.GetVoterByAddress(ctx, address)
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	voter, err := m.voterRepo.GetVoterByAddress(ctx, reqCtx.GetAddress())
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":   err,
-			"address": address,
+			"address": reqCtx.Address,
 		}).ErrorWithCtx(ctx, "[VoterUseCases.GetVoterByAddress] Failed to get voter by address")
 	}
 

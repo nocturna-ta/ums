@@ -5,32 +5,32 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/lib/pq"
 	"github.com/nocturna-ta/golib/database/sql"
+	"github.com/nocturna-ta/golib/ethereum"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/tracing"
 	"github.com/nocturna-ta/golib/txmanager/utils"
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
-	"github.com/nocturna-ta/ums/pkg/binding"
 	utils2 "github.com/nocturna-ta/ums/pkg/utils"
+	"github.com/nocturna-ta/votechain-contract/binding"
 )
 
 type KPUBranchRepository struct {
-	client   *ethclient.Client
+	client   ethereum.Client
 	contract *binding.Votechain
 	db       *sql.Store
 }
 
 type OptsKPUBranchRepository struct {
-	Client          *ethclient.Client
+	Client          ethereum.Client
 	ContractAddress common.Address
 	DB              *sql.Store
 }
 
 func NewKPUBranchRepository(opts *OptsKPUBranchRepository) repository.KPUBranchRepository {
-	contract, err := binding.NewVotechain(opts.ContractAddress, opts.Client)
+	contract, err := binding.NewVotechain(opts.ContractAddress, opts.Client.GetEthClient())
 	if err != nil {
 		return nil
 	}
@@ -51,17 +51,41 @@ func (K *KPUBranchRepository) InsertKPUBranch(ctx context.Context, kpuBranch *mo
 	spam, ctx := tracing.StartSpanFromContext(ctx, "KPUBranchRepository.InsertKPUBranch")
 	defer spam.End()
 
-	var (
-		err error
-	)
+	tx, err := utils2.StringToTx(signedTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to convert signed transaction to transaction")
+		return err
+	}
 	sqlTrx := utils.GetSqlTx(ctx)
 
-	if sqlTrx != nil {
-		_, err = sqlTrx.ExecContext(ctx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
-	} else {
-		_, err = K.db.GetMaster().ExecContext(ctx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
+	var ownTransaction bool
+	if sqlTrx == nil {
+		var err error
+		sqlTrx, err = K.db.GetMaster().BeginTxx(ctx, nil)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to begin transaction")
+			return err
+		}
+
+		ownTransaction = true
+
+		defer func() {
+			if err != nil && ownTransaction {
+				rollbackErr := sqlTrx.Rollback()
+				if rollbackErr != nil {
+					log.WithFields(log.Fields{
+						"error": rollbackErr,
+					}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to rollback transaction")
+				}
+			}
+		}()
 	}
 
+	_, err = sqlTrx.ExecContext(ctx, insertKPUBranch, kpuBranch.ID, kpuBranch.Name, kpuBranch.BranchAddress, kpuBranch.Region, kpuBranch.IsActive, kpuBranch.CreatedAt, kpuBranch.UpdatedAt)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {
@@ -82,20 +106,30 @@ func (K *KPUBranchRepository) InsertKPUBranch(ctx context.Context, kpuBranch *mo
 		return err
 	}
 
-	tx, err := utils2.StringToTx(signedTransaction)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to convert signed transaction to transaction")
-		return err
-	}
-
 	err = K.client.SendTransaction(ctx, tx)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to send transaction")
+
+		if ownTransaction {
+			rollbackErr := sqlTrx.Rollback()
+			if rollbackErr != nil {
+				log.WithFields(log.Fields{
+					"error": rollbackErr,
+				}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to rollback transaction")
+			}
+		}
 		return err
+	}
+
+	if ownTransaction {
+		if err := sqlTrx.Commit(); err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to commit transaction")
+			return err
+		}
 	}
 
 	return nil

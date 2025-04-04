@@ -30,6 +30,22 @@ definitions:
       signed_transaction:
         type: string
     type: object
+  request.UserChangePasswordRequest:
+    properties:
+      confirm:
+        type: string
+      new:
+        type: string
+      old:
+        type: string
+    type: object
+  request.UserLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
   request.UserRegistrationRequest:
     properties:
       email:
@@ -73,6 +89,13 @@ definitions:
       is_active:
         type: boolean
       region:
+        type: string
+    type: object
+  response.UserLoginResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
         type: string
     type: object
   response.UserRegistrationResponse:
@@ -170,16 +193,19 @@ paths:
       summary: Get All KPU Branch
       tags:
       - kpu_branch
-  /v1/kpu-branch/address/{address}:
+  /v1/kpu-branch/address:
     get:
       consumes:
       - application/json
       description: Get KPU Branch By Address
       parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
       - description: Address
-        in: path
-        name: address
-        required: true
+        in: header
+        name: X-Address-Id
         type: string
       produces:
       - application/json
@@ -249,16 +275,81 @@ paths:
       summary: Get user by email
       tags:
       - User
-  /v1/user/id/{id}:
+  /v1/user/change-password:
+    put:
+      consumes:
+      - application/json
+      description: Change user password
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: User change password request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password changed
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserResponse'
+              type: object
+      summary: Change user password
+      tags:
+      - User
+  /v1/user/login:
+    post:
+      consumes:
+      - application/json
+      description: Login user
+      parameters:
+      - description: User login request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User logged in
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserLoginResponse'
+              type: object
+      summary: Login user
+      tags:
+      - User
+  /v1/user/me:
     get:
       consumes:
       - application/json
       description: Get user by ID
       parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
         type: string
       produces:
       - application/json
@@ -302,16 +393,19 @@ paths:
       summary: Register a new user
       tags:
       - User
-  /v1/user/update/{id}:
+  /v1/user/update:
     put:
       consumes:
       - application/json
       description: Update user
       parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
         type: string
       - description: User update request
         in: body
@@ -354,7 +448,36 @@ paths:
       summary: Get All Voter
       tags:
       - voters
-  /v1/voter/{nik}:
+  /v1/voter/address:
+    get:
+      consumes:
+      - application/json
+      description: Get Voter By Address
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.VoterResponse'
+              type: object
+      summary: Get Voter By Address
+      tags:
+      - voters
+  /v1/voter/nik/{nik}:
     get:
       consumes:
       - application/json
@@ -378,32 +501,6 @@ paths:
                   $ref: '#/definitions/response.VoterResponse'
               type: object
       summary: Get Voter By NIK
-      tags:
-      - voters
-  /v1/voter/address/{address}:
-    get:
-      consumes:
-      - application/json
-      description: Get Voter By Address
-      parameters:
-      - description: Address
-        in: path
-        name: address
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.VoterResponse'
-              type: object
-      summary: Get Voter By Address
       tags:
       - voters
   /v1/voter/region/{region}:

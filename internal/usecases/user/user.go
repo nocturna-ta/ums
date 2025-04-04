@@ -3,8 +3,10 @@ package user
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/log"
 	response2 "github.com/nocturna-ta/golib/response"
@@ -87,16 +89,20 @@ func (m *Module) GetUserByEmail(ctx context.Context, email string) (*response.Us
 	}, nil
 }
 
-func (m *Module) GetByID(ctx context.Context, id string) (*response.UserResponse, error) {
+func (m *Module) GetByID(ctx context.Context) (*response.UserResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "UserUseCases.GetByID")
 	defer span.End()
 
-	idUUID, err := uuid.Parse(id)
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	user, err := m.userRepo.GetById(ctx, idUUID)
+	fmt.Println(reqCtx.GetUserId())
+	user, err := m.userRepo.GetById(ctx, reqCtx.GetUserId())
 	if err != nil {
 		log.WithFields(log.Fields{
-			"id":    id,
+			"id":    reqCtx.UserId,
 			"error": err,
 		}).ErrorWithCtx(ctx, "[UserUseCases.GetByID] Failed to get user by id")
 		return nil, err
@@ -108,16 +114,19 @@ func (m *Module) GetByID(ctx context.Context, id string) (*response.UserResponse
 	}, nil
 }
 
-func (m *Module) UpdateUser(ctx context.Context, id string, req *request.UserUpdateRequest) (*response.UserResponse, error) {
+func (m *Module) UpdateUser(ctx context.Context, req *request.UserUpdateRequest) (*response.UserResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "UserUseCases.UpdateUser")
 	defer span.End()
 
-	idUUID, err := uuid.Parse(id)
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	existing, err := m.userRepo.GetById(ctx, idUUID)
+	existing, err := m.userRepo.GetById(ctx, reqCtx.GetUserId())
 	if err != nil {
 		log.WithFields(log.Fields{
-			"id":    id,
+			"id":    reqCtx.UserId,
 			"error": err,
 		}).ErrorWithCtx(ctx, "[UserUseCases.UpdateUser] Failed to get user by id")
 		return nil, err
@@ -131,7 +140,7 @@ func (m *Module) UpdateUser(ctx context.Context, id string, req *request.UserUpd
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"id":      id,
+			"id":      reqCtx.UserId,
 			"error":   err,
 			"request": req,
 		}).ErrorWithCtx(ctx, "[UserUseCases.UpdateUser] Failed to update user")
@@ -152,35 +161,38 @@ func (m *Module) UpdateUser(ctx context.Context, id string, req *request.UserUpd
 	}, nil
 }
 
-func (m *Module) ChangePassword(ctx context.Context, id string, req *request.UserChangePasswordRequest) error {
+func (m *Module) ChangePassword(ctx context.Context, req *request.UserChangePasswordRequest) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "UserUseCases.ChangePassword")
 	defer span.End()
 
-	idUUID, err := uuid.Parse(id)
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return err
+	}
 
-	exitsting, err := m.userRepo.GetById(ctx, idUUID)
+	existing, err := m.userRepo.GetById(ctx, reqCtx.GetUserId())
 	if err != nil {
 		log.WithFields(log.Fields{
-			"id":    id,
+			"id":    reqCtx.UserId,
 			"error": err,
 		}).ErrorWithCtx(ctx, "[UserUseCases.ChangePassword] Failed to get user by id")
 		return err
 	}
 
-	oldHash := utils.PasswordHash(req.Old, exitsting.PasswordSalt)
-	newPassword := utils.PasswordHash(req.Confirm, exitsting.PasswordSalt)
-	if oldHash != exitsting.Password {
+	oldHash := utils.PasswordHash(req.Old, existing.PasswordSalt)
+	newPassword := utils.PasswordHash(req.Confirm, existing.PasswordSalt)
+	if oldHash != existing.Password {
 		return &custerr.ErrChain{
 			Message: errorcode.WrongPassword.Message,
 			Code:    errorcode.WrongPassword.Code,
 		}
 	}
 
-	err = m.userRepo.ChangePassword(ctx, exitsting.ID, newPassword)
+	err = m.userRepo.ChangePassword(ctx, existing.ID, newPassword)
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"id":      id,
+			"id":      reqCtx.UserId,
 			"err":     err,
 			"request": req,
 		}).ErrorWithCtx(ctx, "[UserUseCases.ChangePassword] Failed to change password")

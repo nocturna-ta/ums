@@ -10,6 +10,10 @@ run-api: dependency swag-init
 	@echo ">> Running API Server"
 	@go run main.go server-http
 
+run-grpc: dependency
+	@echo ">> Running gRPC Server"
+	@go run main.go serve-grpc
+
 generate-abi:
 	@echo  ">> Generating ABI"
 	@solcjs --abi ./pkg/contracts/Votechain.sol -o ./pkg/binding
@@ -32,9 +36,9 @@ migrate-down:
 remock:
 	#https://github.com/vektra/mockery
 	@echo ">> Mock Repositories"
-	@mockery --all --dir ./internal/domain/repository --output ./internal/domain/repository/mocks_repository --outpkg mocks_repository
+	@mockery --all --recursive --dir ./internal/domain/repository --output ./internal/domain/repository/mocks_repository --outpkg mocks_repository
 
-	@echo ">> Mock UseCases"
+	@echo ">> Mock Usecases"
 	@mockery --all --dir ./internal/usecases --output ./internal/usecases/mocks_usecases --outpkg mocks_usecases
 
 	@echo ">> Mock Interfaces"

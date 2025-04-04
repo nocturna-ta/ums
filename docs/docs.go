@@ -101,7 +101,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/kpu-branch/address/{address}": {
+        "/v1/kpu-branch/address": {
             "get": {
                 "description": "Get KPU Branch By Address",
                 "consumes": [
@@ -117,10 +117,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
                         "description": "Address",
-                        "name": "address",
-                        "in": "path",
-                        "required": true
+                        "name": "X-Address-Id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -191,7 +196,111 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/user/id/{id}": {
+        "/v1/user/change-password": {
+            "put": {
+                "description": "Change user password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Change user password",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "description": "User change password request",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password changed",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/login": {
+            "post": {
+                "description": "Login user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "description": "User login request",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User logged in",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UserLoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/me": {
             "get": {
                 "description": "Get user by ID",
                 "consumes": [
@@ -207,10 +316,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -281,7 +395,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/user/update/{id}": {
+        "/v1/user/update": {
             "put": {
                 "description": "Update user",
                 "consumes": [
@@ -297,10 +411,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
                     },
                     {
                         "description": "User update request",
@@ -413,7 +532,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/voter/address/{address}": {
+        "/v1/voter/address": {
             "get": {
                 "description": "Get Voter By Address",
                 "consumes": [
@@ -429,8 +548,57 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
                         "description": "Address",
-                        "name": "address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.VoterResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/voter/nik/{nik}": {
+            "get": {
+                "description": "Get Voter By NIK",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "voters"
+                ],
+                "summary": "Get Voter By NIK",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "NIK",
+                        "name": "nik",
                         "in": "path",
                         "required": true
                     }
@@ -546,50 +714,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/v1/voter/{nik}": {
-            "get": {
-                "description": "Get Voter By NIK",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "voters"
-                ],
-                "summary": "Get Voter By NIK",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "NIK",
-                        "name": "nik",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.VoterResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -635,6 +759,31 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "signed_transaction": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UserChangePasswordRequest": {
+            "type": "object",
+            "properties": {
+                "confirm": {
+                    "type": "string"
+                },
+                "new": {
+                    "type": "string"
+                },
+                "old": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UserLoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
                     "type": "string"
                 }
             }
@@ -705,6 +854,17 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "region": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.UserLoginResponse": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "token": {
                     "type": "string"
                 }
             }

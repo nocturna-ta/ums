@@ -65,17 +65,16 @@ func (api *API) GetAllKPUBranch(ctx context.Context, req *router.Request) (*rest
 // @Description Get KPU Branch By Address
 // @Tags kpu_branch
 // @Accept json
-// @Param address path string true "Address"
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
 // @Produce json
 // @Success 200 {object} jsonResponse{data=response.KPUBranchResponse}
-// @Router /v1/kpu-branch/address/{address} [get]
+// @Router /v1/kpu-branch/address [get]
 func (api *API) GetKPUBranchByAddress(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetKPUBranchByAddress")
 	defer span.End()
 
-	address := req.Params("address")
-
-	res, err := api.kpuBranchUc.GetKPUBranchByAddress(ctx, address)
+	res, err := api.kpuBranchUc.GetKPUBranchByAddress(ctx)
 	if err != nil {
 		return cutresp.CustomErrorResponse(err)
 	}

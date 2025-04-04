@@ -6,7 +6,7 @@ import (
 )
 
 type VoterRepository interface {
-	InsertVoter(ctx context.Context, voter *model.Voter, signed_transaction string) error
+	InsertVoter(ctx context.Context, voter *model.Voter, signedTransaction string) error
 	GetAllVoter(ctx context.Context) ([]model.Voter, error)
 	GetVoterByNIK(ctx context.Context, nik string) (*model.Voter, error)
 	GetVoterByAddress(ctx context.Context, address string) (*model.Voter, error)

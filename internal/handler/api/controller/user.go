@@ -71,16 +71,15 @@ func (api *API) GetUserByEmail(ctx context.Context, req *router.Request) (*rest.
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param id path string true "User ID"
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
 // @Success 200 {object} jsonResponse{data=response.UserResponse} "User found"
-// @Router /v1/user/id/{id} [get]
+// @Router /v1/user/me [get]
 func (api *API) GetByID(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetByID")
 	defer span.End()
 
-	id := req.Params("id")
-
-	res, err := api.userUc.GetByID(ctx, id)
+	res, err := api.userUc.GetByID(ctx)
 	if err != nil {
 		return cutresp.CustomErrorResponse(err)
 	}
@@ -94,15 +93,14 @@ func (api *API) GetByID(ctx context.Context, req *router.Request) (*rest.JSONRes
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param id path string true "User ID"
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
 // @Param user body request.UserUpdateRequest true "User update request"
 // @Success 200 {object} jsonResponse{data=response.UserResponse} "User updated"
-// @Router /v1/user/update/{id} [put]
+// @Router /v1/user/update [put]
 func (api *API) UpdateUser(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.UpdateUser")
 	defer span.End()
-
-	id := req.Params("id")
 
 	var userReq request.UserUpdateRequest
 	err := json.Unmarshal(req.RawBody(), &userReq)
@@ -116,10 +114,77 @@ func (api *API) UpdateUser(ctx context.Context, req *router.Request) (*rest.JSON
 		return cutresp.CustomErrorResponse(err)
 	}
 
-	res, err := api.userUc.UpdateUser(ctx, id, &userReq)
+	res, err := api.userUc.UpdateUser(ctx, &userReq)
 	if err != nil {
 		return cutresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
+}
+
+// LoginUser godoc
+// @Summary Login user
+// @Description Login user
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param user body request.UserLoginRequest true "User login request"
+// @Success 200 {object} jsonResponse{data=response.UserLoginResponse} "User logged in"
+// @Router /v1/user/login [post]
+func (api *API) LoginUser(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.LoginUser")
+	defer span.End()
+
+	var loginReq request.UserLoginRequest
+	err := json.Unmarshal(req.RawBody(), &loginReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	err = loginReq.ValidateLogin()
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	res, err := api.userUc.LoginUser(ctx, &loginReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}
+
+// ChangePassword godoc
+// @Summary Change user password
+// @Description Change user password
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param user body request.UserChangePasswordRequest true "User change password request"
+// @Success 200 {object} jsonResponse{data=response.UserResponse} "Password changed"
+// @Router /v1/user/change-password [put]
+func (api *API) ChangePassword(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.ChangePassword")
+	defer span.End()
+
+	var changePassReq request.UserChangePasswordRequest
+	err := json.Unmarshal(req.RawBody(), &changePassReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	err = changePassReq.ValidateChangePassword()
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	err = api.userUc.ChangePassword(ctx, &changePassReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData("Password changed"), nil
+
 }

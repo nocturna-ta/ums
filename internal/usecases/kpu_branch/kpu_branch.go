@@ -3,6 +3,7 @@ package kpu_branch
 import (
 	"context"
 	"errors"
+	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/log"
 	response2 "github.com/nocturna-ta/golib/response"
@@ -85,15 +86,20 @@ func (m *Module) GetAllKPUBranch(ctx context.Context) (*[]response.KPUBranchResp
 	return &res, err
 }
 
-func (m *Module) GetKPUBranchByAddress(ctx context.Context, address string) (*response.KPUBranchResponse, error) {
+func (m *Module) GetKPUBranchByAddress(ctx context.Context) (*response.KPUBranchResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUBranchUseCases.GetKPUBranchByAddress")
 	defer span.End()
 
-	kpuBranch, err := m.kpuBranchRepo.GetKPUBranchByAddress(ctx, address)
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	kpuBranch, err := m.kpuBranchRepo.GetKPUBranchByAddress(ctx, reqCtx.GetAddress())
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":   err,
-			"address": address,
+			"address": reqCtx.Address,
 		}).ErrorWithCtx(ctx, "[KPUBranchUseCases.GetKPUBranchByAddress] Failed to get kpu branch by address")
 	}
 

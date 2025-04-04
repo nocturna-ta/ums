@@ -67,22 +67,22 @@ func (api *API) RegisterRoute() *router.FastRouter {
 	myRouter.Group("/v1", func(v1 *router.FastRouter) {
 		v1.Group("/voter", func(voter *router.FastRouter) {
 			voter.POST("/register", api.RegisterVoter, router.MustAuthorized(false))
-			voter.GET("/:nik", api.GetVoterByNIK, router.MustAuthorized(false))
-			voter.GET("/address/:address", api.GetVoterByAddress, router.MustAuthorized(false))
+			voter.GET("/nik/:nik", api.GetVoterByNIK, router.MustAuthorized(false))
+			voter.GET("/address", api.GetVoterByAddress, router.MustAuthorized(false))
 			voter.GET("/region/:region", api.GetVoterByRegion, router.MustAuthorized(false))
 			voter.GET("/", api.GetAllVoter, router.MustAuthorized(false))
 		})
 		v1.Group("/kpu-branch", func(kpuBranch *router.FastRouter) {
 			kpuBranch.GET("/", api.GetAllKPUBranch, router.MustAuthorized(false))
 			kpuBranch.POST("/register", api.RegisterKPUBranch, router.MustAuthorized(false))
-			kpuBranch.GET("/address/:address", api.GetKPUBranchByAddress, router.MustAuthorized(false))
+			kpuBranch.GET("/address", api.GetKPUBranchByAddress, router.MustAuthorized(false))
 		})
-		//v1.Group("/user", func(user *router.FastRouter) {
-		//	user.POST("/register", api.RegisterUser, router.MustAuthorized(false))
-		//	user.GET("/:email", api.GetUserByEmail, router.MustAuthorized(false))
-		//	user.GET("/id/:id", api.GetByID, router.MustAuthorized(false))
-		//	user.PUT("/update/:id", api.UpdateUser, router.MustAuthorized(false))
-		//})
+		v1.Group("/user", func(user *router.FastRouter) {
+			user.POST("/register", api.RegisterUser, router.MustAuthorized(false))
+			user.GET("/me", api.GetByID)
+			user.PUT("/update", api.UpdateUser)
+			user.POST("/login", api.LoginUser, router.MustAuthorized(false))
+		})
 	})
 
 	return myRouter
