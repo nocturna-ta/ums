@@ -3,27 +3,28 @@ module github.com/nocturna-ta/ums
 go 1.23.6
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/ethereum/go-ethereum v1.15.7
 	github.com/gofiber/swagger v1.1.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
+	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
 	github.com/nocturna-ta/api-gateway-grpc-lib v1.0.0
 	github.com/nocturna-ta/common-model v1.0.0
-	github.com/nocturna-ta/golib v1.1.1
-	github.com/nocturna-ta/votechain-contract v1.2.1
+	github.com/nocturna-ta/golib v1.1.3
+	github.com/nocturna-ta/votechain-contract v1.2.2
 	github.com/spf13/cobra v1.8.1
+	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/swag v1.16.4
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
-	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/IBM/sarama v1.43.3 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/avast/retry-go/v4 v4.6.0 // indirect
 	github.com/bits-and-blooms/bitset v1.22.0 // indirect
@@ -38,7 +39,6 @@ require (
 	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/ethereum/c-kzg-4844 v1.0.0 // indirect
-	github.com/ethereum/c-kzg-4844/bindings/go v0.0.0-20230126171313-363c7d7593b4 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
@@ -63,8 +63,8 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/jinzhu/configor v1.2.2 // indirect
-	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
+	github.com/k2io/hookingo v1.0.6 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -76,12 +76,13 @@ require (
 	github.com/newrelic/go-agent/v3/integrations/nrgrpc v1.4.4 // indirect
 	github.com/newrelic/go-agent/v3/integrations/nrmysql v1.2.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/supranational/blst v0.3.14 // indirect
 	github.com/swaggo/files/v2 v2.0.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.14 // indirect

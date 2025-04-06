@@ -83,7 +83,15 @@ func StringToTx(signedTx string) (*types.Transaction, error) {
 	}
 
 	return tx, nil
+}
 
+var StringToTxVar = func(signedTx string) (*types.Transaction, error) {
+	tx := new(types.Transaction)
+	if err := tx.UnmarshalBinary(common.FromHex(signedTx)); err != nil {
+		return nil, err
+	}
+
+	return &types.Transaction{}, nil
 }
 
 func ConvertToRouterCorsConfig(configCors *config.CorsConfig) *router.CorsConfig {

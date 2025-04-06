@@ -15,28 +15,32 @@ import (
 	"github.com/nocturna-ta/ums/internal/domain/repository"
 	utils2 "github.com/nocturna-ta/ums/pkg/utils"
 	"github.com/nocturna-ta/votechain-contract/binding"
+	"github.com/nocturna-ta/votechain-contract/interfaces"
 )
 
 type KPUBranchRepository struct {
 	client   ethereum.Client
-	contract *binding.Votechain
+	contract interfaces.IVotechain
 	db       *sql.Store
 }
 
 type OptsKPUBranchRepository struct {
 	Client          ethereum.Client
 	ContractAddress common.Address
+	Contract        interfaces.IVotechain
 	DB              *sql.Store
 }
 
 func NewKPUBranchRepository(opts *OptsKPUBranchRepository) repository.KPUBranchRepository {
+	var contractInterface interfaces.IVotechain
 	contract, err := binding.NewVotechain(opts.ContractAddress, opts.Client.GetEthClient())
 	if err != nil {
 		return nil
 	}
+	contractInterface = contract
 	return &KPUBranchRepository{
 		client:   opts.Client,
-		contract: contract,
+		contract: contractInterface,
 		db:       opts.DB,
 	}
 }
@@ -58,6 +62,7 @@ func (K *KPUBranchRepository) InsertKPUBranch(ctx context.Context, kpuBranch *mo
 		}).ErrorWithCtx(ctx, "[KPUBranchRepository.InsertKPUBranch] Failed to convert signed transaction to transaction")
 		return err
 	}
+	log.Print(tx)
 	sqlTrx := utils.GetSqlTx(ctx)
 
 	var ownTransaction bool
