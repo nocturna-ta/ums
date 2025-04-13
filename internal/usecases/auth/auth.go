@@ -33,6 +33,7 @@ func (m *Module) ValidateAuthorization(ctx context.Context, req *request.Validat
 		IsValid: true,
 		ExplodeHeader: map[string]string{
 			"UserID": claims.UserID,
+			"Role":   claims.Role,
 		},
 	}
 }

@@ -11,6 +11,7 @@ type AccessClaims struct {
 
 type JwtData struct {
 	UserID string `json:"user_id,omitempty"`
+	Role   string `json:"role,omitempty"`
 }
 type ClaimType string
 

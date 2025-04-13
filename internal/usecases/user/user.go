@@ -231,6 +231,7 @@ func (m *Module) LoginUser(ctx context.Context, req *request.UserLoginRequest) (
 		},
 		JwtData: &jwtsvc.JwtData{
 			UserID: existing.ID.String(),
+			Role:   existing.Role,
 		},
 	})
 
