@@ -14,7 +14,8 @@ import (
 	"github.com/nocturna-ta/ums/internal/interfaces/jwtsvc"
 	"github.com/nocturna-ta/ums/internal/usecases"
 	"github.com/nocturna-ta/ums/internal/usecases/auth"
-	"github.com/nocturna-ta/ums/internal/usecases/kpu_branch"
+	"github.com/nocturna-ta/ums/internal/usecases/kpu_kota"
+	"github.com/nocturna-ta/ums/internal/usecases/kpu_provinsi"
 	"github.com/nocturna-ta/ums/internal/usecases/user"
 	"github.com/nocturna-ta/ums/internal/usecases/voter"
 )
@@ -22,9 +23,10 @@ import (
 type container struct {
 	Cfg         config.MainConfig
 	VoterUc     usecases.VoterUseCases
-	KpuBranchUc usecases.KPUBranchUseCases
 	AuthUc      usecases.AuthUseCases
 	UserUc      usecases.UserUseCases
+	KpuKota     usecases.KPUKotaUseCases
+	KpuProvinsi usecases.KPUProvinsiUseCases
 }
 
 type options struct {
@@ -39,13 +41,19 @@ func newContainer(opts *options) *container {
 	voterRepo := dao.NewVoterRepository(&dao.OptsVoterRepository{
 		DB:              opts.DB,
 		Client:          opts.Client,
-		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.ContractAddress),
+		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.VoterManagerAddress),
 	})
 
-	kpuBranchRepo := dao.NewKPUBranchRepository(&dao.OptsKPUBranchRepository{
+	kpuKotaRepo := dao.NewKPUKotaRepository(&dao.OptsKPUKotaRepository{
 		DB:              opts.DB,
 		Client:          opts.Client,
-		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.ContractAddress),
+		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.KPUManagerAddress),
+	})
+
+	kpuProvinsiRepo := dao.NewKPUProvinsiRepository(&dao.OptsKPUProvinsiRepository{
+		DB:              opts.DB,
+		Client:          opts.Client,
+		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.KPUManagerAddress),
 	})
 
 	usersRepo := dao.NewUserRepository(&dao.OptsUserRepository{
@@ -74,12 +82,20 @@ func newContainer(opts *options) *container {
 		Topics:    opts.Cfg.Kafka.Topics,
 	})
 
-	kpuBranchUc := kpu_branch.New(&kpu_branch.Opts{
-		KpuBranchRepo: kpuBranchRepo,
-		TxMgr:         txMgr,
-		JwtSvc:        jwtSvc,
-		Publisher:     opts.Publisher,
-		Topics:        opts.Cfg.Kafka.Topics,
+	kpuKotaUc := kpu_kota.New(&kpu_kota.Opts{
+		KpuKotaRepo: kpuKotaRepo,
+		TxMgr:       txMgr,
+		JwtSvc:      jwtSvc,
+		Publisher:   opts.Publisher,
+		Topics:      opts.Cfg.Kafka.Topics,
+	})
+
+	kpuProvinsiUc := kpu_provinsi.New(&kpu_provinsi.Opts{
+		KpuProvinsiRepo: kpuProvinsiRepo,
+		TxMgr:           txMgr,
+		JwtSvc:          jwtSvc,
+		Publisher:       opts.Publisher,
+		Topics:          opts.Cfg.Kafka.Topics,
 	})
 
 	userUc := user.New(&user.Opts{
@@ -97,9 +113,10 @@ func newContainer(opts *options) *container {
 	return &container{
 		Cfg:         *opts.Cfg,
 		VoterUc:     voterUc,
-		KpuBranchUc: kpuBranchUc,
 		AuthUc:      authUc,
 		UserUc:      userUc,
+		KpuKota:     kpuKotaUc,
+		KpuProvinsi: kpuProvinsiUc,
 	}
 
 }

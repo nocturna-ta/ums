@@ -134,9 +134,9 @@ func (_m *VoterRepository) GetVoterByRegion(ctx context.Context, region string) 
 	return r0, r1
 }
 
-// InsertVoter provides a mock function with given fields: ctx, voter, signed_transaction
-func (_m *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, signed_transaction string) error {
-	ret := _m.Called(ctx, voter, signed_transaction)
+// InsertVoter provides a mock function with given fields: ctx, voter, signedTransaction
+func (_m *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, signedTransaction string) error {
+	ret := _m.Called(ctx, voter, signedTransaction)
 
 	if len(ret) == 0 {
 		panic("no return value specified for InsertVoter")
@@ -144,7 +144,7 @@ func (_m *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, 
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *model.Voter, string) error); ok {
-		r0 = rf(ctx, voter, signed_transaction)
+		r0 = rf(ctx, voter, signedTransaction)
 	} else {
 		r0 = ret.Error(0)
 	}

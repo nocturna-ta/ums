@@ -17,8 +17,9 @@ type API struct {
 	enableSwagger  bool
 	corsConfig     *router.CorsConfig
 	voterUc        usecases.VoterUseCases
-	kpuBranchUc    usecases.KPUBranchUseCases
 	userUc         usecases.UserUseCases
+	kpuProvinsiUc  usecases.KPUProvinsiUseCases
+	kpuKotaUc      usecases.KPUKotaUseCases
 }
 
 type Options struct {
@@ -30,8 +31,9 @@ type Options struct {
 	EnableSwagger  bool
 	CorsConfig     *router.CorsConfig
 	VoterUc        usecases.VoterUseCases
-	KpuBranchUc    usecases.KPUBranchUseCases
 	UserUc         usecases.UserUseCases
+	KpuProvinsiUc  usecases.KPUProvinsiUseCases
+	KpuKotaUc      usecases.KPUKotaUseCases
 }
 
 func New(opts *Options) *API {
@@ -44,8 +46,9 @@ func New(opts *Options) *API {
 		enableSwagger:  opts.EnableSwagger,
 		corsConfig:     opts.CorsConfig,
 		voterUc:        opts.VoterUc,
-		kpuBranchUc:    opts.KpuBranchUc,
 		userUc:         opts.UserUc,
+		kpuProvinsiUc:  opts.KpuProvinsiUc,
+		kpuKotaUc:      opts.KpuKotaUc,
 	}
 }
 
@@ -72,10 +75,15 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			voter.GET("/region/:region", api.GetVoterByRegion, router.MustAuthorized(false))
 			voter.GET("/", api.GetAllVoter, router.MustAuthorized(false))
 		})
-		v1.Group("/kpu-branch", func(kpuBranch *router.FastRouter) {
-			kpuBranch.GET("/", api.GetAllKPUBranch, router.MustAuthorized(false))
-			kpuBranch.POST("/register", api.RegisterKPUBranch, router.MustAuthorized(false))
-			kpuBranch.GET("/address", api.GetKPUBranchByAddress, router.MustAuthorized(false))
+		v1.Group("/kpu-provinsi", func(kpuProvinsi *router.FastRouter) {
+			kpuProvinsi.GET("/", api.GetAllKPUProvinsi, router.MustAuthorized(false))
+			kpuProvinsi.POST("/register", api.RegisterKPUProvinsi, router.MustAuthorized(false))
+			kpuProvinsi.GET("/address", api.GetKPUProvinsiByAddress, router.MustAuthorized(false))
+		})
+		v1.Group("/kpu-kota", func(kpuKota *router.FastRouter) {
+			kpuKota.GET("/", api.GetAllKPUKota, router.MustAuthorized(false))
+			kpuKota.POST("/register", api.RegisterKPUKota, router.MustAuthorized(false))
+			kpuKota.GET("/address", api.GetKPUKotaByAddress, router.MustAuthorized(false))
 		})
 		v1.Group("/user", func(user *router.FastRouter) {
 			user.POST("/register", api.RegisterUser, router.MustAuthorized(false))

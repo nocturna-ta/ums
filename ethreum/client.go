@@ -12,5 +12,5 @@ func GetEthereumClient(cfg *config.BlockchainConfig) (ethereum.Client, error) {
 	})
 }
 func GetContractAddress(cfg *config.BlockchainConfig) common.Address {
-	return common.HexToAddress(cfg.ContractAddress)
+	return common.HexToAddress(cfg.KPUManagerAddress)
 }

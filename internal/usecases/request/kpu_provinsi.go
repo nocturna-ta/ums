@@ -5,15 +5,15 @@ import (
 	"github.com/nocturna-ta/golib/response"
 )
 
-type KPUBranchRegistrationRequest struct {
+type KPUProvinsiRegistrationRequest struct {
 	Name              string `json:"name"`
-	BranchAddress     string `json:"branch_address"`
+	Address           string `json:"address"`
 	Region            string `json:"region"`
 	IsActive          bool   `json:"is_active"`
 	SignedTransaction string `json:"signed_transaction"`
 }
 
-func (req *KPUBranchRegistrationRequest) ValidateRegistrationRequest() error {
+func (req *KPUProvinsiRegistrationRequest) ValidateRegistrationRequest() error {
 	if req == nil {
 		return &custerr.ErrChain{
 			Message: "Request cannot be nil",

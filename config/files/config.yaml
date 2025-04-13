@@ -32,7 +32,15 @@ Kafka:
       ErrorHandler: "Phase1"
       WithBackOff: true
     MasterDataVoter:
-        Value: "ums.masterdata-voter"
+        Value: "ums.masterdata-voters"
+        ErrorHandler: "Phase1"
+        WithBackOff: true
+    MasterDataKpuKota:
+        Value: "ums.masterdata-kpu-kota"
+        ErrorHandler: "Phase1"
+        WithBackOff: true
+    MasterDataKpuProvinsi:
+        Value: "ums.masterdata-kpu-provinsi"
         ErrorHandler: "Phase1"
         WithBackOff: true
 
@@ -47,7 +55,12 @@ Encryption:
 
 BlockchainConfig:
   GanacheURL: "http://127.0.0.1:7545"
-  ContractAddress: "0xF3Ce9A70c0b2671dF39C2B2F5C2fCD81f82434D9"
+  VotechainAddress: "0x1c979D6fEb3020B758F969e6E58A480c7A0E05bD"
+  ElectionManagerAddress: "0x3335BaEDb5f79Bfe55D505266AB25FFd6A71DFf9"
+  KPUManagerAddress: "0x18634B2AffEdbb254b0C048cF1656ceB1497EA51"
+  VoterManagerAddress: "0x002CACf0f0273B173124E03f5B6F1331b10494fD"
+  VotechainBaseAddress: "0x4A0aCca77e652df74CAD23Df4CE68cA6239c39f9"
+
 
 Cors:
   AllowOrigins: "*"

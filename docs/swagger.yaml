@@ -17,9 +17,22 @@ definitions:
       message:
         type: string
     type: object
-  request.KPUBranchRegistrationRequest:
+  request.KPUKotaRegistrationRequest:
     properties:
-      branch_address:
+      address:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      region:
+        type: string
+      signed_transaction:
+        type: string
+    type: object
+  request.KPUProvinsiRegistrationRequest:
+    properties:
+      address:
         type: string
       is_active:
         type: boolean
@@ -73,16 +86,34 @@ definitions:
       voter_address:
         type: string
     type: object
-  response.KPUBranchRegistrationResponse:
+  response.KPUKotaRegistrationResponse:
     properties:
-      branch_address:
+      address:
         type: string
       is_active:
         type: boolean
     type: object
-  response.KPUBranchResponse:
+  response.KPUKotaResponse:
     properties:
-      branch_address:
+      address:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      region:
+        type: string
+    type: object
+  response.KPUProvinsiRegistrationResponse:
+    properties:
+      address:
+        type: string
+      is_active:
+        type: boolean
+    type: object
+  response.KPUProvinsiResponse:
+    properties:
+      address:
         type: string
       id:
         type: string
@@ -173,11 +204,11 @@ paths:
       summary: Ping
       tags:
       - Health
-  /v1/kpu-branch:
+  /v1/kpu-kota:
     get:
       consumes:
       - application/json
-      description: Get All KPU Branch
+      description: Get All KPU Kota
       produces:
       - application/json
       responses:
@@ -188,16 +219,16 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.KPUBranchResponse'
+                  $ref: '#/definitions/response.KPUKotaResponse'
               type: object
-      summary: Get All KPU Branch
+      summary: Get All KPU Kota
       tags:
-      - kpu_branch
-  /v1/kpu-branch/address:
+      - kpu_kota
+  /v1/kpu-kota/address:
     get:
       consumes:
       - application/json
-      description: Get KPU Branch By Address
+      description: Get KPU Kota By Address
       parameters:
       - description: User
         in: header
@@ -217,23 +248,23 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.KPUBranchResponse'
+                  $ref: '#/definitions/response.KPUKotaResponse'
               type: object
-      summary: Get KPU Branch By Address
+      summary: Get KPU Kota By Address
       tags:
-      - kpu_branch
-  /v1/kpu-branch/register:
+      - kpu_kota
+  /v1/kpu-kota/register:
     post:
       consumes:
       - application/json
-      description: Register KPU Branch
+      description: Register KPU Kota
       parameters:
       - description: Register Request
         in: body
         name: users
         required: true
         schema:
-          $ref: '#/definitions/request.KPUBranchRegistrationRequest'
+          $ref: '#/definitions/request.KPUKotaRegistrationRequest'
       produces:
       - application/json
       responses:
@@ -244,11 +275,87 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.KPUBranchRegistrationResponse'
+                  $ref: '#/definitions/response.KPUKotaRegistrationResponse'
               type: object
-      summary: Register KPU Branch
+      summary: Register KPU Kota
       tags:
-      - kpu_branch
+      - kpu_kota
+  /v1/kpu-provinsi:
+    get:
+      consumes:
+      - application/json
+      description: Get All KPU Provinsi
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiResponse'
+              type: object
+      summary: Get All KPU Provinsi
+      tags:
+      - kpu_provinsi
+  /v1/kpu-provinsi/address:
+    get:
+      consumes:
+      - application/json
+      description: Get KPU Provinsi By Address
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiResponse'
+              type: object
+      summary: Get KPU Provinsi By Address
+      tags:
+      - kpu_provinsi
+  /v1/kpu-provinsi/register:
+    post:
+      consumes:
+      - application/json
+      description: Register KPU Provinsi
+      parameters:
+      - description: Register Request
+        in: body
+        name: users
+        required: true
+        schema:
+          $ref: '#/definitions/request.KPUProvinsiRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiRegistrationResponse'
+              type: object
+      summary: Register KPU Provinsi
+      tags:
+      - kpu_provinsi
   /v1/user/{email}:
     get:
       consumes:

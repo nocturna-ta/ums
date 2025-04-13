@@ -11,9 +11,8 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
 	github.com/nocturna-ta/api-gateway-grpc-lib v1.0.0
-	github.com/nocturna-ta/common-model v1.0.0
+	github.com/nocturna-ta/common-model v1.3.0
 	github.com/nocturna-ta/golib v1.1.3
-	github.com/nocturna-ta/votechain-contract v1.2.2
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/swag v1.16.4
@@ -75,6 +74,7 @@ require (
 	github.com/newrelic/go-agent/v3 v3.35.1 // indirect
 	github.com/newrelic/go-agent/v3/integrations/nrgrpc v1.4.4 // indirect
 	github.com/newrelic/go-agent/v3/integrations/nrmysql v1.2.2 // indirect
+	github.com/nocturna-ta/votechain-contract v1.2.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect

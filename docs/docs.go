@@ -66,9 +66,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/kpu-branch": {
+        "/v1/kpu-kota": {
             "get": {
-                "description": "Get All KPU Branch",
+                "description": "Get All KPU Kota",
                 "consumes": [
                     "application/json"
                 ],
@@ -76,9 +76,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "kpu_branch"
+                    "kpu_kota"
                 ],
-                "summary": "Get All KPU Branch",
+                "summary": "Get All KPU Kota",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -91,7 +91,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.KPUBranchResponse"
+                                            "$ref": "#/definitions/response.KPUKotaResponse"
                                         }
                                     }
                                 }
@@ -101,9 +101,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/kpu-branch/address": {
+        "/v1/kpu-kota/address": {
             "get": {
-                "description": "Get KPU Branch By Address",
+                "description": "Get KPU Kota By Address",
                 "consumes": [
                     "application/json"
                 ],
@@ -111,9 +111,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "kpu_branch"
+                    "kpu_kota"
                 ],
-                "summary": "Get KPU Branch By Address",
+                "summary": "Get KPU Kota By Address",
                 "parameters": [
                     {
                         "type": "string",
@@ -140,7 +140,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.KPUBranchResponse"
+                                            "$ref": "#/definitions/response.KPUKotaResponse"
                                         }
                                     }
                                 }
@@ -150,9 +150,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/kpu-branch/register": {
+        "/v1/kpu-kota/register": {
             "post": {
-                "description": "Register KPU Branch",
+                "description": "Register KPU Kota",
                 "consumes": [
                     "application/json"
                 ],
@@ -160,9 +160,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "kpu_branch"
+                    "kpu_kota"
                 ],
-                "summary": "Register KPU Branch",
+                "summary": "Register KPU Kota",
                 "parameters": [
                     {
                         "description": "Register Request",
@@ -170,7 +170,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.KPUBranchRegistrationRequest"
+                            "$ref": "#/definitions/request.KPUKotaRegistrationRequest"
                         }
                     }
                 ],
@@ -186,7 +186,137 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.KPUBranchRegistrationResponse"
+                                            "$ref": "#/definitions/response.KPUKotaRegistrationResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-provinsi": {
+            "get": {
+                "description": "Get All KPU Provinsi",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kpu_provinsi"
+                ],
+                "summary": "Get All KPU Provinsi",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.KPUProvinsiResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-provinsi/address": {
+            "get": {
+                "description": "Get KPU Provinsi By Address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kpu_provinsi"
+                ],
+                "summary": "Get KPU Provinsi By Address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.KPUProvinsiResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-provinsi/register": {
+            "post": {
+                "description": "Register KPU Provinsi",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kpu_provinsi"
+                ],
+                "summary": "Register KPU Provinsi",
+                "parameters": [
+                    {
+                        "description": "Register Request",
+                        "name": "users",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.KPUProvinsiRegistrationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.KPUProvinsiRegistrationResponse"
                                         }
                                     }
                                 }
@@ -743,10 +873,30 @@ const docTemplate = `{
                 }
             }
         },
-        "request.KPUBranchRegistrationRequest": {
+        "request.KPUKotaRegistrationRequest": {
             "type": "object",
             "properties": {
-                "branch_address": {
+                "address": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "signed_transaction": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.KPUProvinsiRegistrationRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
                     "type": "string"
                 },
                 "is_active": {
@@ -830,10 +980,10 @@ const docTemplate = `{
                 }
             }
         },
-        "response.KPUBranchRegistrationResponse": {
+        "response.KPUKotaRegistrationResponse": {
             "type": "object",
             "properties": {
-                "branch_address": {
+                "address": {
                     "type": "string"
                 },
                 "is_active": {
@@ -841,10 +991,38 @@ const docTemplate = `{
                 }
             }
         },
-        "response.KPUBranchResponse": {
+        "response.KPUKotaResponse": {
             "type": "object",
             "properties": {
-                "branch_address": {
+                "address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "region": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.KPUProvinsiRegistrationResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.KPUProvinsiResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
                     "type": "string"
                 },
                 "id": {

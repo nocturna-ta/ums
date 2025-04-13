@@ -10,10 +10,11 @@ import (
 )
 
 type Options struct {
-	Cfg         config.MainConfig
-	VoterUc     usecases.VoterUseCases
-	KpuBranchUc usecases.KPUBranchUseCases
-	UserUc      usecases.UserUseCases
+	Cfg           config.MainConfig
+	VoterUc       usecases.VoterUseCases
+	UserUc        usecases.UserUseCases
+	KpuProvinsiUc usecases.KPUProvinsiUseCases
+	KpuKotaUc     usecases.KPUKotaUseCases
 }
 
 type Handler struct {
@@ -36,8 +37,9 @@ func New(opts *Options) *Handler {
 		EnableSwagger:  opts.Cfg.API.EnableSwagger,
 		CorsConfig:     utils.ConvertToRouterCorsConfig(&opts.Cfg.Cors),
 		VoterUc:        opts.VoterUc,
-		KpuBranchUc:    opts.KpuBranchUc,
 		UserUc:         opts.UserUc,
+		KpuProvinsiUc:  opts.KpuProvinsiUc,
+		KpuKotaUc:      opts.KpuKotaUc,
 	}).RegisterRoute()
 
 	return handler

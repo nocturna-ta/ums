@@ -14,12 +14,13 @@ import (
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
 	utils2 "github.com/nocturna-ta/ums/pkg/utils"
-	"github.com/nocturna-ta/votechain-contract/binding"
+	"github.com/nocturna-ta/votechain-contract/binding/voterManager"
+	"github.com/nocturna-ta/votechain-contract/interfaces"
 )
 
 type VoterRepository struct {
 	client   ethereum.Client
-	contract *binding.Votechain
+	contract interfaces.VoterManagerInterface
 	db       *sql.Store
 }
 
@@ -27,16 +28,20 @@ type OptsVoterRepository struct {
 	Client          ethereum.Client
 	DB              *sql.Store
 	ContractAddress common.Address
+	Contract        interfaces.VoterManagerInterface
 }
 
 func NewVoterRepository(opts *OptsVoterRepository) repository.VoterRepository {
-	contract, err := binding.NewVotechain(opts.ContractAddress, opts.Client.GetEthClient())
+	var contractInterface interfaces.VoterManagerInterface
+	contract, err := voterManager.NewVoterManager(opts.ContractAddress, opts.Client.GetEthClient())
 	if err != nil {
 		return nil
 	}
+	contractInterface = contract
+
 	return &VoterRepository{
 		client:   opts.Client,
-		contract: contract,
+		contract: contractInterface,
 		db:       opts.DB,
 	}
 }
