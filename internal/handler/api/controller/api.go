@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/swagger"
 	"github.com/nocturna-ta/golib/router"
 	_ "github.com/nocturna-ta/ums/docs"
+	"github.com/nocturna-ta/ums/internal/handler/api/middleware"
 	"github.com/nocturna-ta/ums/internal/usecases"
 	"time"
 )
@@ -76,7 +77,7 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			voter.GET("/", api.GetAllVoter, router.MustAuthorized(false))
 		})
 		v1.Group("/kpu-provinsi", func(kpuProvinsi *router.FastRouter) {
-			kpuProvinsi.GET("/", api.GetAllKPUProvinsi, router.MustAuthorized(false))
+			kpuProvinsi.GET("/", middleware.RequireRole("kpu_kota")(api.GetAllKPUProvinsi))
 			kpuProvinsi.POST("/register", api.RegisterKPUProvinsi, router.MustAuthorized(false))
 			kpuProvinsi.GET("/address", api.GetKPUProvinsiByAddress, router.MustAuthorized(false))
 		})
