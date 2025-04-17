@@ -23,8 +23,14 @@ func (m *Module) RegisterKPUProvinsi(ctx context.Context, req *request.KPUProvin
 		kpuProvinsi *model.KPUProvinsi
 	)
 
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	transaction := func(txCtx context.Context) (any, error) {
 		kpuProvinsi = model.ConstructRegistrationKPUProvinsi(req)
+		kpuProvinsi.UserID = reqCtx.GetUserId()
 
 		errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, req.SignedTransaction)
 		if errTx != nil {
@@ -51,7 +57,7 @@ func (m *Module) RegisterKPUProvinsi(ctx context.Context, req *request.KPUProvin
 		return nil, nil
 	}
 
-	_, err := m.txMgr.Execute(ctx, transaction, nil)
+	_, err = m.txMgr.Execute(ctx, transaction, nil)
 	if err != nil {
 		return nil, err
 	}

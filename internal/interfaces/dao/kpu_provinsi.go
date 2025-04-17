@@ -46,8 +46,8 @@ func NewKPUProvinsiRepository(opts *OptsKPUProvinsiRepository) repository.KPUPro
 }
 
 const (
-	insertKPUProvinsi = `INSERT INTO kpu_provinsi (id, name, address, region, is_active, created_at, updated_at)
-    						VALUES($1,$2,$3,$4,$5,$6,$7)`
+	insertKPUProvinsi = `INSERT INTO kpu_provinsi (id, user_id, name, address, region, is_active, created_at, updated_at)
+    						VALUES($1,$2,$3,$4,$5,$6,$7,$8)`
 	selectKPUProvinsi = `SELECT %s FROM kpu_provinsi %s WHERE TRUE %s`
 )
 
@@ -89,7 +89,7 @@ func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *mode
 		}()
 	}
 
-	_, err = sqlTrx.ExecContext(ctx, insertKPUProvinsi, kpu.ID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.CreatedAt, kpu.UpdatedAt)
+	_, err = sqlTrx.ExecContext(ctx, insertKPUProvinsi, kpu.ID, kpu.UserID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.CreatedAt, kpu.UpdatedAt)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {

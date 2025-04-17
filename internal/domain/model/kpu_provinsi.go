@@ -14,6 +14,7 @@ type KPUProvinsi struct {
 	Address  string    `db:"address"`
 	Region   string    `db:"region"`
 	IsActive bool      `db:"is_active"`
+	UserID   uuid.UUID `db:"user_id"`
 }
 
 func (u *KPUProvinsi) ToMessageModel() *event.KPUProvinsiMessage {

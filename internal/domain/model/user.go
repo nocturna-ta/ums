@@ -71,7 +71,7 @@ func ConstructUserRegistration(req *request.UserRegistrationRequest) *User {
 		Email:        req.Email,
 		Password:     utils.PasswordHash(req.Password, salt),
 		PasswordSalt: salt,
-		Role:         "",
+		Role:         req.Role,
 		IsActive:     true,
 	}
 

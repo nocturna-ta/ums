@@ -42,4 +42,8 @@ var (
 		Code:    40013,
 		Message: "Old password mismatch",
 	}
+	RoleEmpty = ErrorDefinition{
+		Code:    40014,
+		Message: "Role cannot be empty",
+	}
 )

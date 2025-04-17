@@ -15,6 +15,9 @@ import (
 // @Description Register KPU Provinsi
 // @Tags kpu_provinsi
 // @Accept json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param users body request.KPUProvinsiRegistrationRequest true "Register Request"
 // @Produce json
 // @Success 200 {object} jsonResponse{data=response.KPUProvinsiRegistrationResponse}
@@ -44,6 +47,10 @@ func (api *API) RegisterKPUProvinsi(ctx context.Context, req *router.Request) (*
 // @Summary Get All KPU Provinsi
 // @Description Get All KPU Provinsi
 // @Tags kpu_provinsi
+// @Param Authorization header string true "Bearer {token}"
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Accept json
 // @Produce json
 // @Success 200 {object} jsonResponse{data=response.KPUProvinsiResponse}
@@ -67,6 +74,7 @@ func (api *API) GetAllKPUProvinsi(ctx context.Context, req *router.Request) (*re
 // @Accept json
 // @Param X-User-Id header string false "User"
 // @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Produce json
 // @Success 200 {object} jsonResponse{data=response.KPUProvinsiResponse}
 // @Router /v1/kpu-provinsi/address [get]

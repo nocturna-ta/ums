@@ -12,6 +12,7 @@ type UserRegistrationRequest struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Role     string `json:"role"`
 }
 
 type UserUpdateRequest struct {
@@ -76,6 +77,14 @@ func (r *UserRegistrationRequest) ValidateRegistrationUser() error {
 		return &custerr.ErrChain{
 			Message: errorcode.UsernameEmpty.Message,
 			Code:    errorcode.UsernameEmpty.Code,
+			Type:    response.ErrBadRequest,
+		}
+	}
+
+	if r.Role == constants.EmptyString {
+		return &custerr.ErrChain{
+			Message: errorcode.RoleEmpty.Message,
+			Code:    errorcode.RoleEmpty.Code,
 			Type:    response.ErrBadRequest,
 		}
 	}

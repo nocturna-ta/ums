@@ -54,13 +54,20 @@ func New(opts *Options) *API {
 }
 
 func (api *API) RegisterRoute() *router.FastRouter {
+	corsConfig := &router.CorsConfig{
+		AllowOrigins:     "http://localhost:5173",
+		AllowMethods:     "GET, POST, PUT, PATCH, DELETE",
+		AllowHeaders:     "Content-Type, Authorization, x-user-id",
+		AllowCredentials: false,
+		MaxAge:           300,
+	}
 	myRouter := router.New(&router.Options{
 		Prefix:         api.prefix,
 		Port:           api.port,
 		ReadTimeout:    api.readTimeout,
 		WriteTimeout:   api.writeTimeout,
 		RequestTimeout: api.requestTimeout,
-		CorsConfig:     api.corsConfig,
+		CorsConfig:     corsConfig,
 	})
 
 	if api.enableSwagger {
@@ -77,7 +84,7 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			voter.GET("/", api.GetAllVoter, router.MustAuthorized(false))
 		})
 		v1.Group("/kpu-provinsi", func(kpuProvinsi *router.FastRouter) {
-			kpuProvinsi.GET("/", middleware.RequireRole("kpu_kota")(api.GetAllKPUProvinsi))
+			kpuProvinsi.GET("/", middleware.KPUProvinsiOnly()(api.GetAllKPUProvinsi), router.MustAuthorized(false))
 			kpuProvinsi.POST("/register", api.RegisterKPUProvinsi, router.MustAuthorized(false))
 			kpuProvinsi.GET("/address", api.GetKPUProvinsiByAddress, router.MustAuthorized(false))
 		})

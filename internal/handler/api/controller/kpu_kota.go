@@ -16,6 +16,9 @@ import (
 // @Tags kpu_kota
 // @Accept json
 // @Param users body request.KPUKotaRegistrationRequest true "Register Request"
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Produce json
 // @Success 200 {object} jsonResponse{data=response.KPUKotaRegistrationResponse}
 // @Router /v1/kpu-kota/register [post]
@@ -44,6 +47,9 @@ func (api *API) RegisterKPUKota(ctx context.Context, req *router.Request) (*rest
 // @Summary Get All KPU Kota
 // @Description Get All KPU Kota
 // @Tags kpu_kota
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Accept json
 // @Produce json
 // @Success 200 {object} jsonResponse{data=response.KPUKotaResponse}
@@ -67,6 +73,7 @@ func (api *API) GetAllKPUKota(ctx context.Context, req *router.Request) (*rest.J
 // @Accept json
 // @Param X-User-Id header string false "User"
 // @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Produce json
 // @Success 200 {object} jsonResponse{data=response.KPUKotaResponse}
 // @Router /v1/kpu-kota/address [get]

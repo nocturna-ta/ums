@@ -209,6 +209,21 @@ const docTemplate = `{
                     "kpu_provinsi"
                 ],
                 "summary": "Get All KPU Provinsi",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer {token}",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -294,6 +309,13 @@ const docTemplate = `{
                 ],
                 "summary": "Register KPU Provinsi",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "Register Request",
                         "name": "users",
@@ -945,6 +967,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 },
                 "username": {

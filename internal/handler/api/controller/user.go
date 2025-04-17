@@ -48,6 +48,9 @@ func (api *API) RegisterUser(ctx context.Context, req *router.Request) (*rest.JS
 // @Tags User
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param email path string true "User email"
 // @Success 200 {object} jsonResponse{data=response.UserResponse} "User found"
 // @Router /v1/user/{email} [get]
@@ -73,6 +76,7 @@ func (api *API) GetUserByEmail(ctx context.Context, req *router.Request) (*rest.
 // @Produce json
 // @Param X-User-Id header string false "User"
 // @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Success 200 {object} jsonResponse{data=response.UserResponse} "User found"
 // @Router /v1/user/me [get]
 func (api *API) GetByID(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
@@ -95,6 +99,7 @@ func (api *API) GetByID(ctx context.Context, req *router.Request) (*rest.JSONRes
 // @Produce json
 // @Param X-User-Id header string false "User"
 // @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param user body request.UserUpdateRequest true "User update request"
 // @Success 200 {object} jsonResponse{data=response.UserResponse} "User updated"
 // @Router /v1/user/update [put]
@@ -128,6 +133,9 @@ func (api *API) UpdateUser(ctx context.Context, req *router.Request) (*rest.JSON
 // @Tags User
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param user body request.UserLoginRequest true "User login request"
 // @Success 200 {object} jsonResponse{data=response.UserLoginResponse} "User logged in"
 // @Router /v1/user/login [post]
@@ -162,6 +170,7 @@ func (api *API) LoginUser(ctx context.Context, req *router.Request) (*rest.JSONR
 // @Produce json
 // @Param X-User-Id header string false "User"
 // @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param user body request.UserChangePasswordRequest true "User change password request"
 // @Success 200 {object} jsonResponse{data=response.UserResponse} "Password changed"
 // @Router /v1/user/change-password [put]

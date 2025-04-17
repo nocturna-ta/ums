@@ -65,6 +65,8 @@ definitions:
         type: string
       password:
         type: string
+      role:
+        type: string
       username:
         type: string
     type: object
@@ -285,6 +287,16 @@ paths:
       consumes:
       - application/json
       description: Get All KPU Provinsi
+      parameters:
+      - description: Bearer {token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
       produces:
       - application/json
       responses:
@@ -335,6 +347,11 @@ paths:
       - application/json
       description: Register KPU Provinsi
       parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
       - description: Register Request
         in: body
         name: users
