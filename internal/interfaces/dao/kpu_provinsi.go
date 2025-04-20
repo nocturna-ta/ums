@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/nocturna-ta/golib/database/sql"
 	"github.com/nocturna-ta/golib/ethereum"
@@ -16,6 +17,7 @@ import (
 	utils2 "github.com/nocturna-ta/ums/pkg/utils"
 	kpuManager2 "github.com/nocturna-ta/votechain-contract/binding/kpuManager"
 	"github.com/nocturna-ta/votechain-contract/interfaces"
+	"time"
 )
 
 type KPUProvinsiRepository struct {
@@ -46,9 +48,10 @@ func NewKPUProvinsiRepository(opts *OptsKPUProvinsiRepository) repository.KPUPro
 }
 
 const (
-	insertKPUProvinsi = `INSERT INTO kpu_provinsi (id, user_id, name, address, region, is_active, created_at, updated_at)
-    						VALUES($1,$2,$3,$4,$5,$6,$7,$8)`
+	insertKPUProvinsi = `INSERT INTO kpu_provinsi (id, user_id, name, address, region, is_active, photo_path, created_at, updated_at)
+    						VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`
 	selectKPUProvinsi = `SELECT %s FROM kpu_provinsi %s WHERE TRUE %s`
+	updateKPUProvinsi = `UPDATE kpu_provinsi SET %s WHERE TRUE %s`
 )
 
 func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi, signedTransaction string) error {
@@ -89,7 +92,7 @@ func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *mode
 		}()
 	}
 
-	_, err = sqlTrx.ExecContext(ctx, insertKPUProvinsi, kpu.ID, kpu.UserID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.CreatedAt, kpu.UpdatedAt)
+	_, err = sqlTrx.ExecContext(ctx, insertKPUProvinsi, kpu.ID, kpu.UserID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.PhotoPath, kpu.CreatedAt, kpu.UpdatedAt)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {
@@ -156,7 +159,7 @@ func (K *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]model.
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetAllKPUProvinsi] Failed to get all kpu provinsi")
 	}
 
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false"
 	joinQuery := ""
 
@@ -213,7 +216,7 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByAddress(ctx context.Context, add
 		return nil, err
 	}
 
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false AND kpu_provinsi.address = $1"
 	joinQuery := ""
 	args = append(args, address)
@@ -240,4 +243,74 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByAddress(ctx context.Context, add
 	}
 
 	return &kpuProvinsiModel, nil
+}
+
+func (K *KPUProvinsiRepository) GetKPUProvinsiByID(ctx context.Context, id uuid.UUID) (*model.KPUProvinsi, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiRepository.GetKPUProvinsiByID")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+	var (
+		kpuProvinsiModel model.KPUProvinsi
+		err              error
+		args             []any
+	)
+
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	whereQuery := " AND kpu_provinsi.is_deleted = false AND kpu_provinsi.id = $1"
+	joinQuery := ""
+	args = append(args, id)
+
+	query := fmt.Sprintf(selectKPUProvinsi, selectQuery, joinQuery, whereQuery)
+	if sqlTrx != nil {
+		err = sqlTrx.GetContext(ctx, &kpuProvinsiModel, query, args...)
+	} else {
+		err = K.db.GetMaster().GetContext(ctx, &kpuProvinsiModel, query, args...)
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    id,
+		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetKPUProvinsiByID] Failed to get kpu provinsi by ID")
+		return nil, err
+	}
+
+	return &kpuProvinsiModel, nil
+}
+
+func (K *KPUProvinsiRepository) UpdateKPUProvinsiPhoto(ctx context.Context, id uuid.UUID, photoPath string) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiRepository.UpdateKPUProvinsiPhoto")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+	var (
+		err  error
+		args []any
+	)
+
+	now := time.Now()
+
+	setQuery := "photo_path = $1, updated_at = $2"
+	whereQuery := " AND id = $3 AND is_deleted = false"
+	args = append(args, photoPath, now, id)
+
+	query := fmt.Sprintf(updateKPUProvinsi, setQuery, whereQuery)
+
+	if sqlTrx != nil {
+		_, err = sqlTrx.ExecContext(ctx, query, photoPath, now, id)
+	} else {
+		_, err = K.db.GetMaster().ExecContext(ctx, query, photoPath, now, id)
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":     err,
+			"id":        id,
+			"photoPath": photoPath,
+		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsiPhoto] Failed to update photo path")
+		return err
+	}
+
+	return nil
 }

@@ -24,6 +24,7 @@ CREATE TABLE "kpu_kota"(
     address varchar(255) NOT NULL,
     region varchar(255) NOT NULL,
     is_active bool NOT NULL,
+    photo_path varchar(255) DEFAULT NULL,
     created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT now(),
     is_deleted bool NOT NULL DEFAULT FALSE
@@ -36,6 +37,7 @@ CREATE TABLE "kpu_provinsi"(
     address varchar(255) NOT NULL,
     region varchar(255) NOT NULL,
     is_active bool NOT NULL,
+    photo_path varchar(255) DEFAULT NULL,
     created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT now(),
     updated_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT now(),
     is_deleted bool NOT NULL DEFAULT FALSE

@@ -12,7 +12,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/nocturna-ta/api-gateway-grpc-lib v1.0.0
 	github.com/nocturna-ta/common-model v1.3.0
-	github.com/nocturna-ta/golib v1.1.4
+	github.com/nocturna-ta/golib v1.1.5
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/swag v1.16.4

@@ -27,7 +27,7 @@ change-abi:
 
 migrate-up:
 	@echo ">> Running Migrate Up"
-	@migrate -path db/migrations -database "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable" up
+	@migrate -path db/migrations -database "postgres://postgres:1235813@localhost:15432/ums?sslmode=disable" up
 
 migrate-down:
 	@echo ">> Running Migrate down"

@@ -87,6 +87,11 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			kpuProvinsi.GET("/", middleware.KPUProvinsiOnly()(api.GetAllKPUProvinsi), router.MustAuthorized(false))
 			kpuProvinsi.POST("/register", api.RegisterKPUProvinsi, router.MustAuthorized(false))
 			kpuProvinsi.GET("/address", api.GetKPUProvinsiByAddress, router.MustAuthorized(false))
+			kpuProvinsi.GET("/:id", api.GetKPUProvinsiByID, router.MustAuthorized(false))
+
+			kpuProvinsi.POST("/:id/photo", api.UploadKPUProvinsiPhoto, router.MustAuthorized(false))
+			kpuProvinsi.ATTACHMENT("/:id/photo", api.GetKPUProvinsiPhoto, router.MustAuthorized(false))
+
 		})
 		v1.Group("/kpu-kota", func(kpuKota *router.FastRouter) {
 			kpuKota.GET("/", api.GetAllKPUKota, router.MustAuthorized(false))
