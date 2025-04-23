@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/nocturna-ta/golib/database/sql"
 	"github.com/nocturna-ta/golib/ethereum"
@@ -397,4 +398,48 @@ func (v *VoterRepository) GetVoterByRegion(ctx context.Context, region string) (
 	}
 
 	return matchedVoters, nil
+}
+
+func (v *VoterRepository) GetVoterByID(ctx context.Context, id uuid.UUID) (*model.Voter, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "VoterRepository.GetVoterByID")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+	var (
+		voterModel model.Voter
+		err        error
+		args       []any
+	)
+
+	selectQuery := `
+			   voters.id,
+               voters.nik,
+		       voters.voter_address,
+			   voters.region,
+		       voters.is_registered,
+		       voters.has_voted,
+		       voters.voted_at,
+		       voters.last_login,
+		       voters.created_at,
+		       voters.updated_at`
+	whereQuery := " AND voters.is_deleted = false AND voters.id = $1"
+	joinQuery := ""
+	args = append(args, id)
+
+	query := fmt.Sprintf(selectVoter, selectQuery, joinQuery, whereQuery)
+	if sqlTrx != nil {
+		err = sqlTrx.GetContext(ctx, &voterModel, query, args...)
+	} else {
+		err = v.db.GetMaster().GetContext(ctx, &voterModel, query, args...)
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    id,
+		}).ErrorWithCtx(ctx, "[VoterRepository.GetVoterByID] Failed to get voter by ID")
+		return nil, err
+	}
+
+	return &voterModel, nil
 }

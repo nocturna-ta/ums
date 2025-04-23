@@ -256,13 +256,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer {token}",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "User",
                         "name": "X-User-Id",
                         "in": "header"

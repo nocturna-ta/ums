@@ -3,8 +3,13 @@ package kpu_kota
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/google/uuid"
 	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
+	"github.com/nocturna-ta/golib/fileutils"
+	"github.com/nocturna-ta/golib/http"
+	"github.com/nocturna-ta/golib/http/filehandler"
 	"github.com/nocturna-ta/golib/log"
 	response2 "github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/tracing"
@@ -13,6 +18,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
 	"github.com/nocturna-ta/ums/pkg/constants"
+	"io"
 )
 
 func (m *Module) RegisterKPUKota(ctx context.Context, req *request.KPUKotaRegistrationRequest) (*response.KPUKotaRegistrationResponse, error) {
@@ -108,4 +114,118 @@ func (m *Module) GetKPUKotaByAddress(ctx context.Context) (*response.KPUKotaResp
 		IsActive: kpuKota.IsActive,
 	}, err
 
+}
+
+func (m *Module) GetKPUKotaByID(ctx context.Context, id uuid.UUID) (*response.KPUKotaResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaUseCases.GetKPUKotaByID")
+	defer span.End()
+
+	kpuKota, err := m.kpuKotaRepo.GetKPUKotaByID(ctx, id)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    id,
+		}).ErrorWithCtx(ctx, "[KPUKotaUseCases.GetKPUKotaByID] Failed to get kpu kota by ID")
+		return nil, err
+	}
+
+	res := &response.KPUKotaResponse{
+		ID:       kpuKota.ID.String(),
+		UserID:   kpuKota.UserID.String(),
+		Address:  kpuKota.Address,
+		Name:     kpuKota.Name,
+		Region:   kpuKota.Region,
+		IsActive: kpuKota.IsActive,
+		PhotoURL: kpuKota.PhotoPath,
+	}
+
+	if kpuKota.PhotoPath != "" {
+		res.PhotoURL = fmt.Sprintf("/v1/kpu-kota/%s/photo", kpuKota.ID.String())
+	}
+
+	return res, nil
+}
+
+func (m *Module) UploadKPUKotaPhoto(ctx context.Context, kpuKotaID uuid.UUID, fileData io.Reader, fileName string) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaUseCases.UploadKPUKotaPhoto")
+	defer span.End()
+
+	kpuKota, err := m.kpuKotaRepo.GetKPUKotaByID(ctx, kpuKotaID)
+	if err != nil {
+		return &custerr.ErrChain{
+			Message: "KPU Provinsi not found",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	if kpuKota.PhotoPath != "" {
+		_ = fileutils.DeleteFile(ctx, kpuKota.PhotoPath)
+	}
+
+	fileConfig := fileutils.DefaultConfig()
+	fileConfig.SetAllowedImageExtension()
+	fileConfig.EntityType = "kpu_kota"
+
+	photoPath, err := fileutils.StoreFile(ctx, fileData, fileName, fileConfig)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    kpuKotaID,
+		}).ErrorWithCtx(ctx, "[KPUKotaUseCases.UploadKPUKotaPhoto] Failed to store file")
+		return &custerr.ErrChain{
+			Message: "Failed to upload photo",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	err = m.kpuKotaRepo.UpdateKPUKotaPhoto(ctx, kpuKotaID, photoPath)
+	if err != nil {
+		_ = fileutils.DeleteFile(ctx, photoPath)
+		return &custerr.ErrChain{
+			Message: "Failed to update KPU Kota with photo information",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+	return nil
+}
+
+func (m *Module) GetKPUKotaPhoto(ctx context.Context, kpuKotaID uuid.UUID) (*http.File, string, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaUseCases.GetKPUKotaPhoto")
+	defer span.End()
+
+	kota, err := m.kpuKotaRepo.GetKPUKotaByID(ctx, kpuKotaID)
+	if err != nil {
+		return nil, "", &custerr.ErrChain{
+			Message: "KPU Kota not found",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	if kota.PhotoPath == "" {
+		return nil, "", &custerr.ErrChain{
+			Message: "No photo available for this KPU Kota",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+		}
+	}
+
+	file, contentType, err := filehandler.GetFileFromPath(ctx, kota.PhotoPath)
+	if err != nil {
+		return nil, "", &custerr.ErrChain{
+			Message: "Failed to retrieve photo",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	return file, contentType, nil
 }

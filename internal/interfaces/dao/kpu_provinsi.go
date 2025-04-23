@@ -159,7 +159,7 @@ func (K *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]model.
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetAllKPUProvinsi] Failed to get all kpu provinsi")
 	}
 
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false"
 	joinQuery := ""
 
@@ -216,7 +216,7 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByAddress(ctx context.Context, add
 		return nil, err
 	}
 
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false AND kpu_provinsi.address = $1"
 	joinQuery := ""
 	args = append(args, address)
@@ -256,7 +256,7 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByID(ctx context.Context, id uuid.
 		args             []any
 	)
 
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false AND kpu_provinsi.id = $1"
 	joinQuery := ""
 	args = append(args, id)

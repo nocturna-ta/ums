@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/nocturna-ta/golib/database/sql"
 	"github.com/nocturna-ta/golib/ethereum"
@@ -16,6 +17,7 @@ import (
 	utils2 "github.com/nocturna-ta/ums/pkg/utils"
 	kpuManager2 "github.com/nocturna-ta/votechain-contract/binding/kpuManager"
 	"github.com/nocturna-ta/votechain-contract/interfaces"
+	"time"
 )
 
 type KPUKotaRepository struct {
@@ -46,9 +48,10 @@ func NewKPUKotaRepository(opts *OptsKPUKotaRepository) repository.KPUKotaReposit
 }
 
 const (
-	insertKPUKota = `INSERT INTO kpu_kota (id, name, address, region, is_active, created_at, updated_at)
-    						VALUES($1,$2,$3,$4,$5,$6,$7)`
+	insertKPUKota = `INSERT INTO kpu_kota (id, user_id, name, address, region, is_active, photo_path, created_at, updated_at)
+    						VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`
 	selectKPUKota = `SELECT %s FROM kpu_kota %s WHERE TRUE %s`
+	updateKPUKota = `UPDATE kpu_kota SET %s WHERE TRUE %s`
 )
 
 func (K *KPUKotaRepository) InsertKPUKota(ctx context.Context, kpu *model.KPUKota, signedTransaction string) error {
@@ -89,7 +92,7 @@ func (K *KPUKotaRepository) InsertKPUKota(ctx context.Context, kpu *model.KPUKot
 		}()
 	}
 
-	_, err = sqlTrx.ExecContext(ctx, insertKPUKota, kpu.ID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.CreatedAt, kpu.UpdatedAt)
+	_, err = sqlTrx.ExecContext(ctx, insertKPUKota, kpu.ID, kpu.UserID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.PhotoPath, kpu.CreatedAt, kpu.UpdatedAt)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {
@@ -156,7 +159,7 @@ func (K *KPUKotaRepository) GetAllKPUKota(ctx context.Context) ([]model.KPUKota,
 		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetAllKPUKota] Failed to get all kpu kota")
 	}
 
-	selectQuery := `kpu_kota.id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active, kpu_kota.created_at, kpu_kota.updated_at`
+	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active, kpu_kota.photo_path, kpu_kota.created_at, kpu_kota.updated_at`
 	whereQuery := " AND kpu_kota.is_deleted = false"
 	joinQuery := ""
 
@@ -213,7 +216,7 @@ func (K *KPUKotaRepository) GetKPUKotaByAddress(ctx context.Context, address str
 		return nil, err
 	}
 
-	selectQuery := `kpu_kota.id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active, kpu_kota.created_at, kpu_kota.updated_at`
+	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active, kpu_kota.photo_path, kpu_kota.created_at, kpu_kota.updated_at`
 	whereQuery := " AND kpu_kota.is_deleted = false AND kpu_kota.address = $1"
 	joinQuery := ""
 	args = append(args, address)
@@ -237,6 +240,76 @@ func (K *KPUKotaRepository) GetKPUKotaByAddress(ctx context.Context, address str
 			"error": "not matching kpu kota found",
 		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetKPUKotaByAddress] Failed to get kpu kota by address")
 		return nil, ErrNoResult
+	}
+
+	return &kpuKotaModel, nil
+}
+
+func (K *KPUKotaRepository) UpdateKPUKotaPhoto(ctx context.Context, id uuid.UUID, photoPath string) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaRepository.UpdateKPUKotaPhoto")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+	var (
+		err  error
+		args []any
+	)
+
+	now := time.Now()
+
+	setQuery := "photo_path = $1, updated_at = $2"
+	whereQuery := " AND id = $3 AND is_deleted = false"
+	args = append(args, photoPath, now, id)
+
+	query := fmt.Sprintf(updateKPUKota, setQuery, whereQuery)
+
+	if sqlTrx != nil {
+		_, err = sqlTrx.ExecContext(ctx, query, photoPath, now, id)
+	} else {
+		_, err = K.db.GetMaster().ExecContext(ctx, query, photoPath, now, id)
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":     err,
+			"id":        id,
+			"photoPath": photoPath,
+		}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKotaPhoto] Failed to update photo path")
+		return err
+	}
+
+	return nil
+}
+
+func (K *KPUKotaRepository) GetKPUKotaByID(ctx context.Context, id uuid.UUID) (*model.KPUKota, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaRepository.GetKPUKotaByID")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+	var (
+		kpuKotaModel model.KPUKota
+		err          error
+		args         []any
+	)
+
+	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active, kpu_kota.photo_path, kpu_kota.created_at, kpu_kota.updated_at`
+	whereQuery := " AND kpu_kota.is_deleted = false AND kpu_kota.id = $1"
+	joinQuery := ""
+	args = append(args, id)
+
+	query := fmt.Sprintf(selectKPUKota, selectQuery, joinQuery, whereQuery)
+	if sqlTrx != nil {
+		err = sqlTrx.GetContext(ctx, &kpuKotaModel, query, args...)
+	} else {
+		err = K.db.GetMaster().GetContext(ctx, &kpuKotaModel, query, args...)
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    id,
+		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetKPUKotaByID] Failed to get kpu kota by ID")
+		return nil, err
 	}
 
 	return &kpuKotaModel, nil

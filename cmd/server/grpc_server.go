@@ -1,10 +1,13 @@
 package server
 
 import (
+	"context"
 	"github.com/nocturna-ta/golib/database/sql"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/ums/config"
+	"github.com/nocturna-ta/ums/ethreum"
 	"github.com/nocturna-ta/ums/internal/handler/grpc"
+	"github.com/nocturna-ta/ums/internal/infrastructures/kafka"
 	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
@@ -39,9 +42,24 @@ func runGrpc(cmd *cobra.Command, args []string) error {
 		ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
 	}, sql.DriverPostgres)
 
+	client, err := ethreum.GetEthereumClient(&cfg.Blockchain)
+	if err != nil {
+		return err
+	}
+
+	defer client.Close()
+
+	publisher, err := kafka.NewPublisher(context.Background(), cfg.Kafka.Producer)
+	if err != nil {
+		log.Fatalf("Failed to instantiate kafka publisher: %w", err)
+		return err
+	}
+
 	appContainer := newContainer(&options{
-		Cfg: cfg,
-		DB:  database,
+		Cfg:       cfg,
+		DB:        database,
+		Client:    client,
+		Publisher: publisher,
 	})
 
 	server := grpc.New(&grpc.Options{

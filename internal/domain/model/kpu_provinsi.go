@@ -9,13 +9,15 @@ import (
 
 type KPUProvinsi struct {
 	BaseModel
-	ID        uuid.UUID `db:"id"`
-	Name      string    `db:"name"`
-	Address   string    `db:"address"`
-	Region    string    `db:"region"`
-	IsActive  bool      `db:"is_active"`
-	UserID    uuid.UUID `db:"user_id"`
-	PhotoPath string    `db:"photo_path"`
+	ID           uuid.UUID `db:"id"`
+	Name         string    `db:"name"`
+	Address      string    `db:"address"`
+	Region       string    `db:"region"`
+	IsActive     bool      `db:"is_active"`
+	UserID       uuid.UUID `db:"user_id"`
+	PhotoPath    string    `db:"photo_path"`
+	Telephone    string    `db:"telephone"`
+	RegisteredAt time.Time `db:"registered_at"`
 }
 
 func (u *KPUProvinsi) ToMessageModel() *event.KPUProvinsiMessage {

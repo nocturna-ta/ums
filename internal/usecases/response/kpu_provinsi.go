@@ -2,6 +2,7 @@ package response
 
 type KPUProvinsiResponse struct {
 	ID       string `json:"id"`
+	UserID   string `json:"user_id"`
 	Name     string `json:"name"`
 	Address  string `json:"address"`
 	Region   string `json:"region"`

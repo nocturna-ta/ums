@@ -88,7 +88,6 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			kpuProvinsi.POST("/register", api.RegisterKPUProvinsi, router.MustAuthorized(false))
 			kpuProvinsi.GET("/address", api.GetKPUProvinsiByAddress, router.MustAuthorized(false))
 			kpuProvinsi.GET("/:id", api.GetKPUProvinsiByID, router.MustAuthorized(false))
-
 			kpuProvinsi.POST("/:id/photo", api.UploadKPUProvinsiPhoto, router.MustAuthorized(false))
 			kpuProvinsi.ATTACHMENT("/:id/photo", api.GetKPUProvinsiPhoto, router.MustAuthorized(false))
 
@@ -97,6 +96,9 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			kpuKota.GET("/", api.GetAllKPUKota, router.MustAuthorized(false))
 			kpuKota.POST("/register", api.RegisterKPUKota, router.MustAuthorized(false))
 			kpuKota.GET("/address", api.GetKPUKotaByAddress, router.MustAuthorized(false))
+			kpuKota.GET("/:id", api.GetKPUKotaByID, router.MustAuthorized(false))
+			kpuKota.POST("/:id/photo", api.UploadKPUKotaPhoto, router.MustAuthorized(false))
+			kpuKota.ATTACHMENT("/:id/photo", api.GetKPUKotaPhoto, router.MustAuthorized(false))
 		})
 		v1.Group("/user", func(user *router.FastRouter) {
 			user.POST("/register", api.RegisterUser, router.MustAuthorized(false))
