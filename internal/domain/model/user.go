@@ -14,18 +14,26 @@ import (
 
 type User struct {
 	BaseModel
-	ID           uuid.UUID `db:"id"`
-	Username     string    `db:"username"`
-	Email        string    `db:"email"`
-	Password     string    `db:"password"`
-	PasswordSalt string    `db:"password_salt"`
-	Role         string    `db:"role"`
-	IsActive     bool      `db:"is_active"`
+	ID                 uuid.UUID `db:"id"`
+	Username           string    `db:"username"`
+	Email              string    `db:"email"`
+	Password           string    `db:"password"`
+	PasswordSalt       string    `db:"password_salt"`
+	Role               string    `db:"role"`
+	RequestedRole      string    `db:"requested_role"`
+	IsActive           bool      `db:"is_active"`
+	VerificationStatus string    `db:"verification_status"`
 }
 
 type UserUpdate struct {
 	Username string `db:"username"`
 }
+
+const (
+	VerificationStatusPending  = "pending"
+	VerificationStatusApproved = "approved"
+	VerificationStatusRejected = "rejected"
+)
 
 func (u *User) ToMessageModel() *event.UserMessage {
 	msg := &event.UserMessage{
@@ -66,13 +74,15 @@ func ConstructUserRegistration(req *request.UserRegistrationRequest) *User {
 			CreatedAt: now,
 			UpdatedAt: now,
 		},
-		ID:           userId,
-		Username:     username,
-		Email:        req.Email,
-		Password:     utils.PasswordHash(req.Password, salt),
-		PasswordSalt: salt,
-		Role:         req.Role,
-		IsActive:     true,
+		ID:                 userId,
+		Username:           username,
+		Email:              req.Email,
+		Password:           utils.PasswordHash(req.Password, salt),
+		PasswordSalt:       salt,
+		Role:               "unverified",
+		RequestedRole:      req.Role,
+		IsActive:           false,
+		VerificationStatus: VerificationStatusPending,
 	}
 
 	return user

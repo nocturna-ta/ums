@@ -20,6 +20,7 @@ import (
 type UserRepository struct {
 	db *sql.Store
 }
+
 type OptsUserRepository struct {
 	DB *sql.Store
 }
@@ -31,7 +32,8 @@ func NewUserRepository(opts *OptsUserRepository) repository.UserRepository {
 }
 
 const (
-	insertUser = `INSERT INTO users (id, username, email, password, password_salt, role, is_active, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	insertUser = `INSERT INTO users (id, username, email, password, password_salt, role, requested_role, is_active, verification_status, created_at, updated_at) 
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 	selectUser = `SELECT %s FROM users WHERE TRUE %s`
 	updateUser = `UPDATE users SET %s WHERE TRUE %s`
 )
@@ -47,9 +49,31 @@ func (repo *UserRepository) Insert(ctx context.Context, user *model.User) error 
 	sqlTrx := utils.GetSqlTx(ctx)
 
 	if sqlTrx != nil {
-		_, err = sqlTrx.ExecContext(ctx, insertUser, user.ID, user.Username, user.Email, user.Password, user.PasswordSalt, user.Role, user.IsActive, user.CreatedAt, user.UpdatedAt)
+		_, err = sqlTrx.ExecContext(ctx, insertUser,
+			user.ID,
+			user.Username,
+			user.Email,
+			user.Password,
+			user.PasswordSalt,
+			user.Role,
+			user.RequestedRole,
+			user.IsActive,
+			user.VerificationStatus,
+			user.CreatedAt,
+			user.UpdatedAt)
 	} else {
-		_, err = repo.db.GetMaster().ExecContext(ctx, insertUser, user.ID, user.Username, user.Email, user.Password, user.PasswordSalt, user.Role, user.IsActive, user.CreatedAt, user.UpdatedAt)
+		_, err = repo.db.GetMaster().ExecContext(ctx, insertUser,
+			user.ID,
+			user.Username,
+			user.Email,
+			user.Password,
+			user.PasswordSalt,
+			user.Role,
+			user.RequestedRole,
+			user.IsActive,
+			user.VerificationStatus,
+			user.CreatedAt,
+			user.UpdatedAt)
 	}
 
 	if err != nil {
@@ -85,7 +109,7 @@ func (repo *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*model.U
 		args []any
 	)
 
-	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.is_active, users.created_at, users.updated_at"
+	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
 	whereQuery := " AND users.id = $1 AND users.is_deleted = FALSE"
 	args = append(args, id)
 
@@ -197,7 +221,7 @@ func (repo *UserRepository) GetByEmail(ctx context.Context, email string) (*mode
 		args []any
 	)
 
-	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.is_active, users.created_at, users.updated_at"
+	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
 	whereQuery := " AND users.email = $1 AND users.is_deleted = FALSE"
 	args = append(args, email)
 
@@ -220,4 +244,76 @@ func (repo *UserRepository) GetByEmail(ctx context.Context, email string) (*mode
 	}
 
 	return &user, nil
+}
+
+func (repo *UserRepository) UpdateVerificationStatus(ctx context.Context, id uuid.UUID, status string, role string) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "UserRepository.UpdateVerificationStatus")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+
+	var (
+		err  error
+		args []any
+	)
+
+	setQuery := "verification_status = $1, role = $2, is_active = $3, updated_at = $4"
+	whereQuery := " AND id = $5 AND is_deleted = FALSE"
+
+	args = append(args, status, role, true, time.Now(), id)
+	query := fmt.Sprintf(updateUser, setQuery, whereQuery)
+	if sqlTrx != nil {
+		_, err = sqlTrx.ExecContext(ctx, query, args...)
+	} else {
+		_, err = repo.db.GetMaster().ExecContext(ctx, query, args...)
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err,
+			"id":     id,
+			"status": status,
+		}).ErrorWithCtx(ctx, "[UserRepository.UpdateVerificationStatus] Failed to update verification status")
+		return err
+	}
+
+	return nil
+}
+
+func (repo *UserRepository) GetPendingVerificationUsers(ctx context.Context) ([]model.User, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "UserRepository.GetPendingVerificationUsers")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+
+	var (
+		users []model.User
+		args  []any
+	)
+
+	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
+	whereQuery := " AND users.verification_status = $1 AND users.is_deleted = FALSE"
+	args = append(args, model.VerificationStatusPending)
+
+	query := fmt.Sprintf(selectUser, selectQuery, whereQuery)
+
+	if sqlTrx != nil {
+		err := sqlTrx.SelectContext(ctx, &users, query, args...)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(ctx, "[UserRepository.GetPendingVerificationUsers] Failed to get pending verification users")
+			return nil, err
+		}
+	} else {
+		err := repo.db.GetMaster().SelectContext(ctx, &users, query, args...)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(ctx, "[UserRepository.GetPendingVerificationUsers] Failed to get pending verification users")
+			return nil, err
+		}
+	}
+
+	return users, nil
 }

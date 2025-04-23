@@ -105,6 +105,18 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			user.GET("/me", api.GetByID)
 			user.PUT("/update", api.UpdateUser)
 			user.POST("/login", api.LoginUser, router.MustAuthorized(false))
+
+			user.GET("/verification-status/:email", api.CheckVerificationStatus, router.MustAuthorized(false))
+			user.GET("/my-verification-status", api.GetMyVerificationStatus)
+		})
+
+		v1.Group("/admin", func(admin *router.FastRouter) {
+			admin.Group("/verifications", func(verifications *router.FastRouter) {
+				verifications.GET("/pending", middleware.KPUPusat()(api.GetPendingVerifications))
+				verifications.GET("/details/:user_id", middleware.KPUPusat()(api.GetPendingVerificationDetails))
+				verifications.POST("/approve", middleware.KPUPusat()(api.ApproveVerification))
+				verifications.POST("/reject", middleware.KPUPusat()(api.RejectVerification))
+			})
 		})
 	})
 

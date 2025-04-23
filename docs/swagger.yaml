@@ -61,18 +61,42 @@ definitions:
     type: object
   request.UserRegistrationRequest:
     properties:
+      address:
+        type: string
       email:
+        type: string
+      name:
+        description: |-
+          Role-specific fields
+          For KPU Provinsi and KPU Kota
+        type: string
+      nik:
+        description: For Voter
         type: string
       password:
         type: string
+      region:
+        type: string
       role:
         type: string
+      signed_transaction:
+        description: For blockchain transaction
+        type: string
       username:
+        type: string
+      voter_address:
         type: string
     type: object
   request.UserUpdateRequest:
     properties:
       username:
+        type: string
+    type: object
+  request.UserVerificationRequest:
+    properties:
+      admin_reason:
+        type: string
+      user_id:
         type: string
     type: object
   request.VoterRegistrationRequest:
@@ -103,7 +127,13 @@ definitions:
         type: string
       is_active:
         type: boolean
+      name:
+        type: string
+      photo_url:
+        type: string
       region:
+        type: string
+      user_id:
         type: string
     type: object
   response.KPUProvinsiRegistrationResponse:
@@ -129,12 +159,22 @@ definitions:
         type: string
       region:
         type: string
+      user_id:
+        type: string
     type: object
   response.UserLoginResponse:
     properties:
       expires_at:
         type: string
+      is_active:
+        type: boolean
+      message:
+        type: string
+      requested_role:
+        type: string
       token:
+        type: string
+      verification_status:
         type: string
     type: object
   response.UserRegistrationResponse:
@@ -143,7 +183,13 @@ definitions:
         type: string
       id:
         type: string
+      message:
+        type: string
+      requested_role:
+        type: string
       username:
+        type: string
+      verification_status:
         type: string
     type: object
   response.UserResponse:
@@ -151,6 +197,60 @@ definitions:
       id:
         type: string
       username:
+        type: string
+    type: object
+  response.UserVerificationDetailsResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      entity_data:
+        additionalProperties: true
+        type: object
+      id:
+        type: string
+      requested_role:
+        type: string
+      signed_transaction:
+        type: string
+      username:
+        type: string
+      verification_status:
+        type: string
+    type: object
+  response.UserVerificationResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      requested_role:
+        type: string
+      username:
+        type: string
+      verification_status:
+        type: string
+    type: object
+  response.UserVerificationStatusResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      is_active:
+        type: boolean
+      message:
+        type: string
+      requested_role:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+      verification_status:
         type: string
     type: object
   response.VoterRegistrationResponse:
@@ -212,6 +312,167 @@ paths:
       summary: Ping
       tags:
       - Health
+  /v1/admin/verifications/approve:
+    post:
+      consumes:
+      - application/json
+      description: Approve a pending user verification, activating their account with
+        the requested role
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      - description: Verification approval request
+        in: body
+        name: verification
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Approve a user verification request
+      tags:
+      - Admin
+  /v1/admin/verifications/details/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a user's pending verification including
+        entity-specific data
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User verification details
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserVerificationDetailsResponse'
+              type: object
+      summary: Get pending verification details for a specific user
+      tags:
+      - Admin
+  /v1/admin/verifications/pending:
+    get:
+      consumes:
+      - application/json
+      description: Get all users with pending verification status
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pending verification users
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.UserVerificationResponse'
+                  type: array
+              type: object
+      summary: Get pending verification requests
+      tags:
+      - Admin
+  /v1/admin/verifications/reject:
+    post:
+      consumes:
+      - application/json
+      description: Reject a pending user verification, keeping their account as unverified
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      - description: Verification rejection request
+        in: body
+        name: verification
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Reject a user verification request
+      tags:
+      - Admin
   /v1/kpu-kota:
     get:
       consumes:
@@ -243,6 +504,115 @@ paths:
                   $ref: '#/definitions/response.KPUKotaResponse'
               type: object
       summary: Get All KPU Kota
+      tags:
+      - kpu_kota
+  /v1/kpu-kota/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get KPU Kota By ID
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: KPU Kota ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUKotaResponse'
+              type: object
+      summary: Get KPU Kota By ID
+      tags:
+      - kpu_kota
+  /v1/kpu-kota/{id}/photo:
+    get:
+      description: Get the photo for a KPU Kota
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: KPU Kota ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+      summary: Get photo for KPU Kota
+      tags:
+      - kpu_kota
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a photo for a KPU Kota
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: KPU Kota ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Photo file (jpg, jpeg, png only)
+        in: formData
+        name: photo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Upload photo for KPU Kota
       tags:
       - kpu_kota
   /v1/kpu-kota/address:
@@ -680,6 +1050,42 @@ paths:
       summary: Get user by ID
       tags:
       - User
+  /v1/user/my-verification-status:
+    get:
+      consumes:
+      - application/json
+      description: Get the verification status and details for the currently logged
+        in user
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User verification status
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserVerificationStatusResponse'
+              type: object
+      summary: Get current user's verification status
+      tags:
+      - User
   /v1/user/register:
     post:
       consumes:
@@ -744,6 +1150,32 @@ paths:
                   $ref: '#/definitions/response.UserResponse'
               type: object
       summary: Update user
+      tags:
+      - User
+  /v1/user/verification-status/{email}:
+    get:
+      consumes:
+      - application/json
+      description: Check the verification status of a user account
+      parameters:
+      - description: User email
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User verification status
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserVerificationResponse'
+              type: object
+      summary: Check verification status
       tags:
       - User
   /v1/voter:

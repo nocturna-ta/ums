@@ -48,8 +48,8 @@ func NewKPUProvinsiRepository(opts *OptsKPUProvinsiRepository) repository.KPUPro
 }
 
 const (
-	insertKPUProvinsi = `INSERT INTO kpu_provinsi (id, user_id, name, address, region, is_active, photo_path, created_at, updated_at)
-    						VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`
+	insertKPUProvinsi = `INSERT INTO kpu_provinsi (id, user_id, name, address, region, is_active, photo_path, telephone, registered_at, created_at, updated_at)
+    						VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`
 	selectKPUProvinsi = `SELECT %s FROM kpu_provinsi %s WHERE TRUE %s`
 	updateKPUProvinsi = `UPDATE kpu_provinsi SET %s WHERE TRUE %s`
 )
@@ -92,7 +92,7 @@ func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *mode
 		}()
 	}
 
-	_, err = sqlTrx.ExecContext(ctx, insertKPUProvinsi, kpu.ID, kpu.UserID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.PhotoPath, kpu.CreatedAt, kpu.UpdatedAt)
+	_, err = sqlTrx.ExecContext(ctx, insertKPUProvinsi, kpu.ID, kpu.UserID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.PhotoPath, kpu.Telephone, kpu.RegisteredAt, kpu.CreatedAt, kpu.UpdatedAt)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {
@@ -159,7 +159,8 @@ func (K *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]model.
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetAllKPUProvinsi] Failed to get all kpu provinsi")
 	}
 
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
+	kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.telephone, kpu_provinsi.registered_at, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false"
 	joinQuery := ""
 
@@ -216,7 +217,8 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByAddress(ctx context.Context, add
 		return nil, err
 	}
 
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
+	kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.telephone, kpu_provinsi.registered_at, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false AND kpu_provinsi.address = $1"
 	joinQuery := ""
 	args = append(args, address)
@@ -256,7 +258,8 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByID(ctx context.Context, id uuid.
 		args             []any
 	)
 
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region, kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
+	kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.telephone, kpu_provinsi.registered_at, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false AND kpu_provinsi.id = $1"
 	joinQuery := ""
 	args = append(args, id)

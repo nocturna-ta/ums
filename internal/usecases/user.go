@@ -13,4 +13,11 @@ type UserUseCases interface {
 	UpdateUser(ctx context.Context, req *request.UserUpdateRequest) (*response.UserResponse, error)
 	ChangePassword(ctx context.Context, req *request.UserChangePasswordRequest) error
 	LoginUser(ctx context.Context, req *request.UserLoginRequest) (*response.UserLoginResponse, error)
+
+	GetPendingVerificationUsers(ctx context.Context) (*[]response.UserVerificationResponse, error)
+	GetVerificationDetails(ctx context.Context, userIDStr string) (*response.UserVerificationDetailsResponse, error)
+	ApproveUserVerification(ctx context.Context, req *request.UserVerificationRequest) error
+	RejectUserVerification(ctx context.Context, req *request.UserVerificationRequest) error
+	CheckVerificationStatus(ctx context.Context, email string) (*response.UserVerificationResponse, error)
+	GetMyVerificationStatus(ctx context.Context) (*response.UserVerificationStatusResponse, error)
 }

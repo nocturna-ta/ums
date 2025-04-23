@@ -89,11 +89,15 @@ func (m *Module) GetAllKPUProvinsi(ctx context.Context) (*[]response.KPUProvinsi
 	var res []response.KPUProvinsiResponse
 	for _, kpuProvinsis := range kpuProvinsi {
 		resp := response.KPUProvinsiResponse{
-			ID:       kpuProvinsis.ID.String(),
-			Address:  kpuProvinsis.Address,
-			Region:   kpuProvinsis.Region,
-			IsActive: kpuProvinsis.IsActive,
-			Name:     kpuProvinsis.Name,
+			ID:           kpuProvinsis.ID.String(),
+			UserID:       kpuProvinsis.UserID.String(),
+			Name:         kpuProvinsis.Name,
+			Address:      kpuProvinsis.Address,
+			Region:       kpuProvinsis.Region,
+			IsActive:     kpuProvinsis.IsActive,
+			PhotoURL:     kpuProvinsis.PhotoPath,
+			Telephone:    kpuProvinsis.Telephone,
+			RegisteredAt: kpuProvinsis.RegisteredAt.String(),
 		}
 
 		if kpuProvinsis.PhotoPath != "" {
@@ -124,11 +128,15 @@ func (m *Module) GetKPUProvinsiByAddress(ctx context.Context) (*response.KPUProv
 	}
 
 	res := &response.KPUProvinsiResponse{
-		ID:       kpuProvinsi.ID.String(),
-		Address:  kpuProvinsi.Address,
-		Region:   kpuProvinsi.Region,
-		IsActive: kpuProvinsi.IsActive,
-		Name:     kpuProvinsi.Name,
+		ID:           kpuProvinsi.ID.String(),
+		UserID:       kpuProvinsi.UserID.String(),
+		Name:         kpuProvinsi.Name,
+		Address:      kpuProvinsi.Address,
+		Region:       kpuProvinsi.Region,
+		IsActive:     kpuProvinsi.IsActive,
+		PhotoURL:     kpuProvinsi.PhotoPath,
+		Telephone:    kpuProvinsi.Telephone,
+		RegisteredAt: kpuProvinsi.RegisteredAt.String(),
 	}
 
 	if kpuProvinsi.PhotoPath != "" {
@@ -152,11 +160,15 @@ func (m *Module) GetKPUProvinsiByID(ctx context.Context, id uuid.UUID) (*respons
 	}
 
 	res := &response.KPUProvinsiResponse{
-		ID:       kpuProvinsi.ID.String(),
-		Address:  kpuProvinsi.Address,
-		Region:   kpuProvinsi.Region,
-		IsActive: kpuProvinsi.IsActive,
-		Name:     kpuProvinsi.Name,
+		ID:           kpuProvinsi.ID.String(),
+		UserID:       kpuProvinsi.UserID.String(),
+		Name:         kpuProvinsi.Name,
+		Address:      kpuProvinsi.Address,
+		Region:       kpuProvinsi.Region,
+		IsActive:     kpuProvinsi.IsActive,
+		PhotoURL:     kpuProvinsi.PhotoPath,
+		Telephone:    kpuProvinsi.Telephone,
+		RegisteredAt: kpuProvinsi.RegisteredAt.String(),
 	}
 
 	if kpuProvinsi.PhotoPath != "" {

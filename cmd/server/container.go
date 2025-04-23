@@ -60,6 +60,10 @@ func newContainer(opts *options) *container {
 		DB: opts.DB,
 	})
 
+	pendingRepo := dao.NewPendingRegistrationRepository(&dao.OptsPendingRegistrationRepository{
+		DB: opts.DB,
+	})
+
 	txMgr, err := txmanager.New(context.Background(), &txmanager.DriverConfig{
 		Type: "sql",
 		Config: txSql.Config{
@@ -99,11 +103,15 @@ func newContainer(opts *options) *container {
 	})
 
 	userUc := user.New(&user.Opts{
-		UserRepo:  usersRepo,
-		TxMgr:     txMgr,
-		JWTSvc:    jwtSvc,
-		Publisher: opts.Publisher,
-		Topics:    opts.Cfg.Kafka.Topics,
+		UserRepo:        usersRepo,
+		PendingRegRepo:  pendingRepo,
+		KPUProvinsiRepo: kpuProvinsiRepo,
+		KPUKotaRepo:     kpuKotaRepo,
+		VoterRepo:       voterRepo,
+		TxMgr:           txMgr,
+		JWTSvc:          jwtSvc,
+		Publisher:       opts.Publisher,
+		Topics:          opts.Cfg.Kafka.Topics,
 	})
 
 	authUc := auth.New(&auth.Opts{

@@ -14,20 +14,9 @@ run-grpc: dependency
 	@echo ">> Running gRPC Server"
 	@go run main.go serve-grpc
 
-generate-abi:
-	@echo  ">> Generating ABI"
-	@solcjs --abi ./pkg/contracts/Votechain.sol -o ./pkg/binding
-
-generate-gobind:
-	@echo ">> Generating Go Bindings"
-	@abigen --abi ./pkg/binding/Votechain.abi --pkg binding --type Votechain --out ./pkg/binding/Votechain.go
-
-change-abi:
-	@mv ./pkg/binding/pkg_contracts_Votechain_sol_Votechain.abi ./pkg/binding/Votechain.abi
-
 migrate-up:
 	@echo ">> Running Migrate Up"
-	@migrate -path db/migrations -database "postgres://postgres:1235813@localhost:15432/ums?sslmode=disable" up
+	@migrate -path db/migrations -database "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable" up
 
 migrate-down:
 	@echo ">> Running Migrate down"

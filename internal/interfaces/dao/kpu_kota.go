@@ -48,8 +48,8 @@ func NewKPUKotaRepository(opts *OptsKPUKotaRepository) repository.KPUKotaReposit
 }
 
 const (
-	insertKPUKota = `INSERT INTO kpu_kota (id, user_id, name, address, region, is_active, photo_path, created_at, updated_at)
-    						VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`
+	insertKPUKota = `INSERT INTO kpu_kota (id, user_id, name, address, region, is_active, photo_path, telephone, registered_at, created_at, updated_at)
+    						VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`
 	selectKPUKota = `SELECT %s FROM kpu_kota %s WHERE TRUE %s`
 	updateKPUKota = `UPDATE kpu_kota SET %s WHERE TRUE %s`
 )
@@ -92,7 +92,7 @@ func (K *KPUKotaRepository) InsertKPUKota(ctx context.Context, kpu *model.KPUKot
 		}()
 	}
 
-	_, err = sqlTrx.ExecContext(ctx, insertKPUKota, kpu.ID, kpu.UserID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.PhotoPath, kpu.CreatedAt, kpu.UpdatedAt)
+	_, err = sqlTrx.ExecContext(ctx, insertKPUKota, kpu.ID, kpu.UserID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.PhotoPath, kpu.Telephone, kpu.RegisteredAt, kpu.CreatedAt, kpu.UpdatedAt)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {
@@ -159,7 +159,8 @@ func (K *KPUKotaRepository) GetAllKPUKota(ctx context.Context) ([]model.KPUKota,
 		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetAllKPUKota] Failed to get all kpu kota")
 	}
 
-	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active, kpu_kota.photo_path, kpu_kota.created_at, kpu_kota.updated_at`
+	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active,
+kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created_at, kpu_kota.updated_at`
 	whereQuery := " AND kpu_kota.is_deleted = false"
 	joinQuery := ""
 
@@ -216,7 +217,8 @@ func (K *KPUKotaRepository) GetKPUKotaByAddress(ctx context.Context, address str
 		return nil, err
 	}
 
-	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active, kpu_kota.photo_path, kpu_kota.created_at, kpu_kota.updated_at`
+	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active,
+kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created_at, kpu_kota.updated_at`
 	whereQuery := " AND kpu_kota.is_deleted = false AND kpu_kota.address = $1"
 	joinQuery := ""
 	args = append(args, address)
@@ -292,7 +294,8 @@ func (K *KPUKotaRepository) GetKPUKotaByID(ctx context.Context, id uuid.UUID) (*
 		args         []any
 	)
 
-	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active, kpu_kota.photo_path, kpu_kota.created_at, kpu_kota.updated_at`
+	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active,
+kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created_at, kpu_kota.updated_at`
 	whereQuery := " AND kpu_kota.is_deleted = false AND kpu_kota.id = $1"
 	joinQuery := ""
 	args = append(args, id)

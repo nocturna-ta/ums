@@ -1,10 +1,13 @@
 package request
 
 import (
+	"github.com/google/uuid"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/ums/pkg/constants"
 	"github.com/nocturna-ta/ums/pkg/constants/errorcode"
+	"github.com/nocturna-ta/ums/pkg/roles"
+	"github.com/nocturna-ta/ums/pkg/utils"
 	"net/mail"
 )
 
@@ -13,6 +16,19 @@ type UserRegistrationRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
+
+	// Role-specific fields
+	// For KPU Provinsi and KPU Kota
+	Name    string `json:"name,omitempty"`
+	Address string `json:"address,omitempty"`
+	Region  string `json:"region,omitempty"`
+
+	// For Voter
+	NIK          string `json:"nik,omitempty"`
+	VoterAddress string `json:"voter_address,omitempty"`
+
+	// For blockchain transaction
+	SignedTransaction string `json:"signed_transaction,omitempty"`
 }
 
 type UserUpdateRequest struct {
@@ -30,12 +46,29 @@ type UserLoginRequest struct {
 	Password string `json:"password"`
 }
 
+type UserVerificationRequest struct {
+	UserID      string `json:"user_id"`
+	AdminReason string `json:"admin_reason"`
+}
+
 func (r *UserLoginRequest) ValidateLogin() error {
 	_, err := mail.ParseAddress(r.Email)
 	if err != nil {
 		return &custerr.ErrChain{
 			Message: errorcode.InvalidEmail.Message,
 			Code:    errorcode.InvalidEmail.Code,
+			Type:    response.ErrBadRequest,
+		}
+	}
+	return nil
+}
+
+func (r *UserVerificationRequest) ValidateVerificationRequest() error {
+	_, err := uuid.Parse(r.UserID)
+	if err != nil {
+		return &custerr.ErrChain{
+			Message: errorcode.InvalidUUID.Message,
+			Code:    errorcode.InvalidUUID.Code,
 			Type:    response.ErrBadRequest,
 		}
 	}
@@ -103,6 +136,55 @@ func (r *UserRegistrationRequest) ValidateRegistrationUser() error {
 			Message: errorcode.PasswordTooShort.Message,
 			Code:    errorcode.PasswordTooShort.Code,
 			Type:    response.ErrBadRequest,
+		}
+	}
+
+	if roles.IsValidRole(r.Role) {
+		switch r.Role {
+		case roles.RoleKPUProvinsi, roles.RoleKPUKota:
+			if r.Name == constants.EmptyString {
+				return &custerr.ErrChain{
+					Message: "Name is required for KPU roles",
+					Code:    400,
+					Type:    response.ErrBadRequest,
+				}
+			}
+			if r.Address == constants.EmptyString {
+				return &custerr.ErrChain{
+					Message: "Address is required for KPU roles",
+					Code:    400,
+					Type:    response.ErrBadRequest,
+				}
+			}
+			if r.Region == constants.EmptyString {
+				return &custerr.ErrChain{
+					Message: "Region is required for KPU roles",
+					Code:    400,
+					Type:    response.ErrBadRequest,
+				}
+			}
+		case roles.RoleVoter:
+			if r.NIK == constants.EmptyString {
+				return &custerr.ErrChain{
+					Message: "NIK is required for voter role",
+					Code:    400,
+					Type:    response.ErrBadRequest,
+				}
+			}
+			if r.VoterAddress == constants.EmptyString {
+				return &custerr.ErrChain{
+					Message: "Voter address is required for voter role",
+					Code:    400,
+					Type:    response.ErrBadRequest,
+				}
+			}
+			if !utils.IsValidNIK(r.NIK) {
+				return &custerr.ErrChain{
+					Message: "NIK is not valid",
+					Code:    400,
+					Type:    response.ErrBadRequest,
+				}
+			}
 		}
 	}
 

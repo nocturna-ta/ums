@@ -29,8 +29,14 @@ func (m *Module) RegisterKPUKota(ctx context.Context, req *request.KPUKotaRegist
 		kpuKota *model.KPUKota
 	)
 
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	transaction := func(txCtx context.Context) (any, error) {
 		kpuKota = model.ConstructRegistrationKPUKota(req)
+		kpuKota.UserID = reqCtx.GetUserId()
 
 		errTx := m.kpuKotaRepo.InsertKPUKota(txCtx, kpuKota, req.SignedTransaction)
 		if errTx != nil {
@@ -57,7 +63,7 @@ func (m *Module) RegisterKPUKota(ctx context.Context, req *request.KPUKotaRegist
 		return nil, nil
 	}
 
-	_, err := m.txMgr.Execute(ctx, transaction, nil)
+	_, err = m.txMgr.Execute(ctx, transaction, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -80,10 +86,15 @@ func (m *Module) GetAllKPUKota(ctx context.Context) (*[]response.KPUKotaResponse
 	var kpuKotaResponse []response.KPUKotaResponse
 	for _, kpuKota := range kpuKotaList {
 		kpuKotaResponse = append(kpuKotaResponse, response.KPUKotaResponse{
-			ID:       kpuKota.ID.String(),
-			Address:  kpuKota.Address,
-			Region:   kpuKota.Region,
-			IsActive: kpuKota.IsActive,
+			ID:           kpuKota.ID.String(),
+			UserID:       kpuKota.UserID.String(),
+			Address:      kpuKota.Address,
+			Name:         kpuKota.Name,
+			Region:       kpuKota.Region,
+			IsActive:     kpuKota.IsActive,
+			PhotoURL:     kpuKota.PhotoPath,
+			Telephone:    kpuKota.Telephone,
+			RegisteredAt: kpuKota.RegisteredAt.String(),
 		})
 	}
 
@@ -108,10 +119,15 @@ func (m *Module) GetKPUKotaByAddress(ctx context.Context) (*response.KPUKotaResp
 	}
 
 	return &response.KPUKotaResponse{
-		ID:       kpuKota.ID.String(),
-		Address:  kpuKota.Address,
-		Region:   kpuKota.Region,
-		IsActive: kpuKota.IsActive,
+		ID:           kpuKota.ID.String(),
+		UserID:       kpuKota.UserID.String(),
+		Address:      kpuKota.Address,
+		Name:         kpuKota.Name,
+		Region:       kpuKota.Region,
+		IsActive:     kpuKota.IsActive,
+		PhotoURL:     kpuKota.PhotoPath,
+		Telephone:    kpuKota.Telephone,
+		RegisteredAt: kpuKota.RegisteredAt.String(),
 	}, err
 
 }
@@ -130,13 +146,15 @@ func (m *Module) GetKPUKotaByID(ctx context.Context, id uuid.UUID) (*response.KP
 	}
 
 	res := &response.KPUKotaResponse{
-		ID:       kpuKota.ID.String(),
-		UserID:   kpuKota.UserID.String(),
-		Address:  kpuKota.Address,
-		Name:     kpuKota.Name,
-		Region:   kpuKota.Region,
-		IsActive: kpuKota.IsActive,
-		PhotoURL: kpuKota.PhotoPath,
+		ID:           kpuKota.ID.String(),
+		UserID:       kpuKota.UserID.String(),
+		Address:      kpuKota.Address,
+		Name:         kpuKota.Name,
+		Region:       kpuKota.Region,
+		IsActive:     kpuKota.IsActive,
+		PhotoURL:     kpuKota.PhotoPath,
+		Telephone:    kpuKota.Telephone,
+		RegisteredAt: kpuKota.RegisteredAt.String(),
 	}
 
 	if kpuKota.PhotoPath != "" {

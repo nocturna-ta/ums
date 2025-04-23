@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"github.com/nocturna-ta/golib/custerr"
+	"github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/response/rest"
 	"github.com/nocturna-ta/golib/router"
 	"github.com/nocturna-ta/golib/tracing"
@@ -196,4 +198,57 @@ func (api *API) ChangePassword(ctx context.Context, req *router.Request) (*rest.
 
 	return rest.NewJSONResponse().SetData("Password changed"), nil
 
+}
+
+// CheckVerificationStatus godoc
+// @Summary Check verification status
+// @Description Check the verification status of a user account
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param email path string true "User email"
+// @Success 200 {object} jsonResponse{data=response.UserVerificationResponse} "User verification status"
+// @Router /v1/user/verification-status/{email} [get]
+func (api *API) CheckVerificationStatus(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.CheckVerificationStatus")
+	defer span.End()
+
+	email := req.Params("email")
+	if email == "" {
+		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+			Message: "Email is required",
+			Code:    400,
+			Type:    response.ErrBadRequest,
+		})
+	}
+
+	res, err := api.userUc.CheckVerificationStatus(ctx, email)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}
+
+// GetMyVerificationStatus godoc
+// @Summary Get current user's verification status
+// @Description Get the verification status and details for the currently logged in user
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param X-User-Id header string true "User ID"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string true "Role"
+// @Success 200 {object} jsonResponse{data=response.UserVerificationStatusResponse} "User verification status"
+// @Router /v1/user/my-verification-status [get]
+func (api *API) GetMyVerificationStatus(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetMyVerificationStatus")
+	defer span.End()
+
+	res, err := api.userUc.GetMyVerificationStatus(ctx)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
 }

@@ -43,11 +43,14 @@ func ConstructRegistrationKPUProvinsi(req *request.KPUProvinsiRegistrationReques
 			UpdatedAt: now,
 			IsDeleted: false,
 		},
-		ID:       uuid.New(),
-		Name:     req.Name,
-		Address:  req.Address,
-		Region:   req.Region,
-		IsActive: req.IsActive,
+		ID:           uuid.New(),
+		Name:         req.Name,
+		Address:      req.Address,
+		Region:       req.Region,
+		IsActive:     req.IsActive,
+		PhotoPath:    "",
+		Telephone:    "",
+		RegisteredAt: time.Now(),
 	}
 	return kpu
 }

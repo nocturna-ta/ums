@@ -66,6 +66,262 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/admin/verifications/approve": {
+            "post": {
+                "description": "Approve a pending user verification, activating their account with the requested role",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Approve a user verification request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin Role",
+                        "name": "X-Role",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Verification approval request",
+                        "name": "verification",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserVerificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/verifications/details/{user_id}": {
+            "get": {
+                "description": "Get detailed information about a user's pending verification including entity-specific data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get pending verification details for a specific user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin Role",
+                        "name": "X-Role",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User verification details",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UserVerificationDetailsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/verifications/pending": {
+            "get": {
+                "description": "Get all users with pending verification status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get pending verification requests",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin Role",
+                        "name": "X-Role",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending verification users",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.UserVerificationResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/verifications/reject": {
+            "post": {
+                "description": "Reject a pending user verification, keeping their account as unverified",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Reject a user verification request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin Role",
+                        "name": "X-Role",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Verification rejection request",
+                        "name": "verification",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserVerificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/kpu-kota": {
             "get": {
                 "description": "Get All KPU Kota",
@@ -231,6 +487,179 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.KPUKotaRegistrationResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-kota/{id}": {
+            "get": {
+                "description": "Get KPU Kota By ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kpu_kota"
+                ],
+                "summary": "Get KPU Kota By ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "KPU Kota ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.KPUKotaResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-kota/{id}/photo": {
+            "get": {
+                "description": "Get the photo for a KPU Kota",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "kpu_kota"
+                ],
+                "summary": "Get photo for KPU Kota",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "KPU Kota ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "description": "Upload a photo for a KPU Kota",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kpu_kota"
+                ],
+                "summary": "Upload photo for KPU Kota",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "KPU Kota ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Photo file (jpg, jpeg, png only)",
+                        "name": "photo",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
                                         }
                                     }
                                 }
@@ -770,6 +1199,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/user/my-verification-status": {
+            "get": {
+                "description": "Get the verification status and details for the currently logged in user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get current user's verification status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User verification status",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UserVerificationStatusResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/user/register": {
             "post": {
                 "description": "Register a new user",
@@ -871,6 +1357,50 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/verification-status/{email}": {
+            "get": {
+                "description": "Check the verification status of a user account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Check verification status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "email",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User verification status",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UserVerificationResponse"
                                         }
                                     }
                                 }
@@ -1336,16 +1866,37 @@ const docTemplate = `{
         "request.UserRegistrationRequest": {
             "type": "object",
             "properties": {
+                "address": {
+                    "type": "string"
+                },
                 "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Role-specific fields\nFor KPU Provinsi and KPU Kota",
+                    "type": "string"
+                },
+                "nik": {
+                    "description": "For Voter",
                     "type": "string"
                 },
                 "password": {
                     "type": "string"
                 },
+                "region": {
+                    "type": "string"
+                },
                 "role": {
                     "type": "string"
                 },
+                "signed_transaction": {
+                    "description": "For blockchain transaction",
+                    "type": "string"
+                },
                 "username": {
+                    "type": "string"
+                },
+                "voter_address": {
                     "type": "string"
                 }
             }
@@ -1354,6 +1905,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UserVerificationRequest": {
+            "type": "object",
+            "properties": {
+                "admin_reason": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -1401,7 +1963,16 @@ const docTemplate = `{
                 "is_active": {
                     "type": "boolean"
                 },
+                "name": {
+                    "type": "string"
+                },
+                "photo_url": {
+                    "type": "string"
+                },
                 "region": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -1440,6 +2011,9 @@ const docTemplate = `{
                 },
                 "region": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
@@ -1449,7 +2023,19 @@ const docTemplate = `{
                 "expires_at": {
                     "type": "string"
                 },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "requested_role": {
+                    "type": "string"
+                },
                 "token": {
+                    "type": "string"
+                },
+                "verification_status": {
                     "type": "string"
                 }
             }
@@ -1463,7 +2049,16 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "message": {
+                    "type": "string"
+                },
+                "requested_role": {
+                    "type": "string"
+                },
                 "username": {
+                    "type": "string"
+                },
+                "verification_status": {
                     "type": "string"
                 }
             }
@@ -1475,6 +2070,88 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.UserVerificationDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "entity_data": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "id": {
+                    "type": "string"
+                },
+                "requested_role": {
+                    "type": "string"
+                },
+                "signed_transaction": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verification_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.UserVerificationResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "requested_role": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verification_status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.UserVerificationStatusResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "requested_role": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verification_status": {
                     "type": "string"
                 }
             }
