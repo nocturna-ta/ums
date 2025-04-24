@@ -73,7 +73,7 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 		}
 
 		var errReg error
-		pendingRegistration, errReg = model.NewPendingRegistration(
+		pendingRegistration, errReg = model.NewPendingRegist(
 			user.ID,
 			req.Role,
 			req.SignedTransaction,
@@ -445,13 +445,32 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 		return err
 	}
 
-	fmt.Println(user.VerificationStatus)
-
 	if user.VerificationStatus != model.VerificationStatusPending {
 		return &custerr.ErrChain{
 			Message: "User is not in pending verification status",
 			Code:    400,
 			Type:    response2.ErrBadRequest,
+		}
+	}
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return &custerr.ErrChain{
+			Message: "Failed to get request context",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+		}
+	}
+
+	verifierRole := reqCtx.GetRole()
+
+	if !roles.CanVerify(verifierRole, user.RequestedRole) {
+		return &custerr.ErrChain{
+			Message: fmt.Sprintf("A %s cannot verify a %s. Please follow the verification hierarchy.",
+				roles.GetRoleDisplayName(verifierRole),
+				roles.GetRoleDisplayName(user.RequestedRole)),
+			Code: 403,
+			Type: response2.ErrForbiddenResource,
 		}
 	}
 
@@ -659,6 +678,27 @@ func (m *Module) RejectUserVerification(ctx context.Context, req *request.UserVe
 		}
 	}
 
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return &custerr.ErrChain{
+			Message: "Failed to get request context",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+		}
+	}
+
+	verifierRole := reqCtx.GetRole()
+
+	if !roles.CanVerify(verifierRole, user.RequestedRole) {
+		return &custerr.ErrChain{
+			Message: fmt.Sprintf("A %s cannot verify a %s. Please follow the verification hierarchy.",
+				roles.GetRoleDisplayName(verifierRole),
+				roles.GetRoleDisplayName(user.RequestedRole)),
+			Code: 403,
+			Type: response2.ErrForbiddenResource,
+		}
+	}
+
 	pendingReg, err := m.pendingRegRepo.GetByUserID(ctx, userID)
 	if err != nil && !errors.Is(err, dao.ErrNoResult) {
 		log.WithFields(log.Fields{
@@ -708,6 +748,7 @@ func (m *Module) CheckVerificationStatus(ctx context.Context, email string) (*re
 	defer span.End()
 
 	user, err := m.userRepo.GetByEmail(ctx, email)
+	fmt.Println(user)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -759,6 +800,101 @@ func (m *Module) GetMyVerificationStatus(ctx context.Context) (*response.UserVer
 	switch user.VerificationStatus {
 	case model.VerificationStatusPending:
 		response.Message = "Your account is pending verification by an admin. Please wait for approval."
+	case model.VerificationStatusApproved:
+		response.Message = "Your account has been verified and is active."
+	case model.VerificationStatusRejected:
+		response.Message = "Your account verification was rejected."
+	}
+
+	return response, nil
+}
+
+func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response.UserVerificationResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "UserUseCases.GetPendingVerificationsByRole")
+	defer span.End()
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get request context",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+		}
+	}
+
+	currentRole := reqCtx.GetRole()
+
+	users, err := m.userRepo.GetPendingVerificationUsers(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to get pending verification users")
+		return nil, err
+	}
+
+	var filteredUsers []model.User
+	for _, user := range users {
+		if roles.CanVerify(currentRole, user.RequestedRole) {
+			filteredUsers = append(filteredUsers, user)
+		}
+	}
+
+	var result []response.UserVerificationResponse
+	for _, user := range filteredUsers {
+		result = append(result, response.UserVerificationResponse{
+			ID:                 user.ID.String(),
+			Email:              user.Email,
+			Username:           user.Username,
+			RequestedRole:      user.RequestedRole,
+			VerificationStatus: user.VerificationStatus,
+			CreatedAt:          user.CreatedAt,
+		})
+	}
+
+	return &result, nil
+}
+
+func (m *Module) GetEnhancedVerificationStatus(ctx context.Context) (*response.EnhancedUserVerificationStatusResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "UserUseCases.GetEnhancedVerificationStatus")
+	defer span.End()
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userID := reqCtx.GetUserId()
+
+	user, err := m.userRepo.GetById(ctx, userID)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    userID,
+		}).ErrorWithCtx(ctx, "[UserUseCases.GetEnhancedVerificationStatus] Failed to get user by id")
+		return nil, err
+	}
+
+	response := &response.EnhancedUserVerificationStatusResponse{
+		Username:           user.Username,
+		Email:              user.Email,
+		RequestedRole:      user.RequestedRole,
+		Role:               user.Role,
+		VerificationStatus: user.VerificationStatus,
+		IsActive:           user.IsActive,
+		CreatedAt:          user.CreatedAt,
+		VerifierRole:       roles.GetVerifierRoleFor(user.RequestedRole),
+		HierarchyLevel:     roles.GetRoleLevel(user.Role),
+	}
+
+	switch user.VerificationStatus {
+	case model.VerificationStatusPending:
+		verifierRole := roles.GetVerifierRoleFor(user.RequestedRole)
+		if verifierRole != "" {
+			response.Message = fmt.Sprintf("Your account is pending verification by %s. Please wait for approval.",
+				roles.GetRoleDisplayName(verifierRole))
+		} else {
+			response.Message = "Your account is pending verification. Please wait for approval."
+		}
 	case model.VerificationStatusApproved:
 		response.Message = "Your account has been verified and is active."
 	case model.VerificationStatusRejected:

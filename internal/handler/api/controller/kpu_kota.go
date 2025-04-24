@@ -250,3 +250,38 @@ func (api *API) GetKPUKotaPhoto(ctx context.Context, req *router.Request) (*rest
 		SetFileName(file.FileName).
 		SetContentType(contentType), nil
 }
+
+// UpdateKPUKota godoc
+// @Summary Update KPU Kota
+// @Description Update KPU Kota information
+// @Tags kpu_kota
+// @Accept json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string true "Address"
+// @Param X-Role header string false "Role"
+// @Param data body request.KPUKotaUpdateRequest true "Update Request"
+// @Produce json
+// @Success 200 {object} jsonResponse{data=response.KPUKotaResponse}
+// @Router /v1/kpu-kota/update [put]
+func (api *API) UpdateKPUKota(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.UpdateKPUKota")
+	defer span.End()
+
+	var updateReq request.KPUKotaUpdateRequest
+	err := json.Unmarshal(req.RawBody(), &updateReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	err = updateReq.ValidateUpdateRequest()
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	res, err := api.kpuKotaUc.UpdateKPUKota(ctx, &updateReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}

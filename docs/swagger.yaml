@@ -30,6 +30,17 @@ definitions:
       signed_transaction:
         type: string
     type: object
+  request.KPUKotaUpdateRequest:
+    properties:
+      name:
+        type: string
+      region:
+        type: string
+      signed_transaction:
+        type: string
+      telephone:
+        type: string
+    type: object
   request.KPUProvinsiRegistrationRequest:
     properties:
       address:
@@ -41,6 +52,17 @@ definitions:
       region:
         type: string
       signed_transaction:
+        type: string
+    type: object
+  request.KPUProvinsiUpdateRequest:
+    properties:
+      name:
+        type: string
+      region:
+        type: string
+      signed_transaction:
+        type: string
+      telephone:
         type: string
     type: object
   request.UserChangePasswordRequest:
@@ -133,6 +155,10 @@ definitions:
         type: string
       region:
         type: string
+      registered_at:
+        type: string
+      telephone:
+        type: string
       user_id:
         type: string
     type: object
@@ -158,6 +184,10 @@ definitions:
       photo_url:
         type: string
       region:
+        type: string
+      registered_at:
+        type: string
+      telephone:
         type: string
       user_id:
         type: string
@@ -312,89 +342,6 @@ paths:
       summary: Ping
       tags:
       - Health
-  /v1/admin/verifications/approve:
-    post:
-      consumes:
-      - application/json
-      description: Approve a pending user verification, activating their account with
-        the requested role
-      parameters:
-      - description: Admin User ID
-        in: header
-        name: X-User-Id
-        required: true
-        type: string
-      - description: Address
-        in: header
-        name: X-Address-Id
-        type: string
-      - description: Admin Role
-        in: header
-        name: X-Role
-        required: true
-        type: string
-      - description: Verification approval request
-        in: body
-        name: verification
-        required: true
-        schema:
-          $ref: '#/definitions/request.UserVerificationRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success message
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  type: string
-              type: object
-      summary: Approve a user verification request
-      tags:
-      - Admin
-  /v1/admin/verifications/details/{user_id}:
-    get:
-      consumes:
-      - application/json
-      description: Get detailed information about a user's pending verification including
-        entity-specific data
-      parameters:
-      - description: Admin User ID
-        in: header
-        name: X-User-Id
-        required: true
-        type: string
-      - description: Address
-        in: header
-        name: X-Address-Id
-        type: string
-      - description: Admin Role
-        in: header
-        name: X-Role
-        required: true
-        type: string
-      - description: User ID
-        in: path
-        name: user_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: User verification details
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.UserVerificationDetailsResponse'
-              type: object
-      summary: Get pending verification details for a specific user
-      tags:
-      - Admin
   /v1/admin/verifications/pending:
     get:
       consumes:
@@ -430,47 +377,6 @@ paths:
                   type: array
               type: object
       summary: Get pending verification requests
-      tags:
-      - Admin
-  /v1/admin/verifications/reject:
-    post:
-      consumes:
-      - application/json
-      description: Reject a pending user verification, keeping their account as unverified
-      parameters:
-      - description: Admin User ID
-        in: header
-        name: X-User-Id
-        required: true
-        type: string
-      - description: Address
-        in: header
-        name: X-Address-Id
-        type: string
-      - description: Admin Role
-        in: header
-        name: X-Role
-        required: true
-        type: string
-      - description: Verification rejection request
-        in: body
-        name: verification
-        required: true
-        schema:
-          $ref: '#/definitions/request.UserVerificationRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success message
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  type: string
-              type: object
-      summary: Reject a user verification request
       tags:
       - Admin
   /v1/kpu-kota:
@@ -687,6 +593,46 @@ paths:
       summary: Register KPU Kota
       tags:
       - kpu_kota
+  /v1/kpu-kota/update:
+    put:
+      consumes:
+      - application/json
+      description: Update KPU Kota information
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        required: true
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Update Request
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.KPUKotaUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUKotaResponse'
+              type: object
+      summary: Update KPU Kota
+      tags:
+      - kpu_kota
   /v1/kpu-provinsi:
     get:
       consumes:
@@ -899,6 +845,46 @@ paths:
                   $ref: '#/definitions/response.KPUProvinsiRegistrationResponse'
               type: object
       summary: Register KPU Provinsi
+      tags:
+      - kpu_provinsi
+  /v1/kpu-provinsi/update:
+    put:
+      consumes:
+      - application/json
+      description: Update KPU Provinsi information
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        required: true
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Update Request
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.KPUProvinsiUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiResponse'
+              type: object
+      summary: Update KPU Provinsi
       tags:
       - kpu_provinsi
   /v1/user/{email}:
@@ -1178,6 +1164,168 @@ paths:
       summary: Check verification status
       tags:
       - User
+  /v1/verifications/approve:
+    post:
+      consumes:
+      - application/json
+      description: Approve a pending user verification, activating their account with
+        the requested role
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      - description: Verification approval request
+        in: body
+        name: verification
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Approve a user verification request
+      tags:
+      - Admin
+  /v1/verifications/details/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a user's pending verification including
+        entity-specific data
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User verification details
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserVerificationDetailsResponse'
+              type: object
+      summary: Get pending verification details for a specific user
+      tags:
+      - Admin
+  /v1/verifications/pending:
+    get:
+      consumes:
+      - application/json
+      description: Get all users with pending verification status that can be verified
+        by the current user's role
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: User Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pending verification users
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.UserVerificationResponse'
+                  type: array
+              type: object
+      summary: Get pending verification requests for the appropriate role
+      tags:
+      - Admin
+  /v1/verifications/reject:
+    post:
+      consumes:
+      - application/json
+      description: Reject a pending user verification, keeping their account as unverified
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      - description: Verification rejection request
+        in: body
+        name: verification
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Reject a user verification request
+      tags:
+      - Admin
   /v1/voter:
     get:
       consumes:

@@ -6,6 +6,7 @@ import (
 	_ "github.com/nocturna-ta/ums/docs"
 	"github.com/nocturna-ta/ums/internal/handler/api/middleware"
 	"github.com/nocturna-ta/ums/internal/usecases"
+	"github.com/nocturna-ta/ums/pkg/roles"
 	"time"
 )
 
@@ -90,6 +91,7 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			kpuProvinsi.GET("/:id", api.GetKPUProvinsiByID, router.MustAuthorized(false))
 			kpuProvinsi.POST("/:id/photo", api.UploadKPUProvinsiPhoto, router.MustAuthorized(false))
 			kpuProvinsi.ATTACHMENT("/:id/photo", api.GetKPUProvinsiPhoto, router.MustAuthorized(false))
+			kpuProvinsi.PUT("/update", api.UpdateKPUProvinsi, router.MustAuthorized(false))
 
 		})
 		v1.Group("/kpu-kota", func(kpuKota *router.FastRouter) {
@@ -99,6 +101,7 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			kpuKota.GET("/:id", api.GetKPUKotaByID, router.MustAuthorized(false))
 			kpuKota.POST("/:id/photo", api.UploadKPUKotaPhoto, router.MustAuthorized(false))
 			kpuKota.ATTACHMENT("/:id/photo", api.GetKPUKotaPhoto, router.MustAuthorized(false))
+			kpuKota.PUT("/update", api.UpdateKPUKota, router.MustAuthorized(false))
 		})
 		v1.Group("/user", func(user *router.FastRouter) {
 			user.POST("/register", api.RegisterUser, router.MustAuthorized(false))
@@ -108,6 +111,25 @@ func (api *API) RegisterRoute() *router.FastRouter {
 
 			user.GET("/verification-status/:email", api.CheckVerificationStatus, router.MustAuthorized(false))
 			user.GET("/my-verification-status", api.GetMyVerificationStatus)
+		})
+
+		v1.Group("/verifications", func(verifications *router.FastRouter) {
+			verifications.GET("/pending", middleware.RequireAnyRole(
+				roles.RoleKPUPusat,
+				roles.RoleKPUProvinsi,
+				roles.RoleKPUKota)(api.GetPendingVerificationsForRole))
+			verifications.GET("/details/:user_id", middleware.RequireAnyRole(
+				roles.RoleKPUPusat,
+				roles.RoleKPUProvinsi,
+				roles.RoleKPUKota)(api.GetPendingVerificationDetails))
+			verifications.POST("/approve", middleware.RequireAnyRole(
+				roles.RoleKPUPusat,
+				roles.RoleKPUProvinsi,
+				roles.RoleKPUKota)(api.ApproveVerification))
+			verifications.POST("/reject", middleware.RequireAnyRole(
+				roles.RoleKPUPusat,
+				roles.RoleKPUProvinsi,
+				roles.RoleKPUKota)(api.RejectVerification))
 		})
 
 		v1.Group("/admin", func(admin *router.FastRouter) {

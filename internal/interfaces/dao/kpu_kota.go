@@ -317,3 +317,95 @@ kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created
 
 	return &kpuKotaModel, nil
 }
+
+func (K *KPUKotaRepository) UpdateKPUKota(ctx context.Context, kpu *model.KPUKota, signedTransaction string) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaRepository.UpdateKPUKota")
+	defer span.End()
+
+	tx, err := utils2.StringToTx(signedTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to convert signed transaction to transaction")
+		return err
+	}
+	sqlTrx := utils.GetSqlTx(ctx)
+
+	var ownTransaction bool
+	if sqlTrx == nil {
+		var err error
+		sqlTrx, err = K.db.GetMaster().BeginTxx(ctx, nil)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to begin transaction")
+			return err
+		}
+
+		ownTransaction = true
+
+		defer func() {
+			if err != nil && ownTransaction {
+				rollbackErr := sqlTrx.Rollback()
+				if rollbackErr != nil {
+					log.WithFields(log.Fields{
+						"error": rollbackErr,
+					}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to rollback transaction")
+				}
+			}
+		}()
+	}
+
+	setQuery := "name = $1, region = $2, telephone = $3, updated_at = $4"
+	whereQuery := " AND address = $5 AND is_deleted = false"
+	query := fmt.Sprintf(updateKPUKota, setQuery, whereQuery)
+
+	result, err := sqlTrx.ExecContext(ctx, query, kpu.Name, kpu.Region, kpu.Telephone, time.Now(), kpu.Address)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":   err,
+			"address": kpu.Address,
+		}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to update kpu kota")
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to get rows affected")
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrNoUpdateHappened
+	}
+
+	err = K.client.SendTransaction(ctx, tx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to send transaction")
+
+		if ownTransaction {
+			rollbackErr := sqlTrx.Rollback()
+			if rollbackErr != nil {
+				log.WithFields(log.Fields{
+					"error": rollbackErr,
+				}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to rollback transaction")
+			}
+		}
+		return err
+	}
+
+	if ownTransaction {
+		if err := sqlTrx.Commit(); err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to commit transaction")
+			return err
+		}
+	}
+
+	return nil
+}

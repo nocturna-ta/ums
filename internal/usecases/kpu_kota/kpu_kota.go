@@ -247,3 +247,60 @@ func (m *Module) GetKPUKotaPhoto(ctx context.Context, kpuKotaID uuid.UUID) (*htt
 
 	return file, contentType, nil
 }
+
+func (m *Module) UpdateKPUKota(ctx context.Context, updateRequest *request.KPUKotaUpdateRequest) (*response.KPUKotaResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaUseCases.UpdateKPUKota")
+	defer span.End()
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := m.kpuKotaRepo.GetKPUKotaByAddress(ctx, reqCtx.GetAddress())
+	if err != nil {
+		if errors.Is(err, dao.ErrNoUpdateHappened) {
+			return nil, &custerr.ErrChain{
+				Message: "No update happened, KPU Provinsi may not exist",
+				Code:    404,
+				Type:    response2.ErrNotFound,
+			}
+		}
+		return nil, err
+	}
+	existing.Name = updateRequest.Name
+	existing.Region = updateRequest.Region
+	existing.Telephone = updateRequest.Telephone
+
+	err = m.kpuKotaRepo.UpdateKPUKota(ctx, existing, updateRequest.SignedTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    existing.ID,
+			"req":   updateRequest,
+		}).ErrorWithCtx(ctx, "[KPUKotaUseCases.UpdateKPUKota] Failed to update kpu kota")
+	}
+
+	err = m.publisher.Publish(ctx, m.topics.MasterDataKPUProvinsi.Value, existing.ID.String(), existing.ToMessageModel(), map[string]any{
+		constants.MetaDataOperation: constants.Update,
+	})
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    existing.ID,
+		}).ErrorWithCtx(ctx, "[KPUKotaUseCases.UpdateKPUKota] Failed to publish update event")
+	}
+
+	return &response.KPUKotaResponse{
+		ID:           existing.ID.String(),
+		UserID:       existing.UserID.String(),
+		Address:      reqCtx.Address,
+		Name:         existing.Name,
+		Region:       existing.Region,
+		IsActive:     existing.IsActive,
+		PhotoURL:     existing.PhotoPath,
+		Telephone:    existing.Telephone,
+		RegisteredAt: existing.RegisteredAt.String(),
+	}, nil
+}

@@ -33,7 +33,7 @@ type VoterData struct {
 	Region       string `json:"region"`
 }
 
-func NewPendingRegistration(userID uuid.UUID, role string, signedTx string, data interface{}) (*PendingRegistration, error) {
+func NewPendingRegist(userID uuid.UUID, role string, signedTx string, data interface{}) (*PendingRegistration, error) {
 	now := time.Now()
 
 	entityDataJSON, err := json.Marshal(data)

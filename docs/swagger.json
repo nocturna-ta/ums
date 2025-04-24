@@ -58,136 +58,6 @@
                 }
             }
         },
-        "/v1/admin/verifications/approve": {
-            "post": {
-                "description": "Approve a pending user verification, activating their account with the requested role",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Approve a user verification request",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Admin User ID",
-                        "name": "X-User-Id",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Admin Role",
-                        "name": "X-Role",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "Verification approval request",
-                        "name": "verification",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.UserVerificationRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success message",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/admin/verifications/details/{user_id}": {
-            "get": {
-                "description": "Get detailed information about a user's pending verification including entity-specific data",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Get pending verification details for a specific user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Admin User ID",
-                        "name": "X-User-Id",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Admin Role",
-                        "name": "X-Role",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User verification details",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.UserVerificationDetailsResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/admin/verifications/pending": {
             "get": {
                 "description": "Get all users with pending verification status",
@@ -239,72 +109,6 @@
                                             "items": {
                                                 "$ref": "#/definitions/response.UserVerificationResponse"
                                             }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/admin/verifications/reject": {
-            "post": {
-                "description": "Reject a pending user verification, keeping their account as unverified",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Reject a user verification request",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Admin User ID",
-                        "name": "X-User-Id",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Admin Role",
-                        "name": "X-Role",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "Verification rejection request",
-                        "name": "verification",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.UserVerificationRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success message",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
                                         }
                                     }
                                 }
@@ -479,6 +283,71 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.KPUKotaRegistrationResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-kota/update": {
+            "put": {
+                "description": "Update KPU Kota information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kpu_kota"
+                ],
+                "summary": "Update KPU Kota",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Update Request",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.KPUKotaUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.KPUKotaResponse"
                                         }
                                     }
                                 }
@@ -826,6 +695,71 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.KPUProvinsiRegistrationResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-provinsi/update": {
+            "put": {
+                "description": "Update KPU Provinsi information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kpu_provinsi"
+                ],
+                "summary": "Update KPU Provinsi",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    },
+                    {
+                        "description": "Update Request",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.KPUProvinsiUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.KPUProvinsiResponse"
                                         }
                                     }
                                 }
@@ -1464,6 +1398,262 @@
                 }
             }
         },
+        "/v1/verifications/approve": {
+            "post": {
+                "description": "Approve a pending user verification, activating their account with the requested role",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Approve a user verification request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin Role",
+                        "name": "X-Role",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Verification approval request",
+                        "name": "verification",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserVerificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/verifications/details/{user_id}": {
+            "get": {
+                "description": "Get detailed information about a user's pending verification including entity-specific data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get pending verification details for a specific user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin Role",
+                        "name": "X-Role",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User verification details",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.UserVerificationDetailsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/verifications/pending": {
+            "get": {
+                "description": "Get all users with pending verification status that can be verified by the current user's role",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get pending verification requests for the appropriate role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User Role",
+                        "name": "X-Role",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending verification users",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.UserVerificationResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/verifications/reject": {
+            "post": {
+                "description": "Reject a pending user verification, keeping their account as unverified",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Reject a user verification request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin Role",
+                        "name": "X-Role",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Verification rejection request",
+                        "name": "verification",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserVerificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/voter": {
             "get": {
                 "description": "Get All Voter",
@@ -1810,6 +2000,23 @@
                 }
             }
         },
+        "request.KPUKotaUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "signed_transaction": {
+                    "type": "string"
+                },
+                "telephone": {
+                    "type": "string"
+                }
+            }
+        },
         "request.KPUProvinsiRegistrationRequest": {
             "type": "object",
             "properties": {
@@ -1826,6 +2033,23 @@
                     "type": "string"
                 },
                 "signed_transaction": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.KPUProvinsiUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "signed_transaction": {
+                    "type": "string"
+                },
+                "telephone": {
                     "type": "string"
                 }
             }
@@ -1964,6 +2188,12 @@
                 "region": {
                     "type": "string"
                 },
+                "registered_at": {
+                    "type": "string"
+                },
+                "telephone": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "string"
                 }
@@ -2002,6 +2232,12 @@
                     "type": "string"
                 },
                 "region": {
+                    "type": "string"
+                },
+                "registered_at": {
+                    "type": "string"
+                },
+                "telephone": {
                     "type": "string"
                 },
                 "user_id": {

@@ -7,11 +7,14 @@ import (
 )
 
 type VoterRegistrationRequest struct {
-	NIK               string `json:"nik"`
-	VoterAddress      string `json:"voter_address"`
-	Region            string `json:"region"`
-	IsRegistered      bool   `json:"is_registered"`
-	SignedTransaction string `json:"signed_transaction"`
+	FullName           string `json:"full_name"`
+	NIK                string `json:"nik"`
+	VoterAddress       string `json:"voter_address"`
+	Region             string `json:"region"`
+	BirthPlace         string `json:"birth_place"`
+	BirthDate          string `json:"birth_date"`
+	ResidentialAddress string `json:"residential_address"`
+	SignedTransaction  string `json:"signed_transaction"`
 }
 
 func (req *VoterRegistrationRequest) ValidateRegisterRequest() error {

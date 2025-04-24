@@ -12,4 +12,5 @@ type KPUKotaRepository interface {
 	GetKPUKotaByAddress(ctx context.Context, address string) (*model.KPUKota, error)
 	UpdateKPUKotaPhoto(ctx context.Context, id uuid.UUID, photoPath string) error
 	GetKPUKotaByID(ctx context.Context, id uuid.UUID) (*model.KPUKota, error)
+	UpdateKPUKota(ctx context.Context, kpu *model.KPUKota, signedTransaction string) error
 }

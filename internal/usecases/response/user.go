@@ -57,3 +57,16 @@ type UserVerificationStatusResponse struct {
 	CreatedAt          time.Time `json:"created_at"`
 	Message            string    `json:"message,omitempty"`
 }
+
+type EnhancedUserVerificationStatusResponse struct {
+	Username           string    `json:"username"`
+	Email              string    `json:"email"`
+	RequestedRole      string    `json:"requested_role"`
+	Role               string    `json:"role"`
+	VerificationStatus string    `json:"verification_status"`
+	IsActive           bool      `json:"is_active"`
+	CreatedAt          time.Time `json:"created_at"`
+	Message            string    `json:"message,omitempty"`
+	VerifierRole       string    `json:"verifier_role,omitempty"`
+	HierarchyLevel     int       `json:"hierarchy_level"`
+}

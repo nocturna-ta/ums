@@ -14,6 +14,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
 	"github.com/nocturna-ta/ums/pkg/constants"
+	"net/url"
 	"time"
 )
 
@@ -221,9 +222,14 @@ func (repo *UserRepository) GetByEmail(ctx context.Context, email string) (*mode
 		args []any
 	)
 
+	decodedEmail, err := url.QueryUnescape(email)
+	if err != nil {
+		decodedEmail = email
+	}
+
 	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
 	whereQuery := " AND users.email = $1 AND users.is_deleted = FALSE"
-	args = append(args, email)
+	args = append(args, decodedEmail)
 
 	query := fmt.Sprintf(selectUser, selectQuery, whereQuery)
 
@@ -241,6 +247,7 @@ func (repo *UserRepository) GetByEmail(ctx context.Context, email string) (*mode
 			"error": err,
 			"email": email,
 		}).ErrorWithCtx(ctx, "[UserRepository.GetByEmail] Failed to get user by email")
+		return nil, err
 	}
 
 	return &user, nil
@@ -311,6 +318,46 @@ func (repo *UserRepository) GetPendingVerificationUsers(ctx context.Context) ([]
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[UserRepository.GetPendingVerificationUsers] Failed to get pending verification users")
+			return nil, err
+		}
+	}
+
+	return users, nil
+}
+
+func (repo *UserRepository) GetPendingVerificationUsersByRequestedRole(ctx context.Context, requestedRole string) ([]model.User, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "UserRepository.GetPendingVerificationUsersByRequestedRole")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+
+	var (
+		users []model.User
+		args  []any
+	)
+
+	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
+	whereQuery := " AND users.verification_status = $1 AND users.requested_role = $2 AND users.is_deleted = FALSE"
+	args = append(args, model.VerificationStatusPending, requestedRole)
+
+	query := fmt.Sprintf(selectUser, selectQuery, whereQuery)
+
+	if sqlTrx != nil {
+		err := sqlTrx.SelectContext(ctx, &users, query, args...)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"role":  requestedRole,
+			}).ErrorWithCtx(ctx, "[UserRepository.GetPendingVerificationUsersByRequestedRole] Failed to get pending verification users by role")
+			return nil, err
+		}
+	} else {
+		err := repo.db.GetMaster().SelectContext(ctx, &users, query, args...)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"role":  requestedRole,
+			}).ErrorWithCtx(ctx, "[UserRepository.GetPendingVerificationUsersByRequestedRole] Failed to get pending verification users by role")
 			return nil, err
 		}
 	}

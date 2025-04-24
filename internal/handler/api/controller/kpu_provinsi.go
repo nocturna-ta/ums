@@ -250,3 +250,38 @@ func (api *API) GetKPUProvinsiPhoto(ctx context.Context, req *router.Request) (*
 		SetFileName(file.FileName).
 		SetContentType(contentType), nil
 }
+
+// UpdateKPUProvinsi godoc
+// @Summary Update KPU Provinsi
+// @Description Update KPU Provinsi information
+// @Tags kpu_provinsi
+// @Accept json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string true "Address"
+// @Param X-Role header string false "Role"
+// @Param data body request.KPUProvinsiUpdateRequest true "Update Request"
+// @Produce json
+// @Success 200 {object} jsonResponse{data=response.KPUProvinsiResponse}
+// @Router /v1/kpu-provinsi/update [put]
+func (api *API) UpdateKPUProvinsi(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.UpdateKPUProvinsi")
+	defer span.End()
+
+	var updateReq request.KPUProvinsiUpdateRequest
+	err := json.Unmarshal(req.RawBody(), &updateReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	err = updateReq.ValidateUpdateRequest()
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	res, err := api.kpuProvinsiUc.UpdateKPUProvinsi(ctx, &updateReq)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}

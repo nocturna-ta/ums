@@ -12,4 +12,5 @@ type KPUProvinsiRepository interface {
 	GetKPUProvinsiByAddress(ctx context.Context, address string) (*model.KPUProvinsi, error)
 	UpdateKPUProvinsiPhoto(ctx context.Context, id uuid.UUID, photoPath string) error
 	GetKPUProvinsiByID(ctx context.Context, id uuid.UUID) (*model.KPUProvinsi, error)
+	UpdateKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi, signedTransaction string) error
 }

@@ -12,6 +12,29 @@ import (
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 )
 
+// GetPendingVerificationsForRole godoc
+// @Summary Get pending verification requests for the appropriate role
+// @Description Get all users with pending verification status that can be verified by the current user's role
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param X-User-Id header string true "User ID"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string true "User Role"
+// @Success 200 {object} jsonResponse{data=[]response.UserVerificationResponse} "Pending verification users"
+// @Router /v1/verifications/pending [get]
+func (api *API) GetPendingVerificationsForRole(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetPendingVerificationsForRole")
+	defer span.End()
+
+	res, err := api.userUc.GetPendingVerificationsByRole(ctx)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}
+
 // GetPendingVerifications godoc
 // @Summary Get pending verification requests
 // @Description Get all users with pending verification status
@@ -46,7 +69,7 @@ func (api *API) GetPendingVerifications(ctx context.Context, req *router.Request
 // @Param X-Role header string true "Admin Role"
 // @Param user_id path string true "User ID"
 // @Success 200 {object} jsonResponse{data=response.UserVerificationDetailsResponse} "User verification details"
-// @Router /v1/admin/verifications/details/{user_id} [get]
+// @Router /v1/verifications/details/{user_id} [get]
 func (api *API) GetPendingVerificationDetails(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetPendingVerificationDetails")
 	defer span.End()
@@ -79,7 +102,7 @@ func (api *API) GetPendingVerificationDetails(ctx context.Context, req *router.R
 // @Param X-Role header string true "Admin Role"
 // @Param verification body request.UserVerificationRequest true "Verification approval request"
 // @Success 200 {object} jsonResponse{data=string} "Success message"
-// @Router /v1/admin/verifications/approve [post]
+// @Router /v1/verifications/approve [post]
 func (api *API) ApproveVerification(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.ApproveVerification")
 	defer span.End()
@@ -114,7 +137,7 @@ func (api *API) ApproveVerification(ctx context.Context, req *router.Request) (*
 // @Param X-Role header string true "Admin Role"
 // @Param verification body request.UserVerificationRequest true "Verification rejection request"
 // @Success 200 {object} jsonResponse{data=string} "Success message"
-// @Router /v1/admin/verifications/reject [post]
+// @Router /v1/verifications/reject [post]
 func (api *API) RejectVerification(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.RejectVerification")
 	defer span.End()

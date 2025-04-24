@@ -20,4 +20,6 @@ type UserUseCases interface {
 	RejectUserVerification(ctx context.Context, req *request.UserVerificationRequest) error
 	CheckVerificationStatus(ctx context.Context, email string) (*response.UserVerificationResponse, error)
 	GetMyVerificationStatus(ctx context.Context) (*response.UserVerificationStatusResponse, error)
+	GetPendingVerificationsByRole(ctx context.Context) (*[]response.UserVerificationResponse, error)
+	GetEnhancedVerificationStatus(ctx context.Context) (*response.EnhancedUserVerificationStatusResponse, error)
 }
