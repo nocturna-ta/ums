@@ -2,37 +2,54 @@ package model
 
 import (
 	"github.com/google/uuid"
-	"github.com/nocturna-ta/golib/utils/randomizer"
+	"github.com/nocturna-ta/common-model/models/event"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
-	"github.com/nocturna-ta/ums/pkg/utils"
-	"math/rand"
 	"time"
 )
 
 type Voter struct {
 	BaseModel
-	ID           uuid.UUID `db:"id"`
-	NIK          string    `db:"nik"`
-	VoterAddress string    `db:"voter_address"`
-	Region       string    `db:"region"`
-	IsRegistered bool      `db:"is_registered"`
-	HasVoted     bool      `db:"has_voted"`
-	Password     string    `db:"password"`
-	PasswordSalt string    `db:"password_salt"`
-	VotedAt      time.Time `db:"voted_at"`
-	LastLogin    time.Time `db:"last_login"`
+	ID                 uuid.UUID `db:"id"`
+	UserID             uuid.UUID `db:"user_id"`
+	NIK                string    `db:"nik"`
+	FullName           string    `db:"full_name"`
+	Gender             string    `db:"gender"`
+	BirthPlace         string    `db:"birth_place"`
+	BirthDate          time.Time `db:"birth_date"`
+	ResidentialAddress string    `db:"residential_address"`
+	VoterAddress       string    `db:"voter_address"`
+	Region             string    `db:"region"`
+	IsRegistered       bool      `db:"is_registered"`
+	HasVoted           bool      `db:"has_voted"`
+	VotedAt            time.Time `db:"voted_at"`
+	LastLogin          time.Time `db:"last_login"`
+}
+
+func (v *Voter) ToMessageModel() *event.VoterMessage {
+	msg := &event.VoterMessage{
+		BaseModelMessage: event.BaseModelMessage{
+			CreatedAt: v.CreatedAt,
+			UpdatedAt: v.UpdatedAt,
+			IsDeleted: v.IsDeleted,
+		},
+		ID:           v.ID.String(),
+		NIK:          v.NIK,
+		VoterAddress: v.VoterAddress,
+		Region:       v.Region,
+		IsRegistered: v.IsRegistered,
+	}
+	return msg
 }
 
 func ConstructRegistration(req *request.VoterRegistrationRequest) *Voter {
 	now := time.Now()
 
-	n := rand.Intn(10)
-	if n < 6 {
-		n += 4
-	}
-
-	salt := randomizer.RandomString(n)
 	voterId := uuid.New()
+	layout := "2006-01-02"
+	birthDate, err := time.Parse(layout, req.BirthDate)
+	if err != nil {
+		return nil
+	}
 
 	user := &Voter{
 		BaseModel: BaseModel{
@@ -40,16 +57,19 @@ func ConstructRegistration(req *request.VoterRegistrationRequest) *Voter {
 			UpdatedAt: now,
 			IsDeleted: false,
 		},
-		ID:           voterId,
-		NIK:          req.NIK,
-		VoterAddress: req.VoterAddress,
-		Password:     utils.PasswordHash(req.NIK, salt),
-		PasswordSalt: salt,
-		IsRegistered: req.IsRegistered,
-		HasVoted:     false,
-		VotedAt:      time.Time{},
-		Region:       req.Region,
-		LastLogin:    now,
+		ID:                 voterId,
+		NIK:                req.NIK,
+		FullName:           req.FullName,
+		Gender:             req.Gender,
+		BirthPlace:         req.BirthPlace,
+		BirthDate:          birthDate,
+		ResidentialAddress: req.ResidentialAddress,
+		VoterAddress:       req.VoterAddress,
+		Region:             req.Region,
+		IsRegistered:       false,
+		HasVoted:           false,
+		VotedAt:            time.Time{},
+		LastLogin:          now,
 	}
 	return user
 }

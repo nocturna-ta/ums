@@ -16,6 +16,7 @@ type (
 		Kafka      KafkaConfig      `yaml:"Kafka"`
 		Encryption EncryptionConfig `yaml:"Encryption"`
 		Cors       CorsConfig       `yaml:"Cors"`
+		GrpcServer GrpcServerConfig `yaml:"GrpcServer"`
 	}
 	ServerConfig struct {
 		Port         uint          `yaml:"Port" env:"SERVER_PORT"`
@@ -36,8 +37,12 @@ type (
 		ConnMaxLifetime string `yaml:"ConnMaxLifetime" env:"DB_CONN_MAX_LIFETIME"`
 	}
 	BlockchainConfig struct {
-		GanacheURL      string `yaml:"GanacheURL" env:"GANACHE_URL"`
-		ContractAddress string `yaml:"ContractAddress" env:"CONTRACT_ADDRESS"`
+		GanacheURL             string `yaml:"GanacheURL"`
+		VotechainAddress       string `yaml:"VotechainAddress" `
+		VotechainBaseAddress   string `yaml:"VotechainBaseAddress"`
+		KPUManagerAddress      string `yaml:"KPUManagerAddress"`
+		VoterManagerAddress    string `yaml:"VoterManagerAddress"`
+		ElectionManagerAddress string `yaml:"ElectionManagerAddress"`
 	}
 	JWTConfig struct {
 		Secret string `yaml:"Secret" env:"JWT_SECRET"`
@@ -53,7 +58,13 @@ type (
 	}
 
 	KafkaTopics struct {
-		MasterDataUser KafkaTopicConfig `yaml:"MasterDataUser"`
+		MasterDataUser        KafkaTopicConfig `yaml:"MasterDataUser"`
+		MasterDataVoter       KafkaTopicConfig `yaml:"MasterDataVoter"`
+		MasterDataKPUProvinsi KafkaTopicConfig `yaml:"MasterDataKpuProvinsi"`
+		MasterDataKPUKota     KafkaTopicConfig `yaml:"MasterDataKpuKota"`
+	}
+	GrpcServerConfig struct {
+		Port uint `yaml:"Port"`
 	}
 	KafkaTopicConfig struct {
 		Value        string `yaml:"Value" env:"KAFKA_TOPIC_VALUE"`

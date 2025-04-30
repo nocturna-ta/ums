@@ -16,6 +16,9 @@ import (
 // @Tags		voters
 // @Accept		json
 // @Param		users		body 		request.VoterRegistrationRequest	true	"Register Request"
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Produce	json
 // @Success	200	{object}	jsonResponse{data=response.VoterRegistrationResponse}
 // @Router		/v1/voter/register [post]
@@ -46,9 +49,12 @@ func (api *API) RegisterVoter(ctx context.Context, req *router.Request) (*rest.J
 // @Tags		voters
 // @Accept		json
 // @Param		nik		path 		string	true	"NIK"
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Produce	json
 // @Success	200	{object}	jsonResponse{data=response.VoterResponse}
-// @Router		/v1/voter/{nik} [get]
+// @Router		/v1/voter/nik/{nik} [get]
 func (api *API) GetVoterByNIK(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetVoterByNIK")
 	defer span.End()
@@ -68,17 +74,17 @@ func (api *API) GetVoterByNIK(ctx context.Context, req *router.Request) (*rest.J
 // @Description Get Voter By Address
 // @Tags		voters
 // @Accept		json
-// @Param		address		path 		string	true	"Address"
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Produce	json
 // @Success	200	{object}	jsonResponse{data=response.VoterResponse}
-// @Router		/v1/voter/address/{address} [get]
+// @Router		/v1/voter/address [get]
 func (api *API) GetVoterByAddress(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetVoterByAddress")
 	defer span.End()
 
-	address := req.Params("address")
-
-	res, err := api.voterUc.GetVoterByAddress(ctx, address)
+	res, err := api.voterUc.GetVoterByAddress(ctx)
 	if err != nil {
 		return cutresp.CustomErrorResponse(err)
 	}
@@ -92,6 +98,9 @@ func (api *API) GetVoterByAddress(ctx context.Context, req *router.Request) (*re
 // @Tags		voters
 // @Accept		json
 // @Param		region		path 		string	true	"Region"
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Produce	json
 // @Success	200	{object}	jsonResponse{data=response.VoterResponse}
 // @Router		/v1/voter/region/{region} [get]
@@ -114,6 +123,9 @@ func (api *API) GetVoterByRegion(ctx context.Context, req *router.Request) (*res
 // @Description Get All Voter
 // @Tags		voters
 // @Accept		json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Produce	json
 // @Success	200	{object}	jsonResponse{data=response.VoterResponse}
 // @Router		/v1/voter [get]

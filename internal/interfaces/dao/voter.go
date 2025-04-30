@@ -5,89 +5,112 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/nocturna-ta/golib/database/sql"
+	"github.com/nocturna-ta/golib/ethereum"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/tracing"
 	"github.com/nocturna-ta/golib/txmanager/utils"
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
-	"github.com/nocturna-ta/ums/pkg/binding"
+	utils2 "github.com/nocturna-ta/ums/pkg/utils"
+	"github.com/nocturna-ta/votechain-contract/binding/voterManager"
+	"github.com/nocturna-ta/votechain-contract/interfaces"
 )
 
 type VoterRepository struct {
-	client   *ethclient.Client
-	contract *binding.Votechain
+	client   ethereum.Client
+	contract interfaces.VoterManagerInterface
 	db       *sql.Store
 }
 
 type OptsVoterRepository struct {
-	Client          *ethclient.Client
+	Client          ethereum.Client
 	DB              *sql.Store
 	ContractAddress common.Address
+	Contract        interfaces.VoterManagerInterface
 }
 
 func NewVoterRepository(opts *OptsVoterRepository) repository.VoterRepository {
-	contract, err := binding.NewVotechain(opts.ContractAddress, opts.Client)
+	var contractInterface interfaces.VoterManagerInterface
+	contract, err := voterManager.NewVoterManager(opts.ContractAddress, opts.Client.GetEthClient())
 	if err != nil {
 		return nil
 	}
+	contractInterface = contract
+
 	return &VoterRepository{
 		client:   opts.Client,
-		contract: contract,
+		contract: contractInterface,
 		db:       opts.DB,
 	}
 }
 
 const (
-	insertVoter = `INSERT INTO voters (id, nik, voter_address, password, password_salt, is_registered, has_voted, voted_at, region, last_login, created_at, updated_at)
-								VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10, $11, $12)`
+	insertVoter = `INSERT INTO voters (id, user_id, nik, full_name, gender, birth_place, 
+                    birth_date, residential_address, region, voter_address, is_registered, 
+                    has_voted, voted_at, last_login, created_at, updated_at)
+					VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10, $11, $12, $13, $14, $15, $16)`
 	selectVoter = `SELECT %s FROM voters %s WHERE TRUE %s`
 	updateVoter = `UPDATE voters SET %s WHERE TRUE %s`
 )
 
-func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter) error {
+func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, signedTransaction string) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "VoterRepository.InsertVoter")
 	defer span.End()
 
-	var (
-		err error
-	)
+	tx, err := utils2.StringToTx(signedTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to convert signed transaction to transaction")
+		return err
+	}
 
 	sqlTrx := utils.GetSqlTx(ctx)
 
-	if sqlTrx != nil {
-		_, err = sqlTrx.ExecContext(ctx, insertVoter,
-			voter.ID,
-			voter.NIK,
-			voter.VoterAddress,
-			voter.Password,
-			voter.PasswordSalt,
-			voter.IsRegistered,
-			voter.HasVoted,
-			voter.VotedAt,
-			voter.Region,
-			voter.LastLogin,
-			voter.CreatedAt,
-			voter.UpdatedAt,
-		)
-	} else {
-		_, err = v.db.GetMaster().ExecContext(ctx, insertVoter,
-			voter.ID,
-			voter.NIK,
-			voter.VoterAddress,
-			voter.Password,
-			voter.PasswordSalt,
-			voter.IsRegistered,
-			voter.HasVoted,
-			voter.VotedAt,
-			voter.Region,
-			voter.LastLogin,
-			voter.CreatedAt,
-			voter.UpdatedAt,
-		)
+	var ownTransaction bool
+	if sqlTrx == nil {
+		sqlTrx, err = v.db.GetMaster().BeginTxx(ctx, nil)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to begin transaction")
+			return err
+		}
+		ownTransaction = true
+
+		defer func() {
+			if err != nil && ownTransaction {
+				rollbackErr := sqlTrx.Rollback()
+				if rollbackErr != nil {
+					log.WithFields(log.Fields{
+						"error": rollbackErr,
+					}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to rollback transaction")
+				}
+			}
+		}()
 	}
+
+	_, err = sqlTrx.ExecContext(ctx, insertVoter,
+		voter.ID,
+		voter.UserID,
+		voter.NIK,
+		voter.FullName,
+		voter.Gender,
+		voter.BirthPlace,
+		voter.BirthDate,
+		voter.ResidentialAddress,
+		voter.Region,
+		voter.VoterAddress,
+		voter.IsRegistered,
+		voter.HasVoted,
+		voter.VotedAt,
+		voter.LastLogin,
+		voter.CreatedAt,
+		voter.UpdatedAt,
+	)
 
 	if err != nil {
 		var pqErr *pq.Error
@@ -108,6 +131,32 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter) e
 		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to insert entry")
 		return err
 	}
+	err = v.client.SendTransaction(ctx, tx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to send transaction")
+
+		if ownTransaction {
+			rollbackErr := sqlTrx.Rollback()
+			if rollbackErr != nil {
+				log.WithFields(log.Fields{
+					"error": rollbackErr,
+				}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to rollback transaction")
+			}
+		}
+		return err
+	}
+
+	if ownTransaction {
+		if err := sqlTrx.Commit(); err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to commit transaction")
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -127,18 +176,9 @@ func (v *VoterRepository) GetAllVoter(ctx context.Context) ([]model.Voter, error
 		}).ErrorWithCtx(ctx, "[VoterRepository.GetAllVoter] Failed to get all voters")
 	}
 
-	selectQuery := `
-			   voters.id,
-               voters.nik,
-		       voters.voter_address,
-			   voters.region,
-		       voters.is_registered,
-		       voters.has_voted,
-		       voters.voted_at,
-		       voters.last_login,
-		       voters.created_at,
-		       voters.updated_at`
-
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
 	whereQuery := " AND voters.is_deleted = false"
 	joinQuery := ""
 
@@ -185,7 +225,7 @@ func (v *VoterRepository) GetVoterByNIK(ctx context.Context, nik string) (*model
 		args  []any
 	)
 
-	voterContract, err := v.contract.GetVoterByKTP(nil, nik)
+	voterContract, err := v.contract.GetVoterByNIK(nil, nik)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -193,17 +233,9 @@ func (v *VoterRepository) GetVoterByNIK(ctx context.Context, nik string) (*model
 		return nil, err
 	}
 
-	selectQuery := `
-			   voters.id,
-               voters.nik,
-		       voters.voter_address,
-			   voters.region,
-		       voters.is_registered,
-		       voters.has_voted,
-		       voters.voted_at,
-		       voters.last_login,
-		       voters.created_at,
-		       voters.updated_at`
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.nik = $1"
 	joinQuery := ""
@@ -250,18 +282,9 @@ func (v *VoterRepository) GetVoterByAddress(ctx context.Context, address string)
 		}).ErrorWithCtx(ctx, "[VoterRepository.GetVoterByAddress] Failed to get voter by address")
 		return nil, err
 	}
-
-	selectQuery := `
-			   voters.id,
-               voters.nik,
-		       voters.voter_address,
-			   voters.region,
-		       voters.is_registered,
-		       voters.has_voted,
-		       voters.voted_at,
-		       voters.last_login,
-		       voters.created_at,
-		       voters.updated_at`
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.voter_address = $1"
 	joinQuery := ""
@@ -301,24 +324,16 @@ func (v *VoterRepository) GetVoterByRegion(ctx context.Context, region string) (
 		args        []any
 	)
 
-	voters, err := v.contract.GetVotersByRegion(nil, region)
+	voters, err := v.contract.GetVoterByRegion(nil, region)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[VoterRepository.GetVoterByRegion] Failed to get voter by region")
 	}
 
-	selectQuery := `
-			   voters.id,
-               voters.nik,
-		       voters.voter_address,
-			   voters.region,
-		       voters.is_registered,
-		       voters.has_voted,
-		       voters.voted_at,
-		       voters.last_login,
-		       voters.created_at,
-		       voters.updated_at`
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.region = $1"
 	joinQuery := ""
@@ -357,4 +372,41 @@ func (v *VoterRepository) GetVoterByRegion(ctx context.Context, region string) (
 	}
 
 	return matchedVoters, nil
+}
+
+func (v *VoterRepository) GetVoterByID(ctx context.Context, id uuid.UUID) (*model.Voter, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "VoterRepository.GetVoterByID")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+	var (
+		voterModel model.Voter
+		err        error
+		args       []any
+	)
+
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
+
+	whereQuery := " AND voters.is_deleted = false AND voters.id = $1"
+	joinQuery := ""
+	args = append(args, id)
+
+	query := fmt.Sprintf(selectVoter, selectQuery, joinQuery, whereQuery)
+	if sqlTrx != nil {
+		err = sqlTrx.GetContext(ctx, &voterModel, query, args...)
+	} else {
+		err = v.db.GetMaster().GetContext(ctx, &voterModel, query, args...)
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    id,
+		}).ErrorWithCtx(ctx, "[VoterRepository.GetVoterByID] Failed to get voter by ID")
+		return nil, err
+	}
+
+	return &voterModel, nil
 }

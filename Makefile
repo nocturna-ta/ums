@@ -10,17 +10,24 @@ run-api: dependency swag-init
 	@echo ">> Running API Server"
 	@go run main.go server-http
 
+run-grpc: dependency
+	@echo ">> Running gRPC Server"
+	@go run main.go serve-grpc
 
 migrate-up:
 	@echo ">> Running Migrate Up"
 	@migrate -path db/migrations -database "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable" up
 
+migrate-down:
+	@echo ">> Running Migrate down"
+	@migrate -path db/migrations -database "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable" down
+
 remock:
 	#https://github.com/vektra/mockery
 	@echo ">> Mock Repositories"
-	@mockery --all --dir ./internal/domain/repository --output ./internal/domain/repository/mocks_repository --outpkg mocks_repository
+	@mockery --all --recursive --dir ./internal/domain/repository --output ./internal/domain/repository/mocks_repository --outpkg mocks_repository
 
-	@echo ">> Mock UseCases"
+	@echo ">> Mock Usecases"
 	@mockery --all --dir ./internal/usecases --output ./internal/usecases/mocks_usecases --outpkg mocks_usecases
 
 	@echo ">> Mock Interfaces"

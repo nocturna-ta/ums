@@ -3,6 +3,7 @@ package voter
 import (
 	"context"
 	"errors"
+	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/log"
 	response2 "github.com/nocturna-ta/golib/response"
@@ -11,6 +12,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/interfaces/dao"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
+	"github.com/nocturna-ta/ums/pkg/constants"
 )
 
 func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrationRequest) (*response.VoterRegistrationResponse, error) {
@@ -19,24 +21,44 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 
 	var (
 		voter *model.Voter
-		err   error
 	)
 
-	voter = model.ConstructRegistration(req)
-
-	if err := m.voterRepo.InsertVoter(ctx, voter); err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[VoterUseCases.RegisterVoter] Failed to register voter")
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	if errors.Is(err, dao.ErrDuplicate) {
-		return nil, &custerr.ErrChain{
-			Message: "User already exists",
-			Code:    400,
-			Cause:   err,
-			Type:    response2.ErrBadRequest,
+	transaction := func(txCtx context.Context) (any, error) {
+		voter = model.ConstructRegistration(req)
+		voter.UserID = reqCtx.GetUserId()
+
+		errTx := m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
+		if errTx != nil {
+			if errors.Is(errTx, dao.ErrDuplicate) {
+				return nil, &custerr.ErrChain{
+					Message: "User already exists",
+					Code:    400,
+					Type:    response2.ErrBadRequest,
+					Cause:   errTx,
+				}
+			}
+
+			return nil, errTx
 		}
+
+		errTx = m.publisher.Publish(txCtx, m.topics.MasterDataVoter.Value, voter.ID.String(), voter.ToMessageModel(), map[string]any{
+			constants.MetaDataOperation: constants.Create,
+		})
+		if errTx != nil {
+			return nil, errTx
+		}
+
+		return nil, nil
+	}
+
+	_, err = m.txMgr.Execute(ctx, transaction, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return &response.VoterRegistrationResponse{
@@ -57,34 +79,51 @@ func (m *Module) GetVoterByNIK(ctx context.Context, nik string) (*response.Voter
 	}
 
 	return &response.VoterResponse{
-		ID:           voter.ID.String(),
-		NIK:          voter.NIK,
-		VoterAddress: voter.VoterAddress,
-		Region:       voter.Region,
-		IsRegistered: voter.IsRegistered,
-		HasVoted:     voter.HasVoted,
+		ID:                 voter.ID.String(),
+		UserID:             voter.UserID.String(),
+		NIK:                voter.NIK,
+		FullName:           voter.FullName,
+		Gender:             voter.Gender,
+		BirthPlace:         voter.BirthPlace,
+		BirthDate:          voter.BirthDate.Format("2006-01-02"),
+		ResidentialAddress: voter.ResidentialAddress,
+		VoterAddress:       voter.VoterAddress,
+		Region:             voter.Region,
+		IsRegistered:       voter.IsRegistered,
+		HasVoted:           voter.HasVoted,
 	}, err
 }
 
-func (m *Module) GetVoterByAddress(ctx context.Context, address string) (*response.VoterResponse, error) {
+func (m *Module) GetVoterByAddress(ctx context.Context) (*response.VoterResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "VoterUseCases.GetVoterByAddress")
 	defer span.End()
 
-	voter, err := m.voterRepo.GetVoterByAddress(ctx, address)
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	voter, err := m.voterRepo.GetVoterByAddress(ctx, reqCtx.GetAddress())
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":   err,
-			"address": address,
+			"address": reqCtx.Address,
 		}).ErrorWithCtx(ctx, "[VoterUseCases.GetVoterByAddress] Failed to get voter by address")
 	}
 
 	return &response.VoterResponse{
-		ID:           voter.ID.String(),
-		NIK:          voter.NIK,
-		VoterAddress: voter.VoterAddress,
-		Region:       voter.Region,
-		IsRegistered: voter.IsRegistered,
-		HasVoted:     voter.HasVoted,
+		ID:                 voter.ID.String(),
+		UserID:             voter.UserID.String(),
+		NIK:                voter.NIK,
+		FullName:           voter.FullName,
+		Gender:             voter.Gender,
+		BirthPlace:         voter.BirthPlace,
+		BirthDate:          voter.BirthDate.Format("2006-01-02"),
+		ResidentialAddress: voter.ResidentialAddress,
+		VoterAddress:       voter.VoterAddress,
+		Region:             voter.Region,
+		IsRegistered:       voter.IsRegistered,
+		HasVoted:           voter.HasVoted,
 	}, err
 }
 
@@ -103,12 +142,18 @@ func (m *Module) GetVoterByRegion(ctx context.Context, region string) (*[]respon
 	var res []response.VoterResponse
 	for _, voter := range voters {
 		res = append(res, response.VoterResponse{
-			ID:           voter.ID.String(),
-			NIK:          voter.NIK,
-			VoterAddress: voter.VoterAddress,
-			Region:       voter.Region,
-			IsRegistered: voter.IsRegistered,
-			HasVoted:     voter.HasVoted,
+			ID:                 voter.ID.String(),
+			UserID:             voter.UserID.String(),
+			NIK:                voter.NIK,
+			FullName:           voter.FullName,
+			Gender:             voter.Gender,
+			BirthPlace:         voter.BirthPlace,
+			BirthDate:          voter.BirthDate.Format("2006-01-02"),
+			ResidentialAddress: voter.ResidentialAddress,
+			VoterAddress:       voter.VoterAddress,
+			Region:             voter.Region,
+			IsRegistered:       voter.IsRegistered,
+			HasVoted:           voter.HasVoted,
 		})
 	}
 
@@ -129,12 +174,18 @@ func (m *Module) GetAllVoter(ctx context.Context) (*[]response.VoterResponse, er
 	var res []response.VoterResponse
 	for _, voter := range voters {
 		res = append(res, response.VoterResponse{
-			ID:           voter.ID.String(),
-			NIK:          voter.NIK,
-			VoterAddress: voter.VoterAddress,
-			Region:       voter.Region,
-			IsRegistered: voter.IsRegistered,
-			HasVoted:     voter.HasVoted,
+			ID:                 voter.ID.String(),
+			UserID:             voter.UserID.String(),
+			NIK:                voter.NIK,
+			FullName:           voter.FullName,
+			Gender:             voter.Gender,
+			BirthPlace:         voter.BirthPlace,
+			BirthDate:          voter.BirthDate.Format("2006-01-02"),
+			ResidentialAddress: voter.ResidentialAddress,
+			VoterAddress:       voter.VoterAddress,
+			Region:             voter.Region,
+			IsRegistered:       voter.IsRegistered,
+			HasVoted:           voter.HasVoted,
 		})
 	}
 

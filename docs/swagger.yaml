@@ -17,9 +17,9 @@ definitions:
       message:
         type: string
     type: object
-  request.KPUBranchRegistrationRequest:
+  request.KPUKotaRegistrationRequest:
     properties:
-      branch_address:
+      address:
         type: string
       is_active:
         type: boolean
@@ -27,34 +27,273 @@ definitions:
         type: string
       region:
         type: string
+      signed_transaction:
+        type: string
+    type: object
+  request.KPUKotaUpdateRequest:
+    properties:
+      name:
+        type: string
+      region:
+        type: string
+      signed_transaction:
+        type: string
+      telephone:
+        type: string
+    type: object
+  request.KPUProvinsiRegistrationRequest:
+    properties:
+      address:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      region:
+        type: string
+      signed_transaction:
+        type: string
+    type: object
+  request.KPUProvinsiUpdateRequest:
+    properties:
+      name:
+        type: string
+      region:
+        type: string
+      signed_transaction:
+        type: string
+      telephone:
+        type: string
+    type: object
+  request.UserChangePasswordRequest:
+    properties:
+      confirm:
+        type: string
+      new:
+        type: string
+      old:
+        type: string
+    type: object
+  request.UserLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  request.UserRegistrationRequest:
+    properties:
+      address:
+        type: string
+      birth_date:
+        type: string
+      birth_place:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
+      kpu-name:
+        description: |-
+          Role-specific fields
+          For KPU Provinsi and KPU Kota
+        type: string
+      nik:
+        description: For Voter
+        type: string
+      password:
+        type: string
+      region:
+        type: string
+      residential_address:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  request.UserUpdateRequest:
+    properties:
+      username:
+        type: string
+    type: object
+  request.UserVerificationRequest:
+    properties:
+      admin_reason:
+        type: string
+      signed_transaction:
+        type: string
+      user_id:
+        type: string
     type: object
   request.VoterRegistrationRequest:
     properties:
-      is_registered:
-        type: boolean
+      birth_date:
+        type: string
+      birth_place:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
       nik:
         type: string
       region:
         type: string
+      residential_address:
+        type: string
+      signed_transaction:
+        type: string
       voter_address:
         type: string
     type: object
-  response.KPUBranchRegistrationResponse:
+  response.KPUKotaRegistrationResponse:
     properties:
-      branch_address:
+      address:
         type: string
       is_active:
         type: boolean
     type: object
-  response.KPUBranchResponse:
+  response.KPUKotaResponse:
     properties:
-      branch_address:
+      address:
         type: string
       id:
         type: string
       is_active:
         type: boolean
+      name:
+        type: string
+      photo_url:
+        type: string
       region:
+        type: string
+      registered_at:
+        type: string
+      telephone:
+        type: string
+      user_id:
+        type: string
+    type: object
+  response.KPUProvinsiRegistrationResponse:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+    type: object
+  response.KPUProvinsiResponse:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      photo_url:
+        type: string
+      region:
+        type: string
+      registered_at:
+        type: string
+      telephone:
+        type: string
+      user_id:
+        type: string
+    type: object
+  response.UserLoginResponse:
+    properties:
+      expires_at:
+        type: string
+      is_active:
+        type: boolean
+      message:
+        type: string
+      requested_role:
+        type: string
+      token:
+        type: string
+      verification_status:
+        type: string
+    type: object
+  response.UserRegistrationResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      message:
+        type: string
+      requested_role:
+        type: string
+      username:
+        type: string
+      verification_status:
+        type: string
+    type: object
+  response.UserResponse:
+    properties:
+      id:
+        type: string
+      username:
+        type: string
+    type: object
+  response.UserVerificationDetailsResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      entity_data:
+        additionalProperties: true
+        type: object
+      id:
+        type: string
+      requested_role:
+        type: string
+      username:
+        type: string
+      verification_status:
+        type: string
+    type: object
+  response.UserVerificationResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      requested_role:
+        type: string
+      username:
+        type: string
+      verification_status:
+        type: string
+    type: object
+  response.UserVerificationStatusResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      is_active:
+        type: boolean
+      message:
+        type: string
+      requested_role:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+      verification_status:
         type: string
     type: object
   response.VoterRegistrationResponse:
@@ -64,6 +303,14 @@ definitions:
     type: object
   response.VoterResponse:
     properties:
+      birth_date:
+        type: string
+      birth_place:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
       has_voted:
         type: boolean
       id:
@@ -73,6 +320,10 @@ definitions:
       nik:
         type: string
       region:
+        type: string
+      residential_address:
+        type: string
+      user_id:
         type: string
       voter_address:
         type: string
@@ -116,11 +367,61 @@ paths:
       summary: Ping
       tags:
       - Health
-  /v1/kpu-branch:
+  /v1/admin/verifications/pending:
     get:
       consumes:
       - application/json
-      description: Get All KPU Branch
+      description: Get all users with pending verification status
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pending verification users
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.UserVerificationResponse'
+                  type: array
+              type: object
+      summary: Get pending verification requests
+      tags:
+      - Admin
+  /v1/kpu-kota:
+    get:
+      consumes:
+      - application/json
+      description: Get All KPU Kota
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
       produces:
       - application/json
       responses:
@@ -131,20 +432,32 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.KPUBranchResponse'
+                  $ref: '#/definitions/response.KPUKotaResponse'
               type: object
-      summary: Get All KPU Branch
+      summary: Get All KPU Kota
       tags:
-      - kpu_branch
-  /v1/kpu-branch/address/{address}:
+      - kpu_kota
+  /v1/kpu-kota/{id}:
     get:
       consumes:
       - application/json
-      description: Get KPU Branch By Address
+      description: Get KPU Kota By ID
       parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
       - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: KPU Kota ID
         in: path
-        name: address
+        name: id
         required: true
         type: string
       produces:
@@ -157,23 +470,67 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.KPUBranchResponse'
+                  $ref: '#/definitions/response.KPUKotaResponse'
               type: object
-      summary: Get KPU Branch By Address
+      summary: Get KPU Kota By ID
       tags:
-      - kpu_branch
-  /v1/kpu-branch/register:
+      - kpu_kota
+  /v1/kpu-kota/{id}/photo:
+    get:
+      description: Get the photo for a KPU Kota
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: KPU Kota ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+      summary: Get photo for KPU Kota
+      tags:
+      - kpu_kota
     post:
       consumes:
-      - application/json
-      description: Register KPU Branch
+      - multipart/form-data
+      description: Upload a photo for a KPU Kota
       parameters:
-      - description: Register Request
-        in: body
-        name: users
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: KPU Kota ID
+        in: path
+        name: id
         required: true
-        schema:
-          $ref: '#/definitions/request.KPUBranchRegistrationRequest'
+        type: string
+      - description: Photo file (jpg, jpeg, png only)
+        in: formData
+        name: photo
+        required: true
+        type: file
       produces:
       - application/json
       responses:
@@ -184,16 +541,834 @@ paths:
             - $ref: '#/definitions/controller.jsonResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.KPUBranchRegistrationResponse'
+                  type: string
               type: object
-      summary: Register KPU Branch
+      summary: Upload photo for KPU Kota
       tags:
-      - kpu_branch
+      - kpu_kota
+  /v1/kpu-kota/address:
+    get:
+      consumes:
+      - application/json
+      description: Get KPU Kota By Address
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUKotaResponse'
+              type: object
+      summary: Get KPU Kota By Address
+      tags:
+      - kpu_kota
+  /v1/kpu-kota/register:
+    post:
+      consumes:
+      - application/json
+      description: Register KPU Kota
+      parameters:
+      - description: Register Request
+        in: body
+        name: users
+        required: true
+        schema:
+          $ref: '#/definitions/request.KPUKotaRegistrationRequest'
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUKotaRegistrationResponse'
+              type: object
+      summary: Register KPU Kota
+      tags:
+      - kpu_kota
+  /v1/kpu-kota/update:
+    put:
+      consumes:
+      - application/json
+      description: Update KPU Kota information
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        required: true
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Update Request
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.KPUKotaUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUKotaResponse'
+              type: object
+      summary: Update KPU Kota
+      tags:
+      - kpu_kota
+  /v1/kpu-provinsi:
+    get:
+      consumes:
+      - application/json
+      description: Get All KPU Provinsi
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiResponse'
+              type: object
+      summary: Get All KPU Provinsi
+      tags:
+      - kpu_provinsi
+  /v1/kpu-provinsi/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get KPU Provinsi By ID
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: KPU Provinsi ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiResponse'
+              type: object
+      summary: Get KPU Provinsi By ID
+      tags:
+      - kpu_provinsi
+  /v1/kpu-provinsi/{id}/photo:
+    get:
+      description: Get the photo for a KPU Provinsi
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: KPU Provinsi ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+      summary: Get photo for KPU Provinsi
+      tags:
+      - kpu_provinsi
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a photo for a KPU Provinsi
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: KPU Provinsi ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Photo file (jpg, jpeg, png only)
+        in: formData
+        name: photo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Upload photo for KPU Provinsi
+      tags:
+      - kpu_provinsi
+  /v1/kpu-provinsi/address:
+    get:
+      consumes:
+      - application/json
+      description: Get KPU Provinsi By Address
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiResponse'
+              type: object
+      summary: Get KPU Provinsi By Address
+      tags:
+      - kpu_provinsi
+  /v1/kpu-provinsi/register:
+    post:
+      consumes:
+      - application/json
+      description: Register KPU Provinsi
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Register Request
+        in: body
+        name: users
+        required: true
+        schema:
+          $ref: '#/definitions/request.KPUProvinsiRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiRegistrationResponse'
+              type: object
+      summary: Register KPU Provinsi
+      tags:
+      - kpu_provinsi
+  /v1/kpu-provinsi/update:
+    put:
+      consumes:
+      - application/json
+      description: Update KPU Provinsi information
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        required: true
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Update Request
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.KPUProvinsiUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiResponse'
+              type: object
+      summary: Update KPU Provinsi
+      tags:
+      - kpu_provinsi
+  /v1/user/{email}:
+    get:
+      consumes:
+      - application/json
+      description: Get user by email
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: User email
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User found
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserResponse'
+              type: object
+      summary: Get user by email
+      tags:
+      - User
+  /v1/user/change-password:
+    put:
+      consumes:
+      - application/json
+      description: Change user password
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: User change password request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password changed
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserResponse'
+              type: object
+      summary: Change user password
+      tags:
+      - User
+  /v1/user/login:
+    post:
+      consumes:
+      - application/json
+      description: Login user
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: User login request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User logged in
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserLoginResponse'
+              type: object
+      summary: Login user
+      tags:
+      - User
+  /v1/user/me:
+    get:
+      consumes:
+      - application/json
+      description: Get user by ID
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User found
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserResponse'
+              type: object
+      summary: Get user by ID
+      tags:
+      - User
+  /v1/user/my-verification-status:
+    get:
+      consumes:
+      - application/json
+      description: Get the verification status and details for the currently logged
+        in user
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User verification status
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserVerificationStatusResponse'
+              type: object
+      summary: Get current user's verification status
+      tags:
+      - User
+  /v1/user/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: User registration request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserRegistrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserRegistrationResponse'
+              type: object
+      summary: Register a new user
+      tags:
+      - User
+  /v1/user/update:
+    put:
+      consumes:
+      - application/json
+      description: Update user
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: User update request
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserResponse'
+              type: object
+      summary: Update user
+      tags:
+      - User
+  /v1/user/verification-status/{email}:
+    get:
+      consumes:
+      - application/json
+      description: Check the verification status of a user account
+      parameters:
+      - description: User email
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User verification status
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserVerificationResponse'
+              type: object
+      summary: Check verification status
+      tags:
+      - User
+  /v1/verifications/approve:
+    post:
+      consumes:
+      - application/json
+      description: Approve a pending user verification, activating their account with
+        the requested role
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      - description: Verification approval request
+        in: body
+        name: verification
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Approve a user verification request
+      tags:
+      - Admin
+  /v1/verifications/details/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a user's pending verification including
+        entity-specific data
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User verification details
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.UserVerificationDetailsResponse'
+              type: object
+      summary: Get pending verification details for a specific user
+      tags:
+      - Admin
+  /v1/verifications/pending:
+    get:
+      consumes:
+      - application/json
+      description: Get all users with pending verification status that can be verified
+        by the current user's role
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: User Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pending verification users
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.UserVerificationResponse'
+                  type: array
+              type: object
+      summary: Get pending verification requests for the appropriate role
+      tags:
+      - Admin
+  /v1/verifications/reject:
+    post:
+      consumes:
+      - application/json
+      description: Reject a pending user verification, keeping their account as unverified
+      parameters:
+      - description: Admin User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Admin Role
+        in: header
+        name: X-Role
+        required: true
+        type: string
+      - description: Verification rejection request
+        in: body
+        name: verification
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Reject a user verification request
+      tags:
+      - Admin
   /v1/voter:
     get:
       consumes:
       - application/json
       description: Get All Voter
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
       produces:
       - application/json
       responses:
@@ -209,42 +1384,23 @@ paths:
       summary: Get All Voter
       tags:
       - voters
-  /v1/voter/{nik}:
-    get:
-      consumes:
-      - application/json
-      description: Get Voter By NIK
-      parameters:
-      - description: NIK
-        in: path
-        name: nik
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.VoterResponse'
-              type: object
-      summary: Get Voter By NIK
-      tags:
-      - voters
-  /v1/voter/address/{address}:
+  /v1/voter/address:
     get:
       consumes:
       - application/json
       description: Get Voter By Address
       parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
       - description: Address
-        in: path
-        name: address
-        required: true
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
         type: string
       produces:
       - application/json
@@ -261,6 +1417,44 @@ paths:
       summary: Get Voter By Address
       tags:
       - voters
+  /v1/voter/nik/{nik}:
+    get:
+      consumes:
+      - application/json
+      description: Get Voter By NIK
+      parameters:
+      - description: NIK
+        in: path
+        name: nik
+        required: true
+        type: string
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.VoterResponse'
+              type: object
+      summary: Get Voter By NIK
+      tags:
+      - voters
   /v1/voter/region/{region}:
     get:
       consumes:
@@ -271,6 +1465,18 @@ paths:
         in: path
         name: region
         required: true
+        type: string
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
         type: string
       produces:
       - application/json
@@ -299,6 +1505,18 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/request.VoterRegistrationRequest'
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
       produces:
       - application/json
       responses:

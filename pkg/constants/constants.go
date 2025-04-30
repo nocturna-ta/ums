@@ -1,5 +1,6 @@
 package constants
 
 const (
-	EmptyString = ""
+	EmptyString   = ""
+	Authorization = "authorization"
 )
