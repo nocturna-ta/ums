@@ -16,19 +16,20 @@ type UserRegistrationRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
+	Address  string `json:"address,omitempty"`
 
 	// Role-specific fields
 	// For KPU Provinsi and KPU Kota
-	Name    string `json:"name,omitempty"`
-	Address string `json:"address,omitempty"`
+	KPUName string `json:"kpu-name,omitempty"`
 	Region  string `json:"region,omitempty"`
 
 	// For Voter
-	NIK          string `json:"nik,omitempty"`
-	VoterAddress string `json:"voter_address,omitempty"`
-
-	// For blockchain transaction
-	SignedTransaction string `json:"signed_transaction,omitempty"`
+	NIK                string `json:"nik,omitempty"`
+	FullName           string `json:"full_name,omitempty"`
+	Gender             string `json:"gender,omitempty"`
+	BirthPlace         string `json:"birth_place,omitempty"`
+	BirthDate          string `json:"birth_date,omitempty"`
+	ResidentialAddress string `json:"residential_address,omitempty"`
 }
 
 type UserUpdateRequest struct {
@@ -47,8 +48,9 @@ type UserLoginRequest struct {
 }
 
 type UserVerificationRequest struct {
-	UserID      string `json:"user_id"`
-	AdminReason string `json:"admin_reason"`
+	UserID            string `json:"user_id"`
+	AdminReason       string `json:"admin_reason"`
+	SignedTransaction string `json:"signed_transaction"`
 }
 
 func (r *UserLoginRequest) ValidateLogin() error {
@@ -142,7 +144,7 @@ func (r *UserRegistrationRequest) ValidateRegistrationUser() error {
 	if roles.IsValidRole(r.Role) {
 		switch r.Role {
 		case roles.RoleKPUProvinsi, roles.RoleKPUKota:
-			if r.Name == constants.EmptyString {
+			if r.KPUName == constants.EmptyString {
 				return &custerr.ErrChain{
 					Message: "Name is required for KPU roles",
 					Code:    400,
@@ -171,7 +173,7 @@ func (r *UserRegistrationRequest) ValidateRegistrationUser() error {
 					Type:    response.ErrBadRequest,
 				}
 			}
-			if r.VoterAddress == constants.EmptyString {
+			if r.Address == constants.EmptyString {
 				return &custerr.ErrChain{
 					Message: "Voter address is required for voter role",
 					Code:    400,

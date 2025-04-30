@@ -23,8 +23,14 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 		voter *model.Voter
 	)
 
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	transaction := func(txCtx context.Context) (any, error) {
 		voter = model.ConstructRegistration(req)
+		voter.UserID = reqCtx.GetUserId()
 
 		errTx := m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
 		if errTx != nil {
@@ -50,7 +56,7 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 		return nil, nil
 	}
 
-	_, err := m.txMgr.Execute(ctx, transaction, nil)
+	_, err = m.txMgr.Execute(ctx, transaction, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -73,12 +79,18 @@ func (m *Module) GetVoterByNIK(ctx context.Context, nik string) (*response.Voter
 	}
 
 	return &response.VoterResponse{
-		ID:           voter.ID.String(),
-		NIK:          voter.NIK,
-		VoterAddress: voter.VoterAddress,
-		Region:       voter.Region,
-		IsRegistered: voter.IsRegistered,
-		HasVoted:     voter.HasVoted,
+		ID:                 voter.ID.String(),
+		UserID:             voter.UserID.String(),
+		NIK:                voter.NIK,
+		FullName:           voter.FullName,
+		Gender:             voter.Gender,
+		BirthPlace:         voter.BirthPlace,
+		BirthDate:          voter.BirthDate.Format("2006-01-02"),
+		ResidentialAddress: voter.ResidentialAddress,
+		VoterAddress:       voter.VoterAddress,
+		Region:             voter.Region,
+		IsRegistered:       voter.IsRegistered,
+		HasVoted:           voter.HasVoted,
 	}, err
 }
 
@@ -100,12 +112,18 @@ func (m *Module) GetVoterByAddress(ctx context.Context) (*response.VoterResponse
 	}
 
 	return &response.VoterResponse{
-		ID:           voter.ID.String(),
-		NIK:          voter.NIK,
-		VoterAddress: voter.VoterAddress,
-		Region:       voter.Region,
-		IsRegistered: voter.IsRegistered,
-		HasVoted:     voter.HasVoted,
+		ID:                 voter.ID.String(),
+		UserID:             voter.UserID.String(),
+		NIK:                voter.NIK,
+		FullName:           voter.FullName,
+		Gender:             voter.Gender,
+		BirthPlace:         voter.BirthPlace,
+		BirthDate:          voter.BirthDate.Format("2006-01-02"),
+		ResidentialAddress: voter.ResidentialAddress,
+		VoterAddress:       voter.VoterAddress,
+		Region:             voter.Region,
+		IsRegistered:       voter.IsRegistered,
+		HasVoted:           voter.HasVoted,
 	}, err
 }
 
@@ -124,12 +142,18 @@ func (m *Module) GetVoterByRegion(ctx context.Context, region string) (*[]respon
 	var res []response.VoterResponse
 	for _, voter := range voters {
 		res = append(res, response.VoterResponse{
-			ID:           voter.ID.String(),
-			NIK:          voter.NIK,
-			VoterAddress: voter.VoterAddress,
-			Region:       voter.Region,
-			IsRegistered: voter.IsRegistered,
-			HasVoted:     voter.HasVoted,
+			ID:                 voter.ID.String(),
+			UserID:             voter.UserID.String(),
+			NIK:                voter.NIK,
+			FullName:           voter.FullName,
+			Gender:             voter.Gender,
+			BirthPlace:         voter.BirthPlace,
+			BirthDate:          voter.BirthDate.Format("2006-01-02"),
+			ResidentialAddress: voter.ResidentialAddress,
+			VoterAddress:       voter.VoterAddress,
+			Region:             voter.Region,
+			IsRegistered:       voter.IsRegistered,
+			HasVoted:           voter.HasVoted,
 		})
 	}
 
@@ -150,12 +174,18 @@ func (m *Module) GetAllVoter(ctx context.Context) (*[]response.VoterResponse, er
 	var res []response.VoterResponse
 	for _, voter := range voters {
 		res = append(res, response.VoterResponse{
-			ID:           voter.ID.String(),
-			NIK:          voter.NIK,
-			VoterAddress: voter.VoterAddress,
-			Region:       voter.Region,
-			IsRegistered: voter.IsRegistered,
-			HasVoted:     voter.HasVoted,
+			ID:                 voter.ID.String(),
+			UserID:             voter.UserID.String(),
+			NIK:                voter.NIK,
+			FullName:           voter.FullName,
+			Gender:             voter.Gender,
+			BirthPlace:         voter.BirthPlace,
+			BirthDate:          voter.BirthDate.Format("2006-01-02"),
+			ResidentialAddress: voter.ResidentialAddress,
+			VoterAddress:       voter.VoterAddress,
+			Region:             voter.Region,
+			IsRegistered:       voter.IsRegistered,
+			HasVoted:           voter.HasVoted,
 		})
 	}
 

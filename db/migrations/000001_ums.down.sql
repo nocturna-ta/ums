@@ -12,3 +12,5 @@ DROP TABLE IF EXISTS users;
 -- Drop enum types
 DROP TYPE IF EXISTS verification_status;
 DROP TYPE IF EXISTS users_role;
+
+DROP TABLE IF EXISTS pending_registrations;

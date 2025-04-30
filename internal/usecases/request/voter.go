@@ -7,8 +7,9 @@ import (
 )
 
 type VoterRegistrationRequest struct {
-	FullName           string `json:"full_name"`
 	NIK                string `json:"nik"`
+	FullName           string `json:"full_name"`
+	Gender             string `json:"gender"`
 	VoterAddress       string `json:"voter_address"`
 	Region             string `json:"region"`
 	BirthPlace         string `json:"birth_place"`

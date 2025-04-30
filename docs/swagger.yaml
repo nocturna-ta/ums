@@ -85,9 +85,17 @@ definitions:
     properties:
       address:
         type: string
+      birth_date:
+        type: string
+      birth_place:
+        type: string
       email:
         type: string
-      name:
+      full_name:
+        type: string
+      gender:
+        type: string
+      kpu-name:
         description: |-
           Role-specific fields
           For KPU Provinsi and KPU Kota
@@ -99,14 +107,11 @@ definitions:
         type: string
       region:
         type: string
+      residential_address:
+        type: string
       role:
         type: string
-      signed_transaction:
-        description: For blockchain transaction
-        type: string
       username:
-        type: string
-      voter_address:
         type: string
     type: object
   request.UserUpdateRequest:
@@ -118,16 +123,26 @@ definitions:
     properties:
       admin_reason:
         type: string
+      signed_transaction:
+        type: string
       user_id:
         type: string
     type: object
   request.VoterRegistrationRequest:
     properties:
-      is_registered:
-        type: boolean
+      birth_date:
+        type: string
+      birth_place:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
       nik:
         type: string
       region:
+        type: string
+      residential_address:
         type: string
       signed_transaction:
         type: string
@@ -242,8 +257,6 @@ definitions:
         type: string
       requested_role:
         type: string
-      signed_transaction:
-        type: string
       username:
         type: string
       verification_status:
@@ -290,6 +303,14 @@ definitions:
     type: object
   response.VoterResponse:
     properties:
+      birth_date:
+        type: string
+      birth_place:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
       has_voted:
         type: boolean
       id:
@@ -299,6 +320,10 @@ definitions:
       nik:
         type: string
       region:
+        type: string
+      residential_address:
+        type: string
+      user_id:
         type: string
       voter_address:
         type: string

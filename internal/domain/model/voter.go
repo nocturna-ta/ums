@@ -10,8 +10,10 @@ import (
 type Voter struct {
 	BaseModel
 	ID                 uuid.UUID `db:"id"`
+	UserID             uuid.UUID `db:"user_id"`
 	NIK                string    `db:"nik"`
 	FullName           string    `db:"full_name"`
+	Gender             string    `db:"gender"`
 	BirthPlace         string    `db:"birth_place"`
 	BirthDate          time.Time `db:"birth_date"`
 	ResidentialAddress string    `db:"residential_address"`
@@ -58,11 +60,13 @@ func ConstructRegistration(req *request.VoterRegistrationRequest) *Voter {
 		ID:                 voterId,
 		NIK:                req.NIK,
 		FullName:           req.FullName,
+		Gender:             req.Gender,
 		BirthPlace:         req.BirthPlace,
 		BirthDate:          birthDate,
 		ResidentialAddress: req.ResidentialAddress,
 		VoterAddress:       req.VoterAddress,
 		Region:             req.Region,
+		IsRegistered:       false,
 		HasVoted:           false,
 		VotedAt:            time.Time{},
 		LastLogin:          now,

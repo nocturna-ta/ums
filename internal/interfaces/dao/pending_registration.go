@@ -31,8 +31,8 @@ func NewPendingRegistrationRepository(opts *OptsPendingRegistrationRepository) r
 }
 
 const (
-	insertPendingRegistration = `INSERT INTO pending_registrations (id, user_id, role, entity_data, signed_transaction, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	insertPendingRegistration = `INSERT INTO pending_registrations (id, user_id, role, entity_data, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6)`
 	selectPendingRegistration = `SELECT %s FROM pending_registrations WHERE TRUE %s`
 	deletePendingRegistration = `UPDATE pending_registrations SET is_deleted = TRUE, updated_at = $1 WHERE id = $2`
 )
@@ -51,7 +51,6 @@ func (repo *PendingRegistrationRepository) Insert(ctx context.Context, registrat
 			registration.UserID,
 			registration.Role,
 			registration.EntityData,
-			registration.SignedTransaction,
 			registration.CreatedAt,
 			registration.UpdatedAt)
 
@@ -61,7 +60,6 @@ func (repo *PendingRegistrationRepository) Insert(ctx context.Context, registrat
 			registration.UserID,
 			registration.Role,
 			registration.EntityData,
-			registration.SignedTransaction,
 			registration.CreatedAt,
 			registration.UpdatedAt)
 	}
@@ -100,7 +98,7 @@ func (repo *PendingRegistrationRepository) GetByUserID(ctx context.Context, user
 	)
 	sqlTrx := utils.GetSqlTx(ctx)
 
-	selectQuery := "id, user_id, role, entity_data, signed_transaction, created_at, updated_at"
+	selectQuery := "id, user_id, role, entity_data, created_at, updated_at"
 	whereClause := " AND user_id = $1 AND is_deleted = FALSE"
 	args = append(args, userID)
 	query := fmt.Sprintf(selectPendingRegistration, selectQuery, whereClause)

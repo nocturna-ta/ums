@@ -44,7 +44,6 @@ type UserVerificationDetailsResponse struct {
 	VerificationStatus string                 `json:"verification_status"`
 	CreatedAt          time.Time              `json:"created_at"`
 	EntityData         map[string]interface{} `json:"entity_data,omitempty"`
-	SignedTransaction  string                 `json:"signed_transaction,omitempty"`
 }
 
 type UserVerificationStatusResponse struct {

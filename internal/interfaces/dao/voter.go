@@ -48,8 +48,10 @@ func NewVoterRepository(opts *OptsVoterRepository) repository.VoterRepository {
 }
 
 const (
-	insertVoter = `INSERT INTO voters (id, nik, voter_address, is_registered, has_voted, voted_at, region, last_login, created_at, updated_at)
-								VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10)`
+	insertVoter = `INSERT INTO voters (id, user_id, nik, full_name, gender, birth_place, 
+                    birth_date, residential_address, region, voter_address, is_registered, 
+                    has_voted, voted_at, last_login, created_at, updated_at)
+					VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10, $11, $12, $13, $14, $15, $16)`
 	selectVoter = `SELECT %s FROM voters %s WHERE TRUE %s`
 	updateVoter = `UPDATE voters SET %s WHERE TRUE %s`
 )
@@ -93,12 +95,18 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 
 	_, err = sqlTrx.ExecContext(ctx, insertVoter,
 		voter.ID,
+		voter.UserID,
 		voter.NIK,
+		voter.FullName,
+		voter.Gender,
+		voter.BirthPlace,
+		voter.BirthDate,
+		voter.ResidentialAddress,
+		voter.Region,
 		voter.VoterAddress,
 		voter.IsRegistered,
 		voter.HasVoted,
 		voter.VotedAt,
-		voter.Region,
 		voter.LastLogin,
 		voter.CreatedAt,
 		voter.UpdatedAt,
@@ -168,18 +176,9 @@ func (v *VoterRepository) GetAllVoter(ctx context.Context) ([]model.Voter, error
 		}).ErrorWithCtx(ctx, "[VoterRepository.GetAllVoter] Failed to get all voters")
 	}
 
-	selectQuery := `
-			   voters.id,
-               voters.nik,
-		       voters.voter_address,
-			   voters.region,
-		       voters.is_registered,
-		       voters.has_voted,
-		       voters.voted_at,
-		       voters.last_login,
-		       voters.created_at,
-		       voters.updated_at`
-
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
 	whereQuery := " AND voters.is_deleted = false"
 	joinQuery := ""
 
@@ -234,17 +233,9 @@ func (v *VoterRepository) GetVoterByNIK(ctx context.Context, nik string) (*model
 		return nil, err
 	}
 
-	selectQuery := `
-			   voters.id,
-               voters.nik,
-		       voters.voter_address,
-			   voters.region,
-		       voters.is_registered,
-		       voters.has_voted,
-		       voters.voted_at,
-		       voters.last_login,
-		       voters.created_at,
-		       voters.updated_at`
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.nik = $1"
 	joinQuery := ""
@@ -291,18 +282,9 @@ func (v *VoterRepository) GetVoterByAddress(ctx context.Context, address string)
 		}).ErrorWithCtx(ctx, "[VoterRepository.GetVoterByAddress] Failed to get voter by address")
 		return nil, err
 	}
-
-	selectQuery := `
-			   voters.id,
-               voters.nik,
-		       voters.voter_address,
-			   voters.region,
-		       voters.is_registered,
-		       voters.has_voted,
-		       voters.voted_at,
-		       voters.last_login,
-		       voters.created_at,
-		       voters.updated_at`
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.voter_address = $1"
 	joinQuery := ""
@@ -349,17 +331,9 @@ func (v *VoterRepository) GetVoterByRegion(ctx context.Context, region string) (
 		}).ErrorWithCtx(ctx, "[VoterRepository.GetVoterByRegion] Failed to get voter by region")
 	}
 
-	selectQuery := `
-			   voters.id,
-               voters.nik,
-		       voters.voter_address,
-			   voters.region,
-		       voters.is_registered,
-		       voters.has_voted,
-		       voters.voted_at,
-		       voters.last_login,
-		       voters.created_at,
-		       voters.updated_at`
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.region = $1"
 	joinQuery := ""
@@ -411,17 +385,10 @@ func (v *VoterRepository) GetVoterByID(ctx context.Context, id uuid.UUID) (*mode
 		args       []any
 	)
 
-	selectQuery := `
-			   voters.id,
-               voters.nik,
-		       voters.voter_address,
-			   voters.region,
-		       voters.is_registered,
-		       voters.has_voted,
-		       voters.voted_at,
-		       voters.last_login,
-		       voters.created_at,
-		       voters.updated_at`
+	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
+			birth_date, residential_address, region, voter_address, is_registered, 
+			has_voted, voted_at, last_login, created_at, updated_at`
+
 	whereQuery := " AND voters.is_deleted = false AND voters.id = $1"
 	joinQuery := ""
 	args = append(args, id)

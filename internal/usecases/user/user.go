@@ -54,20 +54,25 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 		switch req.Role {
 		case roles.RoleKPUProvinsi:
 			entityData = &model.KPUProvinsiData{
-				Name:    req.Name,
+				Name:    req.KPUName,
 				Address: req.Address,
 				Region:  req.Region,
 			}
 		case roles.RoleKPUKota:
 			entityData = &model.KPUKotaData{
-				Name:    req.Name,
+				Name:    req.KPUName,
 				Address: req.Address,
 				Region:  req.Region,
 			}
 		case roles.RoleVoter:
 			entityData = &model.VoterData{
 				NIK:          req.NIK,
-				VoterAddress: req.VoterAddress,
+				Fullname:     req.FullName,
+				Gender:       req.Gender,
+				BirthPlace:   req.BirthPlace,
+				BirthDate:    req.BirthDate,
+				Residential:  req.ResidentialAddress,
+				VoterAddress: req.Address,
 				Region:       req.Region,
 			}
 		}
@@ -76,7 +81,6 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 		pendingRegistration, errReg = model.NewPendingRegist(
 			user.ID,
 			req.Role,
-			req.SignedTransaction,
 			entityData,
 		)
 		if errReg != nil {
@@ -414,7 +418,6 @@ func (m *Module) GetVerificationDetails(ctx context.Context, userIDStr string) (
 		VerificationStatus: user.VerificationStatus,
 		CreatedAt:          user.CreatedAt,
 		EntityData:         entityData,
-		SignedTransaction:  pendingReg.SignedTransaction,
 	}, nil
 }
 
@@ -522,16 +525,17 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 					UpdatedAt: time.Now(),
 					IsDeleted: false,
 				},
-				ID:           uuid.New(),
-				UserID:       userID,
-				Name:         kpuProvinsiData.Name,
-				Address:      kpuProvinsiData.Address,
-				Region:       kpuProvinsiData.Region,
+				ID:      uuid.New(),
+				UserID:  userID,
+				Name:    kpuProvinsiData.Name,
+				Address: kpuProvinsiData.Address,
+				Region:  kpuProvinsiData.Region,
+
 				IsActive:     true,
 				RegisteredAt: time.Now(),
 			}
 
-			errTx = m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, pendingReg.SignedTransaction)
+			errTx = m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, req.SignedTransaction)
 			if errTx != nil {
 				return nil, errTx
 			}
@@ -569,7 +573,7 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				RegisteredAt: time.Now(),
 			}
 
-			errTx = m.kpuKotaRepo.InsertKPUKota(txCtx, kpuKota, pendingReg.SignedTransaction)
+			errTx = m.kpuKotaRepo.InsertKPUKota(txCtx, kpuKota, req.SignedTransaction)
 			if errTx != nil {
 				return nil, errTx
 			}
@@ -592,23 +596,35 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				}
 			}
 
+			layout := "2006-01-02"
+			birthDate, err := time.Parse(layout, voterData.BirthDate)
+			if err != nil {
+				return nil, err
+			}
+
 			voter := &model.Voter{
 				BaseModel: model.BaseModel{
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 					IsDeleted: false,
 				},
-				ID:           uuid.New(),
-				NIK:          voterData.NIK,
-				VoterAddress: voterData.VoterAddress,
-				Region:       voterData.Region,
-				IsRegistered: true,
-				HasVoted:     false,
-				VotedAt:      time.Time{},
-				LastLogin:    time.Now(),
+				ID:                 uuid.New(),
+				UserID:             userID,
+				NIK:                voterData.NIK,
+				FullName:           voterData.Fullname,
+				Gender:             voterData.Gender,
+				BirthPlace:         voterData.BirthPlace,
+				BirthDate:          birthDate,
+				ResidentialAddress: voterData.Residential,
+				VoterAddress:       voterData.VoterAddress,
+				Region:             voterData.Region,
+				IsRegistered:       true,
+				HasVoted:           false,
+				VotedAt:            time.Time{},
+				LastLogin:          time.Now(),
 			}
 
-			errTx = m.voterRepo.InsertVoter(txCtx, voter, pendingReg.SignedTransaction)
+			errTx = m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
 			if errTx != nil {
 				return nil, errTx
 			}

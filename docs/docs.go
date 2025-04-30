@@ -2093,10 +2093,22 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
+                "birth_date": {
+                    "type": "string"
+                },
+                "birth_place": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
-                "name": {
+                "full_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "kpu-name": {
                     "description": "Role-specific fields\nFor KPU Provinsi and KPU Kota",
                     "type": "string"
                 },
@@ -2110,17 +2122,13 @@ const docTemplate = `{
                 "region": {
                     "type": "string"
                 },
+                "residential_address": {
+                    "type": "string"
+                },
                 "role": {
                     "type": "string"
                 },
-                "signed_transaction": {
-                    "description": "For blockchain transaction",
-                    "type": "string"
-                },
                 "username": {
-                    "type": "string"
-                },
-                "voter_address": {
                     "type": "string"
                 }
             }
@@ -2139,6 +2147,9 @@ const docTemplate = `{
                 "admin_reason": {
                     "type": "string"
                 },
+                "signed_transaction": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "string"
                 }
@@ -2147,13 +2158,25 @@ const docTemplate = `{
         "request.VoterRegistrationRequest": {
             "type": "object",
             "properties": {
-                "is_registered": {
-                    "type": "boolean"
+                "birth_date": {
+                    "type": "string"
+                },
+                "birth_place": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
                 },
                 "nik": {
                     "type": "string"
                 },
                 "region": {
+                    "type": "string"
+                },
+                "residential_address": {
                     "type": "string"
                 },
                 "signed_transaction": {
@@ -2329,9 +2352,6 @@ const docTemplate = `{
                 "requested_role": {
                     "type": "string"
                 },
-                "signed_transaction": {
-                    "type": "string"
-                },
                 "username": {
                     "type": "string"
                 },
@@ -2403,6 +2423,18 @@ const docTemplate = `{
         "response.VoterResponse": {
             "type": "object",
             "properties": {
+                "birth_date": {
+                    "type": "string"
+                },
+                "birth_place": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
                 "has_voted": {
                     "type": "boolean"
                 },
@@ -2416,6 +2448,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "region": {
+                    "type": "string"
+                },
+                "residential_address": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 },
                 "voter_address": {
