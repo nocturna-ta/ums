@@ -9,8 +9,8 @@ import (
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "Blockchain Service",
-		Short: "Blockchain Service",
+		Use:   "Votechain : User Management Service",
+		Short: "Votechain : User Management Service",
 	}
 )
 
