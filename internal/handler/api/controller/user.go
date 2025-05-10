@@ -4,39 +4,60 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/nocturna-ta/golib/custerr"
+	"github.com/nocturna-ta/golib/http/filehandler"
 	"github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/response/rest"
 	"github.com/nocturna-ta/golib/router"
 	"github.com/nocturna-ta/golib/tracing"
 	"github.com/nocturna-ta/ums/internal/infrastructures/cutresp"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
+	request2 "github.com/nocturna-ta/ums/pkg/request"
+	"github.com/nocturna-ta/ums/pkg/utils"
 )
 
 // RegisterUser godoc
 // @Summary Register a new user
 // @Description Register a new user
 // @Tags User
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
-// @Param user body request.UserRegistrationRequest true "User registration request"
+// @Param user formData string true "User registration request (JSON)"
+// @Param ktp_photo formData file false "KTP photo"
 // @Success		200	{object}	jsonResponse{data=response.UserRegistrationResponse}
 // @Router /v1/user/register [post]
 func (api *API) RegisterUser(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.RegisterUser")
 	defer span.End()
 
-	var regisReq request.UserRegistrationRequest
-	err := json.Unmarshal(req.RawBody(), &regisReq)
+	form, err := req.RawRequest().MultipartForm()
 	if err != nil {
 		return cutresp.CustomErrorResponse(err)
 	}
 
-	err = regisReq.ValidateRegistrationUser()
+	fileConfig := []utils.FileUploadConfig{
+		{
+			FieldName:  "ktp_photo",
+			Required:   false,
+			UploadFunc: filehandler.ImageUploadOptions,
+			ErrorMsgs: map[error]string{
+				filehandler.ErrInvalidFileFormat: "Invalid file format. Only JPG, JPEG, and PNG files are allowed",
+			},
+		},
+	}
+
+	uploadedFiles, err := utils.ProcessFileUploads(ctx, form, fileConfig)
 	if err != nil {
 		return cutresp.CustomErrorResponse(err)
 	}
 
-	res, err := api.userUc.RegisterUser(ctx, &regisReq)
+	defer utils.CloseFiles(uploadedFiles)
+
+	registrationRequest, err := request2.ParseRegistrationRequest(form, uploadedFiles)
+	if err != nil {
+		return cutresp.CustomErrorResponse(err)
+	}
+
+	res, err := api.userUc.RegisterUser(ctx, registrationRequest)
 	if err != nil {
 		return cutresp.CustomErrorResponse(err)
 	}
@@ -86,42 +107,6 @@ func (api *API) GetByID(ctx context.Context, req *router.Request) (*rest.JSONRes
 	defer span.End()
 
 	res, err := api.userUc.GetByID(ctx)
-	if err != nil {
-		return cutresp.CustomErrorResponse(err)
-	}
-
-	return rest.NewJSONResponse().SetData(res), nil
-}
-
-// UpdateUser godoc
-// @Summary Update user
-// @Description Update user
-// @Tags User
-// @Accept json
-// @Produce json
-// @Param X-User-Id header string false "User"
-// @Param X-Address-Id header string false "Address"
-// @Param X-Role header string false "Role"
-// @Param user body request.UserUpdateRequest true "User update request"
-// @Success 200 {object} jsonResponse{data=response.UserResponse} "User updated"
-// @Router /v1/user/update [put]
-func (api *API) UpdateUser(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
-	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.UpdateUser")
-	defer span.End()
-
-	var userReq request.UserUpdateRequest
-	err := json.Unmarshal(req.RawBody(), &userReq)
-
-	if err != nil {
-		return cutresp.CustomErrorResponse(err)
-	}
-
-	err = userReq.ValidateUpdateUser()
-	if err != nil {
-		return cutresp.CustomErrorResponse(err)
-	}
-
-	res, err := api.userUc.UpdateUser(ctx, &userReq)
 	if err != nil {
 		return cutresp.CustomErrorResponse(err)
 	}

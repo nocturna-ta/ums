@@ -3,7 +3,7 @@ package request
 import (
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/response"
-	"github.com/nocturna-ta/ums/pkg/utils"
+	"github.com/nocturna-ta/ums/pkg/common"
 )
 
 type VoterRegistrationRequest struct {
@@ -27,7 +27,7 @@ func (req *VoterRegistrationRequest) ValidateRegisterRequest() error {
 		}
 	}
 
-	if !utils.IsValidNIK(req.NIK) {
+	if !common.IsValidNIK(req.NIK) {
 		return &custerr.ErrChain{
 			Message: "NIK is not valid",
 			Code:    400,

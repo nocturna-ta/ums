@@ -4,16 +4,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/response"
+	"github.com/nocturna-ta/ums/pkg/common"
 	"github.com/nocturna-ta/ums/pkg/constants"
 	"github.com/nocturna-ta/ums/pkg/constants/errorcode"
 	"github.com/nocturna-ta/ums/pkg/roles"
-	"github.com/nocturna-ta/ums/pkg/utils"
+	"io"
 	"net/mail"
 )
 
 type UserRegistrationRequest struct {
 	Email    string `json:"email"`
-	Username string `json:"username"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
 	Address  string `json:"address,omitempty"`
@@ -24,16 +24,15 @@ type UserRegistrationRequest struct {
 	Region  string `json:"region,omitempty"`
 
 	// For Voter
-	NIK                string `json:"nik,omitempty"`
-	FullName           string `json:"full_name,omitempty"`
-	Gender             string `json:"gender,omitempty"`
-	BirthPlace         string `json:"birth_place,omitempty"`
-	BirthDate          string `json:"birth_date,omitempty"`
-	ResidentialAddress string `json:"residential_address,omitempty"`
-}
-
-type UserUpdateRequest struct {
-	Username string `json:"username"`
+	NIK                string    `json:"nik,omitempty"`
+	FullName           string    `json:"full_name,omitempty"`
+	Gender             string    `json:"gender,omitempty"`
+	BirthPlace         string    `json:"birth_place,omitempty"`
+	BirthDate          string    `json:"birth_date,omitempty"`
+	ResidentialAddress string    `json:"residential_address,omitempty"`
+	KTPPhotoPath       string    `json:"ktp_photo_path,omitempty"`
+	KTPPhotoFile       io.Reader `json:"-" swaggerignore:"true"`
+	KTPPhotoName       string    `json:"-" swaggerignore:"true"`
 }
 
 type UserChangePasswordRequest struct {
@@ -95,27 +94,7 @@ func (r *UserChangePasswordRequest) ValidateChangePassword() error {
 	return nil
 }
 
-func (r *UserUpdateRequest) ValidateUpdateUser() error {
-	if r.Username == constants.EmptyString {
-		return &custerr.ErrChain{
-			Message: errorcode.UsernameEmpty.Message,
-			Code:    errorcode.UsernameEmpty.Code,
-			Type:    response.ErrBadRequest,
-		}
-	}
-
-	return nil
-}
-
 func (r *UserRegistrationRequest) ValidateRegistrationUser() error {
-	if r.Username == constants.EmptyString {
-		return &custerr.ErrChain{
-			Message: errorcode.UsernameEmpty.Message,
-			Code:    errorcode.UsernameEmpty.Code,
-			Type:    response.ErrBadRequest,
-		}
-	}
-
 	if r.Role == constants.EmptyString {
 		return &custerr.ErrChain{
 			Message: errorcode.RoleEmpty.Message,
@@ -180,7 +159,7 @@ func (r *UserRegistrationRequest) ValidateRegistrationUser() error {
 					Type:    response.ErrBadRequest,
 				}
 			}
-			if !utils.IsValidNIK(r.NIK) {
+			if !common.IsValidNIK(r.NIK) {
 				return &custerr.ErrChain{
 					Message: "NIK is not valid",
 					Code:    400,

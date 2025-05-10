@@ -14,10 +14,6 @@ var (
 		Code:    40006,
 		Message: "Wrong Password",
 	}
-	UsernameEmpty = ErrorDefinition{
-		Code:    40007,
-		Message: "Username cannot be empty",
-	}
 	InvalidEmail = ErrorDefinition{
 		Code:    40008,
 		Message: "Invalid Email",

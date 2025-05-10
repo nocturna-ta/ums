@@ -33,8 +33,8 @@ func NewUserRepository(opts *OptsUserRepository) repository.UserRepository {
 }
 
 const (
-	insertUser = `INSERT INTO users (id, username, email, password, password_salt, role, requested_role, is_active, verification_status, created_at, updated_at) 
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
+	insertUser = `INSERT INTO users (id, email, password, password_salt, role, requested_role, is_active, verification_status, created_at, updated_at) 
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	selectUser = `SELECT %s FROM users WHERE TRUE %s`
 	updateUser = `UPDATE users SET %s WHERE TRUE %s`
 )
@@ -52,7 +52,6 @@ func (repo *UserRepository) Insert(ctx context.Context, user *model.User) error 
 	if sqlTrx != nil {
 		_, err = sqlTrx.ExecContext(ctx, insertUser,
 			user.ID,
-			user.Username,
 			user.Email,
 			user.Password,
 			user.PasswordSalt,
@@ -65,7 +64,6 @@ func (repo *UserRepository) Insert(ctx context.Context, user *model.User) error 
 	} else {
 		_, err = repo.db.GetMaster().ExecContext(ctx, insertUser,
 			user.ID,
-			user.Username,
 			user.Email,
 			user.Password,
 			user.PasswordSalt,
@@ -110,7 +108,7 @@ func (repo *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*model.U
 		args []any
 	)
 
-	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
+	selectQuery := "users.id, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
 	whereQuery := " AND users.id = $1 AND users.is_deleted = FALSE"
 	args = append(args, id)
 
@@ -132,43 +130,6 @@ func (repo *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*model.U
 		}).ErrorWithCtx(ctx, "[UserRepository.GetById] Failed to get user by id")
 	}
 	return &user, nil
-}
-
-func (repo *UserRepository) Update(ctx context.Context, id uuid.UUID, update *model.UserUpdate) error {
-	span, ctx := tracing.StartSpanFromContext(ctx, "UserRepository.Update")
-	defer span.End()
-
-	sqlTrx := utils.GetSqlTx(ctx)
-
-	var (
-		err  error
-		args []any
-	)
-
-	if update == nil {
-		return ErrNilParam
-	}
-
-	setQuery := "username = $1, updated_at = $2"
-	whereQuery := " AND id = $3 AND is_deleted = FALSE"
-	args = append(args, update.Username, time.Now(), id)
-
-	query := fmt.Sprintf(updateUser, setQuery, whereQuery)
-	if sqlTrx != nil {
-		_, err = sqlTrx.ExecContext(ctx, query, args...)
-	} else {
-		_, err = repo.db.GetMaster().ExecContext(ctx, query, args...)
-	}
-
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"user":  update,
-		}).ErrorWithCtx(ctx, "[UserRepository.Update] Failed to update user")
-		return err
-	}
-
-	return nil
 }
 
 func (repo *UserRepository) ChangePassword(ctx context.Context, id uuid.UUID, newPass string) error {
@@ -227,7 +188,7 @@ func (repo *UserRepository) GetByEmail(ctx context.Context, email string) (*mode
 		decodedEmail = email
 	}
 
-	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
+	selectQuery := "users.id, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
 	whereQuery := " AND users.email = $1 AND users.is_deleted = FALSE"
 	args = append(args, decodedEmail)
 
@@ -298,7 +259,7 @@ func (repo *UserRepository) GetPendingVerificationUsers(ctx context.Context) ([]
 		args  []any
 	)
 
-	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
+	selectQuery := "users.id, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
 	whereQuery := " AND users.verification_status = $1 AND users.is_deleted = FALSE"
 	args = append(args, model.VerificationStatusPending)
 
@@ -336,7 +297,7 @@ func (repo *UserRepository) GetPendingVerificationUsersByRequestedRole(ctx conte
 		args  []any
 	)
 
-	selectQuery := "users.id, users.username, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
+	selectQuery := "users.id, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
 	whereQuery := " AND users.verification_status = $1 AND users.requested_role = $2 AND users.is_deleted = FALSE"
 	args = append(args, model.VerificationStatusPending, requestedRole)
 

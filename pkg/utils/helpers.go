@@ -1,79 +1,123 @@
 package utils
 
 import (
-	"crypto/sha512"
+	"context"
+	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/nocturna-ta/golib/custerr"
+	"github.com/nocturna-ta/golib/fileutils"
+	"github.com/nocturna-ta/golib/http/filehandler"
+	"github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/router"
-	"github.com/nocturna-ta/golib/utils/encryption"
 	"github.com/nocturna-ta/ums/config"
-	"github.com/nocturna-ta/ums/pkg/constants"
-	"log"
-	"regexp"
-	"strings"
+	"io"
+	"mime/multipart"
 )
 
-func CustomHash(str ...string) string {
-	hash := sha512.New()
-	hash.Write([]byte(strings.Join(str, "#")))
-	return fmt.Sprintf("%x", hash.Sum(nil))
+type FileUploadConfig struct {
+	FieldName   string
+	Required    bool
+	UploadFunc  func() *filehandler.UploadOptions
+	ErrorMsgs   map[error]string
+	DefaultCode int
 }
 
-func PasswordHash(password, salt string) string {
-	return CustomHash(password, salt)
+type UploadedFile struct {
+	File             io.ReadCloser
+	OriginalFilename string
+	FilePath         string
+	ContentType      string
+	Size             int64
 }
 
-func Encryption(text string) string {
-	cfg := &config.MainConfig{}
-	config.ReadConfig(cfg, "")
+func ProcessFileUploads(ctx context.Context, form *multipart.Form, configs []FileUploadConfig) (map[string]UploadedFile, error) {
+	result := make(map[string]UploadedFile)
 
-	enc, err := encryption.NewEncryption(cfg.Encryption.Key)
-	if err != nil {
-		log.Fatal(err)
+	for _, config := range configs {
+		uploadOptions := config.UploadFunc()
+		uploadOptions.FieldName = config.FieldName
+
+		uploadResult, err := filehandler.UploadFile(ctx, form, uploadOptions)
+		if err != nil {
+			if errors.Is(err, filehandler.ErrNoFile) && !config.Required {
+				continue
+			}
+			return nil, MapFileUploadError(err, config)
+		}
+
+		file, err := fileutils.OpenFile(ctx, uploadResult.FilePath)
+		if err != nil {
+			return nil, &custerr.ErrChain{
+				Message: fmt.Sprintf("Failed to open uploaded file: %s", config.FieldName),
+				Code:    500,
+				Type:    response.ErrInternalServerError,
+				Cause:   err,
+			}
+		}
+
+		result[config.FieldName] = UploadedFile{
+			File:             file,
+			OriginalFilename: uploadResult.OriginalFilename,
+			FilePath:         uploadResult.FilePath,
+			ContentType:      uploadResult.ContentType,
+			Size:             uploadResult.Size,
+		}
 	}
 
-	res, err := enc.Encrypt(text)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return res
+	return result, nil
 }
 
-func Decryption(text string) string {
-	cfg := &config.MainConfig{}
-	config.ReadConfig(cfg, "")
-
-	enc, err := encryption.NewEncryption(cfg.Encryption.Key)
-	if err != nil {
-		log.Fatal(err)
+func MapFileUploadError(err error, config FileUploadConfig) *custerr.ErrChain {
+	var errorMsg string
+	var errorCode int = config.DefaultCode
+	if errorCode == 0 {
+		errorCode = 400
 	}
 
-	res, err := enc.Decrypt(text)
-	if err != nil {
-		log.Fatal(err)
+	if config.ErrorMsgs != nil {
+		if msg, exists := config.ErrorMsgs[err]; exists {
+			errorMsg = msg
+		}
 	}
 
-	return res
+	if errorMsg == "" {
+		switch {
+		case errors.Is(err, filehandler.ErrNoFile):
+			errorMsg = fmt.Sprintf("No file provided for %s", config.FieldName)
+		case errors.Is(err, filehandler.ErrFileTooLarge):
+			errorMsg = fmt.Sprintf("File size exceeds maximum allowed size for %s", config.FieldName)
+		case errors.Is(err, filehandler.ErrInvalidFileFormat):
+			errorMsg = fmt.Sprintf("Invalid file format for %s", config.FieldName)
+		default:
+			errorMsg = fmt.Sprintf("Failed to process uploaded file: %s", config.FieldName)
+			errorCode = 500
+		}
+	}
+
+	return &custerr.ErrChain{
+		Message: errorMsg,
+		Code:    errorCode,
+		Type:    response.ErrBadRequest,
+		Cause:   err,
+	}
 }
 
-func IsValidNIK(nik string) bool {
-	nik = strings.TrimSpace(nik)
-	if nik == constants.EmptyString {
-		return false
+func CloseFiles(files map[string]UploadedFile) {
+	for _, fileInfo := range files {
+		if fileInfo.File != nil {
+			fileInfo.File.Close()
+		}
 	}
+}
 
-	if len(nik) != 16 {
-		return false
+func CloseReadClosers(closers ...io.ReadCloser) {
+	for _, closer := range closers {
+		if closer != nil {
+			closer.Close()
+		}
 	}
-
-	matched, err := regexp.MatchString(`^\d{16}$`, nik)
-	if err != nil {
-		return false
-	}
-
-	return matched
 }
 
 func StringToTx(signedTx string) (*types.Transaction, error) {
@@ -83,15 +127,6 @@ func StringToTx(signedTx string) (*types.Transaction, error) {
 	}
 
 	return tx, nil
-}
-
-var StringToTxVar = func(signedTx string) (*types.Transaction, error) {
-	tx := new(types.Transaction)
-	if err := tx.UnmarshalBinary(common.FromHex(signedTx)); err != nil {
-		return nil, err
-	}
-
-	return &types.Transaction{}, nil
 }
 
 func ConvertToRouterCorsConfig(configCors *config.CorsConfig) *router.CorsConfig {

@@ -1,5 +1,5 @@
 -- Create user role enum
-CREATE TYPE users_role AS ENUM('voter', 'unverified', 'kpu_kota', 'kpu_provinsi');
+CREATE TYPE users_role AS ENUM('voter', 'unverified', 'kpu_kota', 'kpu_provinsi', 'kpu_pusat');
 
 -- Create verification status enum
 CREATE TYPE verification_status AS ENUM('pending', 'approved', 'rejected');
@@ -7,7 +7,6 @@ CREATE TYPE verification_status AS ENUM('pending', 'approved', 'rejected');
 -- Create users table with verification fields
 CREATE TABLE "users" (
     id uuid NOT NULL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     password_salt VARCHAR(10) NOT NULL,
@@ -69,6 +68,7 @@ CREATE TABLE "voters" (
     voter_address VARCHAR(255) NOT NULL,
     is_registered BOOL NOT NULL DEFAULT FALSE,
     has_voted BOOL NOT NULL DEFAULT FALSE,
+    ktp_photo_path VARCHAR(255) DEFAULT NULL,
     voted_at TIMESTAMP(6) WITH TIME ZONE,
     last_login TIMESTAMP(6) WITH TIME ZONE,
     created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT now(),

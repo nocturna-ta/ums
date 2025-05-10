@@ -38,7 +38,7 @@ func (m *Module) RegisterKPUProvinsi(ctx context.Context, req *request.KPUProvin
 		kpuProvinsi = model.ConstructRegistrationKPUProvinsi(req)
 		kpuProvinsi.UserID = reqCtx.GetUserId()
 
-		errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, req.SignedTransaction)
+		txHash, errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, req.SignedTransaction)
 		if errTx != nil {
 			if errors.Is(errTx, dao.ErrDuplicate) {
 				return nil, &custerr.ErrChain{
@@ -50,6 +50,10 @@ func (m *Module) RegisterKPUProvinsi(ctx context.Context, req *request.KPUProvin
 			}
 
 			return nil, errTx
+		}
+
+		if txHash == "" {
+			return nil, err
 		}
 
 		errTx = m.publisher.Publish(txCtx, m.topics.MasterDataKPUProvinsi.Value, kpuProvinsi.ID.String(), kpuProvinsi.ToMessageModel(), map[string]any{
@@ -249,7 +253,7 @@ func (m *Module) GetKPUProvinsiPhoto(ctx context.Context, kpuProvinsiID uuid.UUI
 		}
 	}
 
-	file, contentType, err := filehandler.GetFileFromPath(ctx, provinsi.PhotoPath)
+	file, contentType, err := filehandler.GetFileFromPath(ctx, provinsi.PhotoPath, filehandler.DisplayModeInline)
 	if err != nil {
 		return nil, "", &custerr.ErrChain{
 			Message: "Failed to retrieve photo",
@@ -266,42 +270,57 @@ func (m *Module) UpdateKPUProvinsi(ctx context.Context, updateRequest *request.K
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiUseCases.UpdateKPUProvinsi")
 	defer span.End()
 
+	var (
+		existing *model.KPUProvinsi
+	)
+
 	reqCtx, err := libCtx.GetRequestContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	existing, err := m.kpuProvinsiRepo.GetKPUProvinsiByAddress(ctx, reqCtx.GetAddress())
-	if err != nil {
-		return nil, &custerr.ErrChain{
-			Message: "KPU Provinsi not found",
-			Code:    404,
-			Type:    response2.ErrNotFound,
-			Cause:   err,
+	transaction := func(txCtx context.Context) (any, error) {
+		existing, errTx := m.kpuProvinsiRepo.GetKPUProvinsiByAddress(ctx, reqCtx.GetAddress())
+		if errTx != nil {
+			return nil, &custerr.ErrChain{
+				Message: "KPU Provinsi not found",
+				Code:    404,
+				Type:    response2.ErrNotFound,
+				Cause:   errTx,
+			}
 		}
-	}
-	existing.Name = updateRequest.Name
-	existing.Telephone = updateRequest.Telephone
-	existing.Region = updateRequest.Region
+		existing.Name = updateRequest.Name
+		existing.Telephone = updateRequest.Telephone
+		existing.Region = updateRequest.Region
 
-	err = m.kpuProvinsiRepo.UpdateKPUProvinsi(ctx, existing, updateRequest.SignedTransaction)
+		txHash, errTx := m.kpuProvinsiRepo.UpdateKPUProvinsi(ctx, existing, updateRequest.SignedTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": errTx,
+				"id":    existing.ID,
+			}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UpdateKPUProvinsi] Failed to update kpu provinsi")
+			return nil, errTx
+		}
+
+		if txHash == "" {
+			return nil, errTx
+		}
+
+		errTx = m.publisher.Publish(ctx, m.topics.MasterDataKPUProvinsi.Value, existing.ID.String(), existing.ToMessageModel(), map[string]any{
+			constants.MetaDataOperation: constants.Update,
+		})
+
+		if errTx != nil {
+			return nil, errTx
+		}
+
+		return nil, nil
+
+	}
+
+	_, err = m.txMgr.Execute(ctx, transaction, nil)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"id":    existing.ID,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UpdateKPUProvinsi] Failed to update kpu provinsi")
 		return nil, err
-	}
-
-	err = m.publisher.Publish(ctx, m.topics.MasterDataKPUProvinsi.Value, existing.ID.String(), existing.ToMessageModel(), map[string]any{
-		constants.MetaDataOperation: constants.Update,
-	})
-
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"id":    existing.ID,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UpdateKPUProvinsi] Failed to publish update event")
 	}
 
 	res := &response.KPUProvinsiResponse{

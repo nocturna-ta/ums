@@ -54,7 +54,7 @@ const (
 	updateKPUKota = `UPDATE kpu_kota SET %s WHERE TRUE %s`
 )
 
-func (K *KPUKotaRepository) InsertKPUKota(ctx context.Context, kpu *model.KPUKota, signedTransaction string) error {
+func (K *KPUKotaRepository) InsertKPUKota(ctx context.Context, kpu *model.KPUKota, signedTransaction string) (string, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaRepository.InsertKPUKota")
 	defer span.End()
 
@@ -63,19 +63,18 @@ func (K *KPUKotaRepository) InsertKPUKota(ctx context.Context, kpu *model.KPUKot
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUKotaRepository.InsertKPUKota] Failed to convert signed transaction to transaction")
-		return err
+		return "", err
 	}
 	sqlTrx := utils.GetSqlTx(ctx)
 
 	var ownTransaction bool
 	if sqlTrx == nil {
-		var err error
 		sqlTrx, err = K.db.GetMaster().BeginTxx(ctx, nil)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[KPUKotaRepository.InsertKPUKota] Failed to begin transaction")
-			return err
+			return "", err
 		}
 
 		ownTransaction = true
@@ -102,7 +101,7 @@ func (K *KPUKotaRepository) InsertKPUKota(ctx context.Context, kpu *model.KPUKot
 					"error": err,
 					"kpu":   kpu,
 				}).ErrorWithCtx(ctx, "[KPUKotaRepository.InsertKPUKota] Duplicate entry")
-				return ErrDuplicate
+				return "", ErrDuplicate
 			}
 		}
 
@@ -110,10 +109,10 @@ func (K *KPUKotaRepository) InsertKPUKota(ctx context.Context, kpu *model.KPUKot
 			"error": err,
 			"kpu":   kpu,
 		}).ErrorWithCtx(ctx, "[KPUKotaRepository.InsertKPUKota] Failed to insert kpu kota")
-		return err
+		return "", err
 	}
 
-	err = K.client.SendTransaction(ctx, tx)
+	txHash, err := K.client.SendTransaction(ctx, tx)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -127,19 +126,19 @@ func (K *KPUKotaRepository) InsertKPUKota(ctx context.Context, kpu *model.KPUKot
 				}).ErrorWithCtx(ctx, "[KPUKotaRepository.InsertKPUKota] Failed to rollback transaction")
 			}
 		}
-		return err
+		return "", err
 	}
 
 	if ownTransaction {
-		if err := sqlTrx.Commit(); err != nil {
+		if err = sqlTrx.Commit(); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[KPUKotaRepository.InsertKPUKota] Failed to commit transaction")
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return txHash, nil
 }
 
 func (K *KPUKotaRepository) GetAllKPUKota(ctx context.Context) ([]model.KPUKota, error) {
@@ -318,7 +317,7 @@ kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created
 	return &kpuKotaModel, nil
 }
 
-func (K *KPUKotaRepository) UpdateKPUKota(ctx context.Context, kpu *model.KPUKota, signedTransaction string) error {
+func (K *KPUKotaRepository) UpdateKPUKota(ctx context.Context, kpu *model.KPUKota, signedTransaction string) (string, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaRepository.UpdateKPUKota")
 	defer span.End()
 
@@ -327,19 +326,18 @@ func (K *KPUKotaRepository) UpdateKPUKota(ctx context.Context, kpu *model.KPUKot
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to convert signed transaction to transaction")
-		return err
+		return "", err
 	}
 	sqlTrx := utils.GetSqlTx(ctx)
 
 	var ownTransaction bool
 	if sqlTrx == nil {
-		var err error
 		sqlTrx, err = K.db.GetMaster().BeginTxx(ctx, nil)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to begin transaction")
-			return err
+			return "", err
 		}
 
 		ownTransaction = true
@@ -366,7 +364,7 @@ func (K *KPUKotaRepository) UpdateKPUKota(ctx context.Context, kpu *model.KPUKot
 			"error":   err,
 			"address": kpu.Address,
 		}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to update kpu kota")
-		return err
+		return "", err
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -374,14 +372,14 @@ func (K *KPUKotaRepository) UpdateKPUKota(ctx context.Context, kpu *model.KPUKot
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to get rows affected")
-		return err
+		return "", err
 	}
 
 	if rowsAffected == 0 {
-		return ErrNoUpdateHappened
+		return "", ErrNoUpdateHappened
 	}
 
-	err = K.client.SendTransaction(ctx, tx)
+	txxHash, err := K.client.SendTransaction(ctx, tx)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -395,17 +393,17 @@ func (K *KPUKotaRepository) UpdateKPUKota(ctx context.Context, kpu *model.KPUKot
 				}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to rollback transaction")
 			}
 		}
-		return err
+		return "", err
 	}
 
 	if ownTransaction {
-		if err := sqlTrx.Commit(); err != nil {
+		if err = sqlTrx.Commit(); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[KPUKotaRepository.UpdateKPUKota] Failed to commit transaction")
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return txxHash, nil
 }

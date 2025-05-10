@@ -7,15 +7,15 @@ import (
 type UserRegistrationResponse struct {
 	ID                 string `json:"id,omitempty"`
 	Email              string `json:"email,omitempty"`
-	Username           string `json:"username,omitempty"`
 	VerificationStatus string `json:"verification_status,omitempty"`
 	RequestedRole      string `json:"requested_role,omitempty"`
 	Message            string `json:"message,omitempty"`
 }
 
 type UserResponse struct {
-	ID       string `json:"id,omitempty"`
-	Username string `json:"username,omitempty"`
+	ID    string `json:"id,omitempty"`
+	Email string `json:"email,omitempty"`
+	Role  string `json:"role,omitempty"`
 }
 
 type UserLoginResponse struct {
@@ -30,7 +30,6 @@ type UserLoginResponse struct {
 type UserVerificationResponse struct {
 	ID                 string    `json:"id"`
 	Email              string    `json:"email"`
-	Username           string    `json:"username"`
 	RequestedRole      string    `json:"requested_role"`
 	VerificationStatus string    `json:"verification_status"`
 	CreatedAt          time.Time `json:"created_at"`
@@ -39,7 +38,6 @@ type UserVerificationResponse struct {
 type UserVerificationDetailsResponse struct {
 	ID                 string                 `json:"id"`
 	Email              string                 `json:"email"`
-	Username           string                 `json:"username"`
 	RequestedRole      string                 `json:"requested_role"`
 	VerificationStatus string                 `json:"verification_status"`
 	CreatedAt          time.Time              `json:"created_at"`
@@ -47,7 +45,6 @@ type UserVerificationDetailsResponse struct {
 }
 
 type UserVerificationStatusResponse struct {
-	Username           string    `json:"username"`
 	Email              string    `json:"email"`
 	RequestedRole      string    `json:"requested_role"`
 	Role               string    `json:"role"`
@@ -58,7 +55,6 @@ type UserVerificationStatusResponse struct {
 }
 
 type EnhancedUserVerificationStatusResponse struct {
-	Username           string    `json:"username"`
 	Email              string    `json:"email"`
 	RequestedRole      string    `json:"requested_role"`
 	Role               string    `json:"role"`

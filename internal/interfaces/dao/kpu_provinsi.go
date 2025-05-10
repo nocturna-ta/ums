@@ -54,7 +54,7 @@ const (
 	updateKPUProvinsi = `UPDATE kpu_provinsi SET %s WHERE TRUE %s`
 )
 
-func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi, signedTransaction string) error {
+func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi, signedTransaction string) (string, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiRepository.InsertKPUProvinsi")
 	defer span.End()
 
@@ -63,19 +63,19 @@ func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *mode
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to convert signed transaction to transaction")
-		return err
+		return "", err
 	}
 	sqlTrx := utils.GetSqlTx(ctx)
 
 	var ownTransaction bool
 	if sqlTrx == nil {
-		var err error
 		sqlTrx, err = K.db.GetMaster().BeginTxx(ctx, nil)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to begin transaction")
-			return err
+			return "", err
+
 		}
 
 		ownTransaction = true
@@ -102,7 +102,7 @@ func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *mode
 					"error": err,
 					"kpu":   kpu,
 				}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Duplicate entry")
-				return ErrDuplicate
+				return "", ErrDuplicate
 			}
 		}
 
@@ -110,10 +110,10 @@ func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *mode
 			"error": err,
 			"kpu":   kpu,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to insert kpu kota")
-		return err
+		return "", err
 	}
 
-	err = K.client.SendTransaction(ctx, tx)
+	txHash, err := K.client.SendTransaction(ctx, tx)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -127,19 +127,19 @@ func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *mode
 				}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to rollback transaction")
 			}
 		}
-		return err
+		return "", err
 	}
 
 	if ownTransaction {
-		if err := sqlTrx.Commit(); err != nil {
+		if err = sqlTrx.Commit(); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to commit transaction")
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return txHash, nil
 }
 
 func (K *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]model.KPUProvinsi, error) {
@@ -318,7 +318,7 @@ func (K *KPUProvinsiRepository) UpdateKPUProvinsiPhoto(ctx context.Context, id u
 	return nil
 }
 
-func (K *KPUProvinsiRepository) UpdateKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi, signedTransaction string) error {
+func (K *KPUProvinsiRepository) UpdateKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi, signedTransaction string) (string, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiRepository.UpdateKPUProvinsi")
 	defer span.End()
 
@@ -329,18 +329,17 @@ func (K *KPUProvinsiRepository) UpdateKPUProvinsi(ctx context.Context, kpu *mode
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to convert signed transaction to transaction")
-		return err
+		return "", err
 	}
 
 	var ownTransaction bool
 	if sqlTrx == nil {
-		var err error
 		sqlTrx, err = K.db.GetMaster().BeginTxx(ctx, nil)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to begin transaction")
-			return err
+			return "", err
 		}
 
 		ownTransaction = true
@@ -366,7 +365,7 @@ func (K *KPUProvinsiRepository) UpdateKPUProvinsi(ctx context.Context, kpu *mode
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to update kpu provinsi")
-		return err
+		return "", err
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -374,14 +373,14 @@ func (K *KPUProvinsiRepository) UpdateKPUProvinsi(ctx context.Context, kpu *mode
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to get rows affected")
-		return err
+		return "", err
 	}
 
 	if rowsAffected == 0 {
-		return ErrNoUpdateHappened
+		return "", ErrNoUpdateHappened
 	}
 
-	err = K.client.SendTransaction(ctx, tx)
+	txHash, err := K.client.SendTransaction(ctx, tx)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -395,17 +394,17 @@ func (K *KPUProvinsiRepository) UpdateKPUProvinsi(ctx context.Context, kpu *mode
 				}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to rollback transaction")
 			}
 		}
-		return err
+		return "", err
 	}
 
 	if ownTransaction {
-		if err := sqlTrx.Commit(); err != nil {
+		if err = sqlTrx.Commit(); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to commit transaction")
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return txHash, nil
 }

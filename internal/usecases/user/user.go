@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
+	"github.com/nocturna-ta/golib/fileutils"
 	"github.com/nocturna-ta/golib/log"
 	response2 "github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/tracing"
@@ -17,10 +18,10 @@ import (
 	"github.com/nocturna-ta/ums/internal/interfaces/jwtsvc"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
+	"github.com/nocturna-ta/ums/pkg/common"
 	"github.com/nocturna-ta/ums/pkg/constants"
 	"github.com/nocturna-ta/ums/pkg/constants/errorcode"
 	"github.com/nocturna-ta/ums/pkg/roles"
-	"github.com/nocturna-ta/ums/pkg/utils"
 	"time"
 )
 
@@ -31,6 +32,7 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 	var (
 		user                *model.User
 		pendingRegistration *model.PendingRegistration
+		KTPPhotoPath        string
 	)
 
 	transaction := func(txCtx context.Context) (any, error) {
@@ -65,6 +67,28 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 				Region:  req.Region,
 			}
 		case roles.RoleVoter:
+			if req.KTPPhotoName == "" || req.KTPPhotoFile == nil {
+				fileConfigKTP := fileutils.DefaultConfig()
+				fileConfigKTP.SetAllowedImageExtension()
+				fileConfigKTP.EntityType = "KTP"
+
+				KTPPhotoPath, errTx = fileutils.StoreFile(txCtx, req.KTPPhotoFile, req.KTPPhotoName, fileConfigKTP)
+				if errTx != nil {
+					_ = fileutils.DeleteFile(txCtx, KTPPhotoPath)
+					log.WithFields(log.Fields{
+						"error": errTx,
+					}).ErrorWithCtx(txCtx, "[UserUseCases.RegisterUser] Failed to store KTP photo")
+					return nil, &custerr.ErrChain{
+						Message: "Failed to store KTP photo",
+						Code:    500,
+						Type:    response2.ErrInternalServerError,
+						Cause:   errTx,
+					}
+				}
+			} else {
+				KTPPhotoPath = ""
+			}
+
 			entityData = &model.VoterData{
 				NIK:          req.NIK,
 				Fullname:     req.FullName,
@@ -74,6 +98,7 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 				Residential:  req.ResidentialAddress,
 				VoterAddress: req.Address,
 				Region:       req.Region,
+				KTPPhotoPath: KTPPhotoPath,
 			}
 		}
 
@@ -94,6 +119,15 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 
 		errTx = m.pendingRegRepo.Insert(txCtx, pendingRegistration)
 		if errTx != nil {
+			if errors.Is(errTx, dao.ErrDuplicate) {
+				_ = fileutils.DeleteFile(txCtx, KTPPhotoPath)
+				return nil, &custerr.ErrChain{
+					Message: "Pending registration already exists",
+					Code:    400,
+					Type:    response2.ErrBadRequest,
+					Cause:   errTx,
+				}
+			}
 			return nil, errTx
 		}
 
@@ -116,7 +150,6 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 	return &response.UserRegistrationResponse{
 		ID:                 user.ID.String(),
 		Email:              user.Email,
-		Username:           user.Username,
 		VerificationStatus: user.VerificationStatus,
 		RequestedRole:      user.RequestedRole,
 		Message:            "Registration successful. Your account is pending verification by an admin.",
@@ -137,8 +170,9 @@ func (m *Module) GetUserByEmail(ctx context.Context, email string) (*response.Us
 	}
 
 	return &response.UserResponse{
-		ID:       user.ID.String(),
-		Username: user.Username,
+		ID:    user.ID.String(),
+		Email: user.Email,
+		Role:  user.Role,
 	}, nil
 }
 
@@ -162,55 +196,9 @@ func (m *Module) GetByID(ctx context.Context) (*response.UserResponse, error) {
 	}
 
 	return &response.UserResponse{
-		ID:       user.ID.String(),
-		Username: user.Username,
-	}, nil
-}
-
-func (m *Module) UpdateUser(ctx context.Context, req *request.UserUpdateRequest) (*response.UserResponse, error) {
-	span, ctx := tracing.StartSpanFromContext(ctx, "UserUseCases.UpdateUser")
-	defer span.End()
-
-	reqCtx, err := libCtx.GetRequestContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	existing, err := m.userRepo.GetById(ctx, reqCtx.GetUserId())
-	if err != nil {
-		log.WithFields(log.Fields{
-			"id":    reqCtx.UserId,
-			"error": err,
-		}).ErrorWithCtx(ctx, "[UserUseCases.UpdateUser] Failed to get user by id")
-		return nil, err
-	}
-
-	existing.Username = req.Username
-
-	err = m.userRepo.Update(ctx, existing.ID, &model.UserUpdate{
-		Username: existing.Username,
-	})
-
-	if err != nil {
-		log.WithFields(log.Fields{
-			"id":      reqCtx.UserId,
-			"error":   err,
-			"request": req,
-		}).ErrorWithCtx(ctx, "[UserUseCases.UpdateUser] Failed to update user")
-		return nil, err
-	}
-
-	err = m.publisher.Publish(ctx, m.topics.MasterDataUser.Value, existing.ID.String(), existing.ToMessageModel(), map[string]any{
-		constants.MetaDataOperation: constants.Update,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &response.UserResponse{
-		ID:       existing.ID.String(),
-		Username: existing.Username,
+		ID:    user.ID.String(),
+		Email: user.Email,
+		Role:  user.Role,
 	}, nil
 }
 
@@ -232,8 +220,8 @@ func (m *Module) ChangePassword(ctx context.Context, req *request.UserChangePass
 		return err
 	}
 
-	oldHash := utils.PasswordHash(req.Old, existing.PasswordSalt)
-	newPassword := utils.PasswordHash(req.Confirm, existing.PasswordSalt)
+	oldHash := common.PasswordHash(req.Old, existing.PasswordSalt)
+	newPassword := common.PasswordHash(req.Confirm, existing.PasswordSalt)
 	if oldHash != existing.Password {
 		return &custerr.ErrChain{
 			Message: errorcode.WrongPassword.Message,
@@ -268,7 +256,7 @@ func (m *Module) LoginUser(ctx context.Context, req *request.UserLoginRequest) (
 		return nil, err
 	}
 
-	password := utils.PasswordHash(req.Password, existing.PasswordSalt)
+	password := common.PasswordHash(req.Password, existing.PasswordSalt)
 	if password != existing.Password {
 		return nil, &custerr.ErrChain{
 			Message: errorcode.WrongPassword.Message,
@@ -336,7 +324,6 @@ func (m *Module) GetPendingVerificationUsers(ctx context.Context) (*[]response.U
 		result = append(result, response.UserVerificationResponse{
 			ID:                 user.ID.String(),
 			Email:              user.Email,
-			Username:           user.Username,
 			RequestedRole:      user.RequestedRole,
 			VerificationStatus: user.VerificationStatus,
 			CreatedAt:          user.CreatedAt,
@@ -382,7 +369,6 @@ func (m *Module) GetVerificationDetails(ctx context.Context, userIDStr string) (
 			return &response.UserVerificationDetailsResponse{
 				ID:                 user.ID.String(),
 				Email:              user.Email,
-				Username:           user.Username,
 				RequestedRole:      user.RequestedRole,
 				VerificationStatus: user.VerificationStatus,
 				CreatedAt:          user.CreatedAt,
@@ -413,7 +399,6 @@ func (m *Module) GetVerificationDetails(ctx context.Context, userIDStr string) (
 	return &response.UserVerificationDetailsResponse{
 		ID:                 user.ID.String(),
 		Email:              user.Email,
-		Username:           user.Username,
 		RequestedRole:      user.RequestedRole,
 		VerificationStatus: user.VerificationStatus,
 		CreatedAt:          user.CreatedAt,
@@ -535,9 +520,13 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				RegisteredAt: time.Now(),
 			}
 
-			errTx = m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, req.SignedTransaction)
+			txHash, errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, req.SignedTransaction)
 			if errTx != nil {
 				return nil, errTx
+			}
+
+			if txHash == "" {
+				return nil, err
 			}
 
 			errTx = m.publisher.Publish(txCtx, m.topics.MasterDataKPUProvinsi.Value, kpuProvinsi.ID.String(), kpuProvinsi.ToMessageModel(), map[string]any{
@@ -573,9 +562,13 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				RegisteredAt: time.Now(),
 			}
 
-			errTx = m.kpuKotaRepo.InsertKPUKota(txCtx, kpuKota, req.SignedTransaction)
+			txHash, errTx := m.kpuKotaRepo.InsertKPUKota(txCtx, kpuKota, req.SignedTransaction)
 			if errTx != nil {
 				return nil, errTx
+			}
+
+			if txHash == "" {
+				return nil, err
 			}
 
 			errTx = m.publisher.Publish(txCtx, m.topics.MasterDataKPUKota.Value, kpuKota.ID.String(), kpuKota.ToMessageModel(), map[string]any{
@@ -618,15 +611,29 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				ResidentialAddress: voterData.Residential,
 				VoterAddress:       voterData.VoterAddress,
 				Region:             voterData.Region,
+				KTPPhotoPath:       voterData.KTPPhotoPath,
 				IsRegistered:       true,
 				HasVoted:           false,
 				VotedAt:            time.Time{},
 				LastLogin:          time.Now(),
 			}
 
-			errTx = m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
+			txHash, errTx := m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
 			if errTx != nil {
+				if errors.Is(errTx, dao.ErrDuplicate) {
+					_ = fileutils.DeleteFile(txCtx, voter.KTPPhotoPath)
+					return nil, &custerr.ErrChain{
+						Message: "User already exists",
+						Code:    400,
+						Type:    response2.ErrBadRequest,
+						Cause:   errTx,
+					}
+				}
 				return nil, errTx
+			}
+
+			if txHash == "" {
+				return nil, err
 			}
 
 			errTx = m.publisher.Publish(txCtx, m.topics.MasterDataVoter.Value, voter.ID.String(), voter.ToMessageModel(), map[string]any{
@@ -776,7 +783,6 @@ func (m *Module) CheckVerificationStatus(ctx context.Context, email string) (*re
 	return &response.UserVerificationResponse{
 		ID:                 user.ID.String(),
 		Email:              user.Email,
-		Username:           user.Username,
 		RequestedRole:      user.RequestedRole,
 		VerificationStatus: user.VerificationStatus,
 		CreatedAt:          user.CreatedAt,
@@ -804,7 +810,6 @@ func (m *Module) GetMyVerificationStatus(ctx context.Context) (*response.UserVer
 	}
 
 	response := &response.UserVerificationStatusResponse{
-		Username:           user.Username,
 		Email:              user.Email,
 		RequestedRole:      user.RequestedRole,
 		Role:               user.Role,
@@ -860,7 +865,6 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 		result = append(result, response.UserVerificationResponse{
 			ID:                 user.ID.String(),
 			Email:              user.Email,
-			Username:           user.Username,
 			RequestedRole:      user.RequestedRole,
 			VerificationStatus: user.VerificationStatus,
 			CreatedAt:          user.CreatedAt,
@@ -891,7 +895,6 @@ func (m *Module) GetEnhancedVerificationStatus(ctx context.Context) (*response.E
 	}
 
 	response := &response.EnhancedUserVerificationStatusResponse{
-		Username:           user.Username,
 		Email:              user.Email,
 		RequestedRole:      user.RequestedRole,
 		Role:               user.Role,

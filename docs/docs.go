@@ -1194,7 +1194,7 @@ const docTemplate = `{
             "post": {
                 "description": "Register a new user",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -1205,13 +1205,17 @@ const docTemplate = `{
                 "summary": "Register a new user",
                 "parameters": [
                     {
-                        "description": "User registration request",
+                        "type": "string",
+                        "description": "User registration request (JSON)",
                         "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.UserRegistrationRequest"
-                        }
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "KTP photo",
+                        "name": "ktp_photo",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -1227,70 +1231,6 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.UserRegistrationResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/user/update": {
-            "put": {
-                "description": "Update user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Update user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User",
-                        "name": "X-User-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Role",
-                        "name": "X-Role",
-                        "in": "header"
-                    },
-                    {
-                        "description": "User update request",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.UserUpdateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User updated",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.UserResponse"
                                         }
                                     }
                                 }
@@ -2087,60 +2027,6 @@ const docTemplate = `{
                 }
             }
         },
-        "request.UserRegistrationRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "birth_date": {
-                    "type": "string"
-                },
-                "birth_place": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "string"
-                },
-                "kpu-name": {
-                    "description": "Role-specific fields\nFor KPU Provinsi and KPU Kota",
-                    "type": "string"
-                },
-                "nik": {
-                    "description": "For Voter",
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "residential_address": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.UserUpdateRequest": {
-            "type": "object",
-            "properties": {
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "request.UserVerificationRequest": {
             "type": "object",
             "properties": {
@@ -2314,9 +2200,6 @@ const docTemplate = `{
                 "requested_role": {
                     "type": "string"
                 },
-                "username": {
-                    "type": "string"
-                },
                 "verification_status": {
                     "type": "string"
                 }
@@ -2325,10 +2208,13 @@ const docTemplate = `{
         "response.UserResponse": {
             "type": "object",
             "properties": {
+                "email": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
-                "username": {
+                "role": {
                     "type": "string"
                 }
             }
@@ -2352,9 +2238,6 @@ const docTemplate = `{
                 "requested_role": {
                     "type": "string"
                 },
-                "username": {
-                    "type": "string"
-                },
                 "verification_status": {
                     "type": "string"
                 }
@@ -2373,9 +2256,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "requested_role": {
-                    "type": "string"
-                },
-                "username": {
                     "type": "string"
                 },
                 "verification_status": {
@@ -2402,9 +2282,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
-                    "type": "string"
-                },
-                "username": {
                     "type": "string"
                 },
                 "verification_status": {

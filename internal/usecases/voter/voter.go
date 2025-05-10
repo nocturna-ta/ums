@@ -32,7 +32,7 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 		voter = model.ConstructRegistration(req)
 		voter.UserID = reqCtx.GetUserId()
 
-		errTx := m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
+		txHash, errTx := m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
 		if errTx != nil {
 			if errors.Is(errTx, dao.ErrDuplicate) {
 				return nil, &custerr.ErrChain{
@@ -44,6 +44,10 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 			}
 
 			return nil, errTx
+		}
+
+		if txHash == "" {
+			return nil, err
 		}
 
 		errTx = m.publisher.Publish(txCtx, m.topics.MasterDataVoter.Value, voter.ID.String(), voter.ToMessageModel(), map[string]any{

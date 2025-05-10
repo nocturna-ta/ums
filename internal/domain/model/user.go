@@ -5,17 +5,14 @@ import (
 	"github.com/nocturna-ta/common-model/models/event"
 	"github.com/nocturna-ta/golib/utils/randomizer"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
-	"github.com/nocturna-ta/ums/pkg/constants"
-	"github.com/nocturna-ta/ums/pkg/utils"
+	"github.com/nocturna-ta/ums/pkg/common"
 	"math/rand"
-	"strings"
 	"time"
 )
 
 type User struct {
 	BaseModel
 	ID                 uuid.UUID `db:"id"`
-	Username           string    `db:"username"`
 	Email              string    `db:"email"`
 	Password           string    `db:"password"`
 	PasswordSalt       string    `db:"password_salt"`
@@ -23,10 +20,6 @@ type User struct {
 	RequestedRole      string    `db:"requested_role"`
 	IsActive           bool      `db:"is_active"`
 	VerificationStatus string    `db:"verification_status"`
-}
-
-type UserUpdate struct {
-	Username string `db:"username"`
 }
 
 const (
@@ -43,7 +36,6 @@ func (u *User) ToMessageModel() *event.UserMessage {
 			IsDeleted: u.IsDeleted,
 		},
 		ID:       u.ID,
-		Username: u.Username,
 		Email:    u.Email,
 		Role:     u.Role,
 		IsActive: u.IsActive,
@@ -54,11 +46,6 @@ func (u *User) ToMessageModel() *event.UserMessage {
 
 func ConstructUserRegistration(req *request.UserRegistrationRequest) *User {
 	now := time.Now()
-	username := req.Username
-	if username == constants.EmptyString {
-		username = "user-" + now.Format("20060102150405")
-	}
-	username = strings.TrimSpace(username)
 
 	n := rand.Intn(10)
 	if n < 6 {
@@ -75,9 +62,8 @@ func ConstructUserRegistration(req *request.UserRegistrationRequest) *User {
 			UpdatedAt: now,
 		},
 		ID:                 userId,
-		Username:           username,
 		Email:              req.Email,
-		Password:           utils.PasswordHash(req.Password, salt),
+		Password:           common.PasswordHash(req.Password, salt),
 		PasswordSalt:       salt,
 		Role:               "unverified",
 		RequestedRole:      req.Role,

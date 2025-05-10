@@ -50,13 +50,13 @@ func NewVoterRepository(opts *OptsVoterRepository) repository.VoterRepository {
 const (
 	insertVoter = `INSERT INTO voters (id, user_id, nik, full_name, gender, birth_place, 
                     birth_date, residential_address, region, voter_address, is_registered, 
-                    has_voted, voted_at, last_login, created_at, updated_at)
-					VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10, $11, $12, $13, $14, $15, $16)`
+                    ktp_photo_path,has_voted, voted_at, last_login, created_at, updated_at)
+					VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10, $11, $12, $13, $14, $15, $16, $17)`
 	selectVoter = `SELECT %s FROM voters %s WHERE TRUE %s`
 	updateVoter = `UPDATE voters SET %s WHERE TRUE %s`
 )
 
-func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, signedTransaction string) error {
+func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, signedTransaction string) (string, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "VoterRepository.InsertVoter")
 	defer span.End()
 
@@ -65,7 +65,7 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to convert signed transaction to transaction")
-		return err
+		return "", err
 	}
 
 	sqlTrx := utils.GetSqlTx(ctx)
@@ -77,7 +77,7 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to begin transaction")
-			return err
+			return "", err
 		}
 		ownTransaction = true
 
@@ -105,6 +105,7 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 		voter.Region,
 		voter.VoterAddress,
 		voter.IsRegistered,
+		voter.KTPPhotoPath,
 		voter.HasVoted,
 		voter.VotedAt,
 		voter.LastLogin,
@@ -121,7 +122,7 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 					"error": err,
 					"voter": voter,
 				}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Duplicate entry")
-				return ErrDuplicate
+				return "", ErrDuplicate
 			}
 		}
 
@@ -129,9 +130,9 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 			"error": err,
 			"voter": voter,
 		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to insert entry")
-		return err
+		return "", err
 	}
-	err = v.client.SendTransaction(ctx, tx)
+	txHash, err := v.client.SendTransaction(ctx, tx)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -145,19 +146,19 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 				}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to rollback transaction")
 			}
 		}
-		return err
+		return "", err
 	}
 
 	if ownTransaction {
-		if err := sqlTrx.Commit(); err != nil {
+		if err = sqlTrx.Commit(); err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to commit transaction")
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return txHash, err
 }
 
 func (v *VoterRepository) GetAllVoter(ctx context.Context) ([]model.Voter, error) {
@@ -177,7 +178,7 @@ func (v *VoterRepository) GetAllVoter(ctx context.Context) ([]model.Voter, error
 	}
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, 
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
 			has_voted, voted_at, last_login, created_at, updated_at`
 	whereQuery := " AND voters.is_deleted = false"
 	joinQuery := ""
@@ -234,7 +235,7 @@ func (v *VoterRepository) GetVoterByNIK(ctx context.Context, nik string) (*model
 	}
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, 
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
 			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.nik = $1"
@@ -283,7 +284,7 @@ func (v *VoterRepository) GetVoterByAddress(ctx context.Context, address string)
 		return nil, err
 	}
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, 
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
 			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.voter_address = $1"
@@ -332,7 +333,7 @@ func (v *VoterRepository) GetVoterByRegion(ctx context.Context, region string) (
 	}
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, 
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
 			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.region = $1"
@@ -386,7 +387,7 @@ func (v *VoterRepository) GetVoterByID(ctx context.Context, id uuid.UUID) (*mode
 	)
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, 
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
 			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.id = $1"
