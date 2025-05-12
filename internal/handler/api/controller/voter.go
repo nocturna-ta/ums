@@ -9,7 +9,7 @@ import (
 	"github.com/nocturna-ta/golib/response/rest"
 	"github.com/nocturna-ta/golib/router"
 	"github.com/nocturna-ta/golib/tracing"
-	"github.com/nocturna-ta/ums/internal/infrastructures/cutresp"
+	"github.com/nocturna-ta/ums/internal/infrastructures/custresp"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 )
 
@@ -33,14 +33,14 @@ func (api *API) RegisterVoter(ctx context.Context, req *router.Request) (*rest.J
 	err := json.Unmarshal(req.RawBody(), &regisReq)
 
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = regisReq.ValidateRegisterRequest()
 
 	res, err := api.voterUc.RegisterVoter(ctx, &regisReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -66,7 +66,7 @@ func (api *API) GetVoterByNIK(ctx context.Context, req *router.Request) (*rest.J
 
 	res, err := api.voterUc.GetVoterByNIK(ctx, nik)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -89,7 +89,7 @@ func (api *API) GetVoterByAddress(ctx context.Context, req *router.Request) (*re
 
 	res, err := api.voterUc.GetVoterByAddress(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -115,7 +115,7 @@ func (api *API) GetVoterByRegion(ctx context.Context, req *router.Request) (*res
 
 	res, err := api.voterUc.GetVoterByRegion(ctx, region)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -138,7 +138,7 @@ func (api *API) GetAllVoter(ctx context.Context, req *router.Request) (*rest.JSO
 
 	res, err := api.voterUc.GetAllVoter(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil

@@ -8,7 +8,7 @@ import (
 	"github.com/nocturna-ta/golib/response/rest"
 	"github.com/nocturna-ta/golib/router"
 	"github.com/nocturna-ta/golib/tracing"
-	"github.com/nocturna-ta/ums/internal/infrastructures/cutresp"
+	"github.com/nocturna-ta/ums/internal/infrastructures/custresp"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 )
 
@@ -29,7 +29,7 @@ func (api *API) GetPendingVerificationsForRole(ctx context.Context, req *router.
 
 	res, err := api.userUc.GetPendingVerificationsByRole(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -52,7 +52,7 @@ func (api *API) GetPendingVerifications(ctx context.Context, req *router.Request
 
 	res, err := api.userUc.GetPendingVerificationUsers(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -76,7 +76,7 @@ func (api *API) GetPendingVerificationDetails(ctx context.Context, req *router.R
 
 	userID := req.Params("user_id")
 	if userID == "" {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "User ID is required",
 			Code:    400,
 			Type:    response.ErrBadRequest,
@@ -85,7 +85,7 @@ func (api *API) GetPendingVerificationDetails(ctx context.Context, req *router.R
 
 	res, err := api.userUc.GetVerificationDetails(ctx, userID)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -110,17 +110,17 @@ func (api *API) ApproveVerification(ctx context.Context, req *router.Request) (*
 	var verificationReq request.UserVerificationRequest
 	err := json.Unmarshal(req.RawBody(), &verificationReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = verificationReq.ValidateVerificationRequest()
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = api.userUc.ApproveUserVerification(ctx, &verificationReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData("User verification approved successfully"), nil
@@ -145,17 +145,17 @@ func (api *API) RejectVerification(ctx context.Context, req *router.Request) (*r
 	var verificationReq request.UserVerificationRequest
 	err := json.Unmarshal(req.RawBody(), &verificationReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = verificationReq.ValidateVerificationRequest()
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = api.userUc.RejectUserVerification(ctx, &verificationReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData("User verification rejected"), nil

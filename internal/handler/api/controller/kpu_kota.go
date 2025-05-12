@@ -11,7 +11,7 @@ import (
 	"github.com/nocturna-ta/golib/response/rest"
 	"github.com/nocturna-ta/golib/router"
 	"github.com/nocturna-ta/golib/tracing"
-	"github.com/nocturna-ta/ums/internal/infrastructures/cutresp"
+	"github.com/nocturna-ta/ums/internal/infrastructures/custresp"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 )
 
@@ -35,14 +35,14 @@ func (api *API) RegisterKPUKota(ctx context.Context, req *router.Request) (*rest
 	err := json.Unmarshal(req.RawBody(), &regisReq)
 
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = regisReq.ValidateRegistrationRequest()
 
 	res, err := api.kpuKotaUc.RegisterKPUKota(ctx, &regisReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -65,7 +65,7 @@ func (api *API) GetAllKPUKota(ctx context.Context, req *router.Request) (*rest.J
 
 	res, err := api.kpuKotaUc.GetAllKPUKota(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -88,7 +88,7 @@ func (api *API) GetKPUKotaByAddress(ctx context.Context, req *router.Request) (*
 
 	res, err := api.kpuKotaUc.GetKPUKotaByAddress(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -113,7 +113,7 @@ func (api *API) GetKPUKotaByID(ctx context.Context, req *router.Request) (*rest.
 	kpuKotaIDStr := req.Params("id")
 	kpuKotaID, err := uuid.Parse(kpuKotaIDStr)
 	if err != nil {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "Invalid KPU Kota ID",
 			Code:    400,
 			Type:    response.ErrBadRequest,
@@ -122,7 +122,7 @@ func (api *API) GetKPUKotaByID(ctx context.Context, req *router.Request) (*rest.
 
 	res, err := api.kpuKotaUc.GetKPUKotaByID(ctx, kpuKotaID)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -148,7 +148,7 @@ func (api *API) UploadKPUKotaPhoto(ctx context.Context, req *router.Request) (*r
 	kpuKotaIDStr := req.Params("id")
 	kpuKotaID, err := uuid.Parse(kpuKotaIDStr)
 	if err != nil {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "Invalid KPU Kota ID",
 			Code:    400,
 			Type:    response.ErrBadRequest,
@@ -157,7 +157,7 @@ func (api *API) UploadKPUKotaPhoto(ctx context.Context, req *router.Request) (*r
 
 	form, err := req.RawRequest().MultipartForm()
 	if err != nil {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "Failed to parse multipart form",
 			Code:    400,
 			Type:    response.ErrBadRequest,
@@ -188,7 +188,7 @@ func (api *API) UploadKPUKotaPhoto(ctx context.Context, req *router.Request) (*r
 			errorCode = 500
 		}
 
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: errorMsg,
 			Code:    errorCode,
 			Type:    response.ErrBadRequest,
@@ -198,7 +198,7 @@ func (api *API) UploadKPUKotaPhoto(ctx context.Context, req *router.Request) (*r
 
 	file, err := fileutils.OpenFile(ctx, uploadResult.FilePath)
 	if err != nil {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "Failed to read uploaded file",
 			Code:    500,
 			Type:    response.ErrInternalServerError,
@@ -209,7 +209,7 @@ func (api *API) UploadKPUKotaPhoto(ctx context.Context, req *router.Request) (*r
 
 	err = api.kpuKotaUc.UploadKPUKotaPhoto(ctx, kpuKotaID, file, uploadResult.OriginalFilename)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData("Photo uploaded successfully"), nil
@@ -270,17 +270,17 @@ func (api *API) UpdateKPUKota(ctx context.Context, req *router.Request) (*rest.J
 	var updateReq request.KPUKotaUpdateRequest
 	err := json.Unmarshal(req.RawBody(), &updateReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = updateReq.ValidateUpdateRequest()
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	res, err := api.kpuKotaUc.UpdateKPUKota(ctx, &updateReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil

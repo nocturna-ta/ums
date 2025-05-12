@@ -11,7 +11,7 @@ import (
 	"github.com/nocturna-ta/golib/response/rest"
 	"github.com/nocturna-ta/golib/router"
 	"github.com/nocturna-ta/golib/tracing"
-	"github.com/nocturna-ta/ums/internal/infrastructures/cutresp"
+	"github.com/nocturna-ta/ums/internal/infrastructures/custresp"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 )
 
@@ -35,14 +35,14 @@ func (api *API) RegisterKPUProvinsi(ctx context.Context, req *router.Request) (*
 	err := json.Unmarshal(req.RawBody(), &regisReq)
 
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = regisReq.ValidateRegistrationRequest()
 
 	res, err := api.kpuProvinsiUc.RegisterKPUProvinsi(ctx, &regisReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -65,7 +65,7 @@ func (api *API) GetAllKPUProvinsi(ctx context.Context, req *router.Request) (*re
 
 	res, err := api.kpuProvinsiUc.GetAllKPUProvinsi(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -88,7 +88,7 @@ func (api *API) GetKPUProvinsiByAddress(ctx context.Context, req *router.Request
 
 	res, err := api.kpuProvinsiUc.GetKPUProvinsiByAddress(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -113,7 +113,7 @@ func (api *API) GetKPUProvinsiByID(ctx context.Context, req *router.Request) (*r
 	kpuProvinsiIDStr := req.Params("id")
 	kpuProvinsiID, err := uuid.Parse(kpuProvinsiIDStr)
 	if err != nil {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "Invalid KPU Provinsi ID",
 			Code:    400,
 			Type:    response.ErrBadRequest,
@@ -122,7 +122,7 @@ func (api *API) GetKPUProvinsiByID(ctx context.Context, req *router.Request) (*r
 
 	res, err := api.kpuProvinsiUc.GetKPUProvinsiByID(ctx, kpuProvinsiID)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -148,7 +148,7 @@ func (api *API) UploadKPUProvinsiPhoto(ctx context.Context, req *router.Request)
 	kpuProvinsiIDStr := req.Params("id")
 	kpuProvinsiID, err := uuid.Parse(kpuProvinsiIDStr)
 	if err != nil {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "Invalid KPU Provinsi ID",
 			Code:    400,
 			Type:    response.ErrBadRequest,
@@ -157,7 +157,7 @@ func (api *API) UploadKPUProvinsiPhoto(ctx context.Context, req *router.Request)
 
 	form, err := req.RawRequest().MultipartForm()
 	if err != nil {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "Failed to parse multipart form",
 			Code:    400,
 			Type:    response.ErrBadRequest,
@@ -188,7 +188,7 @@ func (api *API) UploadKPUProvinsiPhoto(ctx context.Context, req *router.Request)
 			errorCode = 500
 		}
 
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: errorMsg,
 			Code:    errorCode,
 			Type:    response.ErrBadRequest,
@@ -198,7 +198,7 @@ func (api *API) UploadKPUProvinsiPhoto(ctx context.Context, req *router.Request)
 
 	file, err := fileutils.OpenFile(ctx, uploadResult.FilePath)
 	if err != nil {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "Failed to read uploaded file",
 			Code:    500,
 			Type:    response.ErrInternalServerError,
@@ -209,7 +209,7 @@ func (api *API) UploadKPUProvinsiPhoto(ctx context.Context, req *router.Request)
 
 	err = api.kpuProvinsiUc.UploadKPUProvinsiPhoto(ctx, kpuProvinsiID, file, uploadResult.OriginalFilename)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData("Photo uploaded successfully"), nil
@@ -270,17 +270,17 @@ func (api *API) UpdateKPUProvinsi(ctx context.Context, req *router.Request) (*re
 	var updateReq request.KPUProvinsiUpdateRequest
 	err := json.Unmarshal(req.RawBody(), &updateReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = updateReq.ValidateUpdateRequest()
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	res, err := api.kpuProvinsiUc.UpdateKPUProvinsi(ctx, &updateReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil

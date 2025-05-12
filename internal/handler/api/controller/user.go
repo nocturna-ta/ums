@@ -9,7 +9,7 @@ import (
 	"github.com/nocturna-ta/golib/response/rest"
 	"github.com/nocturna-ta/golib/router"
 	"github.com/nocturna-ta/golib/tracing"
-	"github.com/nocturna-ta/ums/internal/infrastructures/cutresp"
+	"github.com/nocturna-ta/ums/internal/infrastructures/custresp"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	request2 "github.com/nocturna-ta/ums/pkg/request"
 	"github.com/nocturna-ta/ums/pkg/utils"
@@ -31,7 +31,7 @@ func (api *API) RegisterUser(ctx context.Context, req *router.Request) (*rest.JS
 
 	form, err := req.RawRequest().MultipartForm()
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	fileConfig := []utils.FileUploadConfig{
@@ -47,19 +47,19 @@ func (api *API) RegisterUser(ctx context.Context, req *router.Request) (*rest.JS
 
 	uploadedFiles, err := utils.ProcessFileUploads(ctx, form, fileConfig)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	defer utils.CloseFiles(uploadedFiles)
 
 	registrationRequest, err := request2.ParseRegistrationRequest(form, uploadedFiles)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	res, err := api.userUc.RegisterUser(ctx, registrationRequest)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -85,7 +85,7 @@ func (api *API) GetUserByEmail(ctx context.Context, req *router.Request) (*rest.
 
 	res, err := api.userUc.GetUserByEmail(ctx, email)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -108,7 +108,7 @@ func (api *API) GetByID(ctx context.Context, req *router.Request) (*rest.JSONRes
 
 	res, err := api.userUc.GetByID(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -133,17 +133,17 @@ func (api *API) LoginUser(ctx context.Context, req *router.Request) (*rest.JSONR
 	var loginReq request.UserLoginRequest
 	err := json.Unmarshal(req.RawBody(), &loginReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = loginReq.ValidateLogin()
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	res, err := api.userUc.LoginUser(ctx, &loginReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -168,17 +168,17 @@ func (api *API) ChangePassword(ctx context.Context, req *router.Request) (*rest.
 	var changePassReq request.UserChangePasswordRequest
 	err := json.Unmarshal(req.RawBody(), &changePassReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = changePassReq.ValidateChangePassword()
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = api.userUc.ChangePassword(ctx, &changePassReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData("Password changed"), nil
@@ -200,7 +200,7 @@ func (api *API) CheckVerificationStatus(ctx context.Context, req *router.Request
 
 	email := req.Params("email")
 	if email == "" {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "Email is required",
 			Code:    400,
 			Type:    response.ErrBadRequest,
@@ -209,7 +209,7 @@ func (api *API) CheckVerificationStatus(ctx context.Context, req *router.Request
 
 	res, err := api.userUc.CheckVerificationStatus(ctx, email)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -232,7 +232,7 @@ func (api *API) GetMyVerificationStatus(ctx context.Context, req *router.Request
 
 	res, err := api.userUc.GetMyVerificationStatus(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
