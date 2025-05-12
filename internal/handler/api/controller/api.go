@@ -77,9 +77,10 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			voter.GET("/address", api.GetVoterByAddress, router.MustAuthorized(false))
 			voter.GET("/region/:region", api.GetVoterByRegion, router.MustAuthorized(false))
 			voter.GET("/", api.GetAllVoter, router.MustAuthorized(false))
+			voter.ATTACHMENT("/:id/photo", api.GetVoterKTPPhoto, router.MustAuthorized(false))
 		})
 		v1.Group("/kpu-provinsi", func(kpuProvinsi *router.FastRouter) {
-			kpuProvinsi.GET("/", middleware.KPUProvinsiOnly()(api.GetAllKPUProvinsi), router.MustAuthorized(false))
+			kpuProvinsi.GET("/", api.GetAllKPUProvinsi, router.MustAuthorized(false))
 			kpuProvinsi.POST("/register", api.RegisterKPUProvinsi, router.MustAuthorized(false))
 			kpuProvinsi.GET("/address", api.GetKPUProvinsiByAddress, router.MustAuthorized(false))
 			kpuProvinsi.GET("/:id", api.GetKPUProvinsiByID, router.MustAuthorized(false))
@@ -101,7 +102,7 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			user.POST("/register", api.RegisterUser, router.MustAuthorized(false))
 			user.GET("/me", api.GetByID)
 			user.POST("/login", api.LoginUser, router.MustAuthorized(false))
-
+			user.GET("/:email", api.GetUserByEmail, router.MustAuthorized(false))
 			user.GET("/verification-status/:email", api.CheckVerificationStatus, router.MustAuthorized(false))
 			user.GET("/my-verification-status", api.GetMyVerificationStatus)
 		})

@@ -1899,6 +1899,50 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/voter/{id}/photo": {
+            "get": {
+                "description": "Get the photo for a KTP Photo",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "voters"
+                ],
+                "summary": "Get KTP photo for Voter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Voter ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2251,6 +2295,10 @@ const docTemplate = `{
                 },
                 "email": {
                     "type": "string"
+                },
+                "entity_data": {
+                    "type": "object",
+                    "additionalProperties": true
                 },
                 "id": {
                     "type": "string"

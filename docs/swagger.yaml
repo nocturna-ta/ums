@@ -228,6 +228,9 @@ definitions:
         type: string
       email:
         type: string
+      entity_data:
+        additionalProperties: true
+        type: object
       id:
         type: string
       requested_role:
@@ -1302,6 +1305,35 @@ paths:
                   $ref: '#/definitions/response.VoterResponse'
               type: object
       summary: Get All Voter
+      tags:
+      - voters
+  /v1/voter/{id}/photo:
+    get:
+      description: Get the photo for a KTP Photo
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Voter ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+      summary: Get KTP photo for Voter
       tags:
       - voters
   /v1/voter/address:

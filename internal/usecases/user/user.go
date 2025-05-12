@@ -56,15 +56,17 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 		switch req.Role {
 		case roles.RoleKPUProvinsi:
 			entityData = &model.KPUProvinsiData{
-				Name:    req.KPUName,
-				Address: req.Address,
-				Region:  req.Region,
+				Name:      req.KPUName,
+				Address:   req.Address,
+				Region:    req.Region,
+				Telephone: req.Telephone,
 			}
 		case roles.RoleKPUKota:
 			entityData = &model.KPUKotaData{
-				Name:    req.KPUName,
-				Address: req.Address,
-				Region:  req.Region,
+				Name:      req.KPUName,
+				Address:   req.Address,
+				Region:    req.Region,
+				Telephone: req.Telephone,
 			}
 		case roles.RoleVoter:
 			if req.KTPPhotoName == "" || req.KTPPhotoFile == nil {
@@ -510,12 +512,12 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 					UpdatedAt: time.Now(),
 					IsDeleted: false,
 				},
-				ID:      uuid.New(),
-				UserID:  userID,
-				Name:    kpuProvinsiData.Name,
-				Address: kpuProvinsiData.Address,
-				Region:  kpuProvinsiData.Region,
-
+				ID:           uuid.New(),
+				UserID:       userID,
+				Name:         kpuProvinsiData.Name,
+				Address:      kpuProvinsiData.Address,
+				Region:       kpuProvinsiData.Region,
+				Telephone:    kpuProvinsiData.Telephone,
 				IsActive:     true,
 				RegisteredAt: time.Now(),
 			}
@@ -558,6 +560,7 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				Name:         kpuKotaData.Name,
 				Address:      kpuKotaData.Address,
 				Region:       kpuKotaData.Region,
+				Telephone:    kpuKotaData.Telephone,
 				IsActive:     true,
 				RegisteredAt: time.Now(),
 			}
@@ -862,9 +865,34 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 
 	var result []response.UserVerificationResponse
 	for _, user := range filteredUsers {
+
+		pendingReg, err := m.pendingRegRepo.GetByUserID(ctx, user.ID)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":  err,
+				"userID": user.ID,
+			}).ErrorWithCtx(ctx, "[UserUseCases.GetVerificationDetails] Failed to get pending registration")
+			return nil, err
+		}
+
+		var entityData map[string]interface{}
+		if err := json.Unmarshal(pendingReg.EntityData, &entityData); err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"id":    user.ID,
+			}).ErrorWithCtx(ctx, "[UserUseCases.GetVerificationDetails] Failed to unmarshal entity data")
+			return nil, &custerr.ErrChain{
+				Message: "Failed to parse entity data",
+				Code:    500,
+				Type:    response2.ErrInternalServerError,
+				Cause:   err,
+			}
+		}
+
 		result = append(result, response.UserVerificationResponse{
 			ID:                 user.ID.String(),
 			Email:              user.Email,
+			EntityData:         entityData,
 			RequestedRole:      user.RequestedRole,
 			VerificationStatus: user.VerificationStatus,
 			CreatedAt:          user.CreatedAt,

@@ -3,8 +3,11 @@ package voter
 import (
 	"context"
 	"errors"
+	"github.com/google/uuid"
 	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
+	"github.com/nocturna-ta/golib/http"
+	"github.com/nocturna-ta/golib/http/filehandler"
 	"github.com/nocturna-ta/golib/log"
 	response2 "github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/tracing"
@@ -194,4 +197,39 @@ func (m *Module) GetAllVoter(ctx context.Context) (*[]response.VoterResponse, er
 	}
 
 	return &res, err
+}
+
+func (m *Module) GetVoterKTPPhoto(ctx context.Context, id uuid.UUID) (*http.File, string, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "VoterUseCases.GetVoterKTPPhoto")
+	defer span.End()
+
+	voter, err := m.voterRepo.GetVoterByID(ctx, id)
+	if err != nil {
+		return nil, "", &custerr.ErrChain{
+			Message: "Failed to get voter by ID",
+			Code:    400,
+			Type:    response2.ErrBadRequest,
+			Cause:   err,
+		}
+	}
+
+	if voter.KTPPhotoPath == "" {
+		return nil, "", &custerr.ErrChain{
+			Message: "KTP photo not found",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+		}
+	}
+
+	file, contentType, err := filehandler.GetFileFromPath(ctx, voter.KTPPhotoPath, filehandler.DisplayModeInline)
+	if err != nil {
+		return nil, "", &custerr.ErrChain{
+			Message: "Failed to get KTP photo",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	return file, contentType, nil
 }
