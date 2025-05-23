@@ -26,6 +26,7 @@ CREATE INDEX idx_users_verification_status ON users (verification_status);
 CREATE TABLE "kpu_kota" (
     id uuid NOT NULL PRIMARY KEY,
     user_id uuid REFERENCES users (id) ON DELETE CASCADE,
+    username VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
     region VARCHAR(255) NOT NULL,
@@ -42,6 +43,7 @@ CREATE TABLE "kpu_kota" (
 CREATE TABLE "kpu_provinsi" (
     id uuid NOT NULL PRIMARY KEY,
     user_id uuid REFERENCES users (id) ON DELETE CASCADE,
+    username VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
     region VARCHAR(255) NOT NULL,

@@ -7,10 +7,11 @@ import (
 )
 
 type KPUKotaRepository interface {
-	InsertKPUKota(ctx context.Context, kpu *model.KPUKota, signedTransaction string) (string, error)
+	InsertKPUKota(ctx context.Context, kpu *model.KPUKota) error
 	GetAllKPUKota(ctx context.Context) ([]model.KPUKota, error)
 	GetKPUKotaByAddress(ctx context.Context, address string) (*model.KPUKota, error)
 	UpdateKPUKotaPhoto(ctx context.Context, id uuid.UUID, photoPath string) error
 	GetKPUKotaByID(ctx context.Context, id uuid.UUID) (*model.KPUKota, error)
-	UpdateKPUKota(ctx context.Context, kpu *model.KPUKota, signedTransaction string) (string, error)
+	UpdateKPUKota(ctx context.Context, kpu *model.KPUKota) error
+	SendTxKPUKotaBlockchain(ctx context.Context, signedTransaction string) (string, error)
 }

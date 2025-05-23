@@ -188,8 +188,6 @@ func (repo *UserRepository) GetByEmail(ctx context.Context, email string) (*mode
 		decodedEmail = email
 	}
 
-	fmt.Println(decodedEmail)
-
 	selectQuery := "users.id, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
 	whereQuery := " AND users.email = $1 AND users.is_deleted = FALSE"
 	args = append(args, decodedEmail)

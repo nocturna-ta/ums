@@ -1981,6 +1981,9 @@
                 },
                 "signed_transaction": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -2017,6 +2020,9 @@
                     "type": "string"
                 },
                 "signed_transaction": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }
@@ -2149,6 +2155,9 @@
                 },
                 "user_id": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -2194,6 +2203,9 @@
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

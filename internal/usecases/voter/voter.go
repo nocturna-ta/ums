@@ -35,7 +35,7 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 		voter = model.ConstructRegistration(req)
 		voter.UserID = reqCtx.GetUserId()
 
-		txHash, errTx := m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
+		errTx := m.voterRepo.InsertVoter(txCtx, voter)
 		if errTx != nil {
 			if errors.Is(errTx, dao.ErrDuplicate) {
 				return nil, &custerr.ErrChain{
@@ -47,6 +47,15 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 			}
 
 			return nil, errTx
+		}
+
+		txHash, err := m.voterRepo.SendTxVoterBlockchain(txCtx, req.SignedTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"voter": voter,
+			}).ErrorWithCtx(txCtx, "[VoterUseCases.RegisterVoter] failed to send transaction to blockchain")
+			return nil, err
 		}
 
 		if txHash == "" {

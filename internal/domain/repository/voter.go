@@ -7,10 +7,12 @@ import (
 )
 
 type VoterRepository interface {
-	InsertVoter(ctx context.Context, voter *model.Voter, signedTransaction string) (string, error)
+	InsertVoter(ctx context.Context, voter *model.Voter) error
+	SendTxVoterBlockchain(ctx context.Context, signedTransaction string) (string, error)
 	GetAllVoter(ctx context.Context) ([]model.Voter, error)
 	GetVoterByNIK(ctx context.Context, nik string) (*model.Voter, error)
 	GetVoterByAddress(ctx context.Context, address string) (*model.Voter, error)
 	GetVoterByRegion(ctx context.Context, region string) ([]model.Voter, error)
 	GetVoterByID(ctx context.Context, id uuid.UUID) (*model.Voter, error)
+	UpdateVoter(ctx context.Context, voter *model.Voter) error
 }

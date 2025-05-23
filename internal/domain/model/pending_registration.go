@@ -15,6 +15,7 @@ type PendingRegistration struct {
 }
 
 type KPUProvinsiData struct {
+	Username  string `json:"username"`
 	Name      string `json:"name"`
 	Address   string `json:"address"`
 	Region    string `json:"region"`
@@ -22,6 +23,7 @@ type KPUProvinsiData struct {
 }
 
 type KPUKotaData struct {
+	Username  string `json:"username"`
 	Name      string `json:"name"`
 	Address   string `json:"address"`
 	Region    string `json:"region"`

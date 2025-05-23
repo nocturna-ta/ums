@@ -29,6 +29,8 @@ definitions:
         type: string
       signed_transaction:
         type: string
+      username:
+        type: string
     type: object
   request.KPUKotaUpdateRequest:
     properties:
@@ -52,6 +54,8 @@ definitions:
       region:
         type: string
       signed_transaction:
+        type: string
+      username:
         type: string
     type: object
   request.KPUProvinsiUpdateRequest:
@@ -138,6 +142,8 @@ definitions:
         type: string
       user_id:
         type: string
+      username:
+        type: string
     type: object
   response.KPUProvinsiRegistrationResponse:
     properties:
@@ -167,6 +173,8 @@ definitions:
       telephone:
         type: string
       user_id:
+        type: string
+      username:
         type: string
     type: object
   response.UserLoginResponse:

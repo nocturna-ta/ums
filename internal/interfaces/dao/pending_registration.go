@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	sql2 "database/sql"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -99,7 +98,7 @@ func (repo *PendingRegistrationRepository) GetByUserID(ctx context.Context, user
 	sqlTrx := utils.GetSqlTx(ctx)
 
 	selectQuery := "id, user_id, role, entity_data, created_at, updated_at"
-	whereClause := " AND user_id = $1 AND is_deleted = FALSE"
+	whereClause := " AND user_id = $1"
 	args = append(args, userID)
 	query := fmt.Sprintf(selectPendingRegistration, selectQuery, whereClause)
 
@@ -111,9 +110,6 @@ func (repo *PendingRegistrationRepository) GetByUserID(ctx context.Context, user
 	}
 
 	if err != nil {
-		if errors.Is(err, sql2.ErrNoRows) {
-			return nil, ErrNoResult
-		}
 		log.WithFields(log.Fields{
 			"error":  err,
 			"userID": userID,

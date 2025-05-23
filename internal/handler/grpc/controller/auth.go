@@ -11,11 +11,15 @@ func (s *server) ValidateAuthorization(ctx context.Context, req *proto.AuthValid
 	span, ctx := tracing.StartSpanFromContext(ctx, "GrpcServer.ValidateAuthorization")
 	defer span.End()
 
-	res := s.authUc.ValidateAuthorization(ctx, &request.ValidateAuthorizationRequest{
+	res, err := s.authUc.ValidateAuthorization(ctx, &request.ValidateAuthorizationRequest{
 		Headers:       req.Headers,
 		Path:          req.Path,
 		TargetService: req.TargetService,
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &proto.AuthValidateResponse{
 		IsValid:       res.IsValid,

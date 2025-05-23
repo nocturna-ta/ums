@@ -100,7 +100,7 @@ func (api *API) RegisterRoute() *router.FastRouter {
 		})
 		v1.Group("/user", func(user *router.FastRouter) {
 			user.POST("/register", api.RegisterUser, router.MustAuthorized(false))
-			user.GET("/me", api.GetByID)
+			user.GET("/me", api.GetByID, router.MustAuthorized(false))
 			user.POST("/login", api.LoginUser, router.MustAuthorized(false))
 			user.GET("/:email", api.GetUserByEmail, router.MustAuthorized(false))
 			user.GET("/verification-status/:email", api.CheckVerificationStatus, router.MustAuthorized(false))

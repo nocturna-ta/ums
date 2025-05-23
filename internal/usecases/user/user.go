@@ -56,6 +56,7 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 		switch req.Role {
 		case roles.RoleKPUProvinsi:
 			entityData = &model.KPUProvinsiData{
+				Username:  req.KPUUsername,
 				Name:      req.KPUName,
 				Address:   req.Address,
 				Region:    req.Region,
@@ -63,6 +64,7 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 			}
 		case roles.RoleKPUKota:
 			entityData = &model.KPUKotaData{
+				Username:  req.KPUUsername,
 				Name:      req.KPUName,
 				Address:   req.Address,
 				Region:    req.Region,
@@ -187,7 +189,8 @@ func (m *Module) GetByID(ctx context.Context) (*response.UserResponse, error) {
 		return nil, err
 	}
 
-	fmt.Println(reqCtx.GetUserId())
+	log.Print(reqCtx.GetUserId())
+	fmt.Print(reqCtx.GetUserId())
 	user, err := m.userRepo.GetById(ctx, reqCtx.GetUserId())
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -514,6 +517,7 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				},
 				ID:           uuid.New(),
 				UserID:       userID,
+				Username:     kpuProvinsiData.Username,
 				Name:         kpuProvinsiData.Name,
 				Address:      kpuProvinsiData.Address,
 				Region:       kpuProvinsiData.Region,
@@ -522,10 +526,12 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				RegisteredAt: time.Now(),
 			}
 
-			txHash, errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, req.SignedTransaction)
+			errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi)
 			if errTx != nil {
 				return nil, errTx
 			}
+
+			txHash, errTx := m.kpuProvinsiRepo.SendTxKPUProvinsiBlockchain(txCtx, req.SignedTransaction)
 
 			if txHash == "" {
 				return nil, err
@@ -557,6 +563,7 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				},
 				ID:           uuid.New(),
 				UserID:       userID,
+				Username:     kpuKotaData.Username,
 				Name:         kpuKotaData.Name,
 				Address:      kpuKotaData.Address,
 				Region:       kpuKotaData.Region,
@@ -565,7 +572,12 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				RegisteredAt: time.Now(),
 			}
 
-			txHash, errTx := m.kpuKotaRepo.InsertKPUKota(txCtx, kpuKota, req.SignedTransaction)
+			errTx := m.kpuKotaRepo.InsertKPUKota(txCtx, kpuKota)
+			if errTx != nil {
+				return nil, errTx
+			}
+
+			txHash, errTx := m.kpuKotaRepo.SendTxKPUKotaBlockchain(txCtx, req.SignedTransaction)
 			if errTx != nil {
 				return nil, errTx
 			}
@@ -621,7 +633,7 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				LastLogin:          time.Now(),
 			}
 
-			txHash, errTx := m.voterRepo.InsertVoter(txCtx, voter, req.SignedTransaction)
+			errTx := m.voterRepo.InsertVoter(txCtx, voter)
 			if errTx != nil {
 				if errors.Is(errTx, dao.ErrDuplicate) {
 					_ = fileutils.DeleteFile(txCtx, voter.KTPPhotoPath)
@@ -632,6 +644,11 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 						Cause:   errTx,
 					}
 				}
+				return nil, errTx
+			}
+
+			txHash, errTx := m.voterRepo.SendTxVoterBlockchain(txCtx, req.SignedTransaction)
+			if errTx != nil {
 				return nil, errTx
 			}
 
@@ -865,7 +882,6 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 
 	var result []response.UserVerificationResponse
 	for _, user := range filteredUsers {
-
 		pendingReg, err := m.pendingRegRepo.GetByUserID(ctx, user.ID)
 		if err != nil {
 			log.WithFields(log.Fields{

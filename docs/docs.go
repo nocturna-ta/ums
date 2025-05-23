@@ -1989,6 +1989,9 @@ const docTemplate = `{
                 },
                 "signed_transaction": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -2025,6 +2028,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "signed_transaction": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }
@@ -2157,6 +2163,9 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -2202,6 +2211,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

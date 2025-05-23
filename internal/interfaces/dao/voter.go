@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	sql2 "database/sql"
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
@@ -56,62 +57,56 @@ const (
 	updateVoter = `UPDATE voters SET %s WHERE TRUE %s`
 )
 
-func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, signedTransaction string) (string, error) {
+func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "VoterRepository.InsertVoter")
 	defer span.End()
 
-	tx, err := utils2.StringToTx(signedTransaction)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to convert signed transaction to transaction")
-		return "", err
-	}
+	var err error
 
 	sqlTrx := utils.GetSqlTx(ctx)
 
-	var ownTransaction bool
-	if sqlTrx == nil {
-		sqlTrx, err = v.db.GetMaster().BeginTxx(ctx, nil)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to begin transaction")
-			return "", err
-		}
-		ownTransaction = true
+	if sqlTrx != nil {
+		_, err = sqlTrx.ExecContext(ctx, insertVoter,
+			voter.ID,
+			voter.UserID,
+			voter.NIK,
+			voter.FullName,
+			voter.Gender,
+			voter.BirthPlace,
+			voter.BirthDate,
+			voter.ResidentialAddress,
+			voter.Region,
+			voter.VoterAddress,
+			voter.IsRegistered,
+			voter.KTPPhotoPath,
+			voter.HasVoted,
+			voter.VotedAt,
+			voter.LastLogin,
+			voter.CreatedAt,
+			voter.UpdatedAt,
+		)
+	} else {
+		_, err = v.db.GetMaster().ExecContext(ctx, insertVoter,
+			voter.ID,
+			voter.UserID,
+			voter.NIK,
+			voter.FullName,
+			voter.Gender,
+			voter.BirthPlace,
+			voter.BirthDate,
+			voter.ResidentialAddress,
+			voter.Region,
+			voter.VoterAddress,
+			voter.IsRegistered,
+			voter.KTPPhotoPath,
+			voter.HasVoted,
+			voter.VotedAt,
+			voter.LastLogin,
+			voter.CreatedAt,
+			voter.UpdatedAt,
+		)
 
-		defer func() {
-			if err != nil && ownTransaction {
-				rollbackErr := sqlTrx.Rollback()
-				if rollbackErr != nil {
-					log.WithFields(log.Fields{
-						"error": rollbackErr,
-					}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to rollback transaction")
-				}
-			}
-		}()
 	}
-
-	_, err = sqlTrx.ExecContext(ctx, insertVoter,
-		voter.ID,
-		voter.UserID,
-		voter.NIK,
-		voter.FullName,
-		voter.Gender,
-		voter.BirthPlace,
-		voter.BirthDate,
-		voter.ResidentialAddress,
-		voter.Region,
-		voter.VoterAddress,
-		voter.IsRegistered,
-		voter.KTPPhotoPath,
-		voter.HasVoted,
-		voter.VotedAt,
-		voter.LastLogin,
-		voter.CreatedAt,
-		voter.UpdatedAt,
-	)
 
 	if err != nil {
 		var pqErr *pq.Error
@@ -122,7 +117,7 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 					"error": err,
 					"voter": voter,
 				}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Duplicate entry")
-				return "", ErrDuplicate
+				return ErrDuplicate
 			}
 		}
 
@@ -130,35 +125,34 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter, s
 			"error": err,
 			"voter": voter,
 		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to insert entry")
+		return err
+	}
+
+	return nil
+}
+
+func (v *VoterRepository) SendTxVoterBlockchain(ctx context.Context, signedTransaction string) (string, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "VoterRepository.SendTxVoterBlockchain")
+	defer span.End()
+
+	tx, err := utils2.StringToTx(signedTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[VoterRepository.SendTxVoterBlockchain] Failed to convert string to transaction")
 		return "", err
 	}
+
 	txHash, err := v.client.SendTransaction(ctx, tx)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
-		}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to send transaction")
-
-		if ownTransaction {
-			rollbackErr := sqlTrx.Rollback()
-			if rollbackErr != nil {
-				log.WithFields(log.Fields{
-					"error": rollbackErr,
-				}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to rollback transaction")
-			}
-		}
+			"tx":    tx,
+		}).ErrorWithCtx(ctx, "[VoterRepository.SendTxVoterBlockchain] Failed to send transaction")
 		return "", err
 	}
 
-	if ownTransaction {
-		if err = sqlTrx.Commit(); err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(ctx, "[VoterRepository.InsertVoter] Failed to commit transaction")
-			return "", err
-		}
-	}
-
-	return txHash, err
+	return txHash, nil
 }
 
 func (v *VoterRepository) GetAllVoter(ctx context.Context) ([]model.Voter, error) {
@@ -410,4 +404,51 @@ func (v *VoterRepository) GetVoterByID(ctx context.Context, id uuid.UUID) (*mode
 	}
 
 	return &voterModel, nil
+}
+
+func (v *VoterRepository) UpdateVoter(ctx context.Context, voter *model.Voter) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "VoterRepository.UpdateVoter")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+
+	var (
+		err    error
+		args   []any
+		result sql2.Result
+	)
+
+	setQuery := `has_voted = $1, voted_at = $2, updated_at = $3`
+	whereQuery := " AND voters.is_deleted = false AND voters.id = $4"
+	args = append(args, voter.HasVoted, voter.VotedAt, voter.UpdatedAt, voter.ID)
+	query := fmt.Sprintf(updateVoter, setQuery, whereQuery)
+
+	if sqlTrx != nil {
+		result, err = sqlTrx.ExecContext(ctx, query, args...)
+	} else {
+		result, err = v.db.GetMaster().ExecContext(ctx, query, args...)
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    voter.ID,
+		}).ErrorWithCtx(ctx, "[VoterRepository.UpdateVoter] Failed to update voter")
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"voter": voter,
+		}).ErrorWithCtx(ctx, "[VoterRepository.UpdateVoter] Failed to get rows affected")
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrNoUpdateHappened
+	}
+
+	return nil
 }

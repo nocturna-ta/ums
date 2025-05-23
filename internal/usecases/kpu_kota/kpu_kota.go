@@ -38,7 +38,7 @@ func (m *Module) RegisterKPUKota(ctx context.Context, req *request.KPUKotaRegist
 		kpuKota = model.ConstructRegistrationKPUKota(req)
 		kpuKota.UserID = reqCtx.GetUserId()
 
-		txHash, errTx := m.kpuKotaRepo.InsertKPUKota(txCtx, kpuKota, req.SignedTransaction)
+		errTx := m.kpuKotaRepo.InsertKPUKota(txCtx, kpuKota)
 		if errTx != nil {
 			if errors.Is(errTx, dao.ErrDuplicate) {
 				return nil, &custerr.ErrChain{
@@ -50,6 +50,17 @@ func (m *Module) RegisterKPUKota(ctx context.Context, req *request.KPUKotaRegist
 			}
 
 			return nil, errTx
+		}
+
+		txHash, err := m.kpuKotaRepo.SendTxKPUKotaBlockchain(txCtx, req.SignedTransaction)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"id":    kpuKota.ID,
+				"req":   req,
+			}).ErrorWithCtx(ctx, "[KPUKotaUseCases.RegisterKPUKota] Failed to send transaction to blockchain")
+			return nil, err
 		}
 
 		if txHash == "" {
@@ -281,7 +292,7 @@ func (m *Module) UpdateKPUKota(ctx context.Context, updateRequest *request.KPUKo
 		existing.Region = updateRequest.Region
 		existing.Telephone = updateRequest.Telephone
 
-		txHash, errTx := m.kpuKotaRepo.UpdateKPUKota(ctx, existing, updateRequest.SignedTransaction)
+		errTx = m.kpuKotaRepo.UpdateKPUKota(ctx, existing)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -299,6 +310,16 @@ func (m *Module) UpdateKPUKota(ctx context.Context, updateRequest *request.KPUKo
 				}
 			}
 			return nil, errTx
+		}
+
+		txHash, err := m.kpuKotaRepo.SendTxKPUKotaBlockchain(ctx, updateRequest.SignedTransaction)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"id":    existing.ID,
+				"req":   updateRequest,
+			}).ErrorWithCtx(ctx, "[KPUKotaUseCases.UpdateKPUKota] Failed to send transaction to blockchain")
+			return nil, err
 		}
 
 		if txHash == "" {

@@ -38,7 +38,7 @@ func (m *Module) RegisterKPUProvinsi(ctx context.Context, req *request.KPUProvin
 		kpuProvinsi = model.ConstructRegistrationKPUProvinsi(req)
 		kpuProvinsi.UserID = reqCtx.GetUserId()
 
-		txHash, errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, req.SignedTransaction)
+		errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi)
 		if errTx != nil {
 			if errors.Is(errTx, dao.ErrDuplicate) {
 				return nil, &custerr.ErrChain{
@@ -49,6 +49,15 @@ func (m *Module) RegisterKPUProvinsi(ctx context.Context, req *request.KPUProvin
 				}
 			}
 
+			return nil, errTx
+		}
+
+		txHash, errTx := m.kpuProvinsiRepo.SendTxKPUProvinsiBlockchain(txCtx, req.SignedTransaction)
+		if errTx != nil {
+			log.WithFields(log.Fields{
+				"error": errTx,
+				"id":    kpuProvinsi.ID,
+			}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.RegisterKPUProvinsi] Failed to send transaction to blockchain")
 			return nil, errTx
 		}
 
@@ -293,12 +302,21 @@ func (m *Module) UpdateKPUProvinsi(ctx context.Context, updateRequest *request.K
 		existing.Telephone = updateRequest.Telephone
 		existing.Region = updateRequest.Region
 
-		txHash, errTx := m.kpuProvinsiRepo.UpdateKPUProvinsi(ctx, existing, updateRequest.SignedTransaction)
+		errTx = m.kpuProvinsiRepo.UpdateKPUProvinsi(ctx, existing)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": errTx,
 				"id":    existing.ID,
 			}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UpdateKPUProvinsi] Failed to update kpu provinsi")
+			return nil, errTx
+		}
+
+		txHash, errTx := m.kpuProvinsiRepo.SendTxKPUProvinsiBlockchain(ctx, updateRequest.SignedTransaction)
+		if errTx != nil {
+			log.WithFields(log.Fields{
+				"error": errTx,
+				"id":    existing.ID,
+			}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UpdateKPUProvinsi] Failed to send transaction to blockchain")
 			return nil, errTx
 		}
 

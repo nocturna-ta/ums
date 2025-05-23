@@ -11,6 +11,7 @@ type KPUKota struct {
 	BaseModel
 	ID           uuid.UUID `db:"id"`
 	UserID       uuid.UUID `db:"user_id"`
+	Username     string    `db:"username"`
 	Name         string    `db:"name"`
 	Address      string    `db:"address"`
 	Region       string    `db:"region"`
@@ -44,6 +45,7 @@ func ConstructRegistrationKPUKota(req *request.KPUKotaRegistrationRequest) *KPUK
 			IsDeleted: false,
 		},
 		ID:           uuid.New(),
+		Username:     req.Username,
 		Name:         req.Name,
 		Address:      req.Address,
 		Region:       req.Region,

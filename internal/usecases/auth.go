@@ -7,5 +7,5 @@ import (
 )
 
 type AuthUseCases interface {
-	ValidateAuthorization(ctx context.Context, req *request.ValidateAuthorizationRequest) *response.ValidateAuthorizationResponse
+	ValidateAuthorization(ctx context.Context, req *request.ValidateAuthorizationRequest) (*response.ValidateAuthorizationResponse, error)
 }
