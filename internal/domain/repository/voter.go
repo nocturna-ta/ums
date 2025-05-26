@@ -15,4 +15,5 @@ type VoterRepository interface {
 	GetVoterByRegion(ctx context.Context, region string) ([]model.Voter, error)
 	GetVoterByID(ctx context.Context, id uuid.UUID) (*model.Voter, error)
 	UpdateVoter(ctx context.Context, voter *model.Voter) error
+	GetVoterByUserID(ctx context.Context, userID uuid.UUID) (*model.Voter, error)
 }

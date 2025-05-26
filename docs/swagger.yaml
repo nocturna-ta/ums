@@ -17,21 +17,6 @@ definitions:
       message:
         type: string
     type: object
-  request.KPUKotaRegistrationRequest:
-    properties:
-      address:
-        type: string
-      is_active:
-        type: boolean
-      name:
-        type: string
-      region:
-        type: string
-      signed_transaction:
-        type: string
-      username:
-        type: string
-    type: object
   request.KPUKotaUpdateRequest:
     properties:
       name:
@@ -41,21 +26,6 @@ definitions:
       signed_transaction:
         type: string
       telephone:
-        type: string
-    type: object
-  request.KPUProvinsiRegistrationRequest:
-    properties:
-      address:
-        type: string
-      is_active:
-        type: boolean
-      name:
-        type: string
-      region:
-        type: string
-      signed_transaction:
-        type: string
-      username:
         type: string
     type: object
   request.KPUProvinsiUpdateRequest:
@@ -115,13 +85,6 @@ definitions:
       voter_address:
         type: string
     type: object
-  response.KPUKotaRegistrationResponse:
-    properties:
-      address:
-        type: string
-      is_active:
-        type: boolean
-    type: object
   response.KPUKotaResponse:
     properties:
       address:
@@ -144,15 +107,6 @@ definitions:
         type: string
       username:
         type: string
-    type: object
-  response.KPUProvinsiRegistrationResponse:
-    properties:
-      address:
-        type: string
-      id:
-        type: string
-      is_active:
-        type: boolean
     type: object
   response.KPUProvinsiResponse:
     properties:
@@ -334,43 +288,6 @@ paths:
       summary: Ping
       tags:
       - Health
-  /v1/admin/verifications/pending:
-    get:
-      consumes:
-      - application/json
-      description: Get all users with pending verification status
-      parameters:
-      - description: Admin User ID
-        in: header
-        name: X-User-Id
-        required: true
-        type: string
-      - description: Address
-        in: header
-        name: X-Address-Id
-        type: string
-      - description: Admin Role
-        in: header
-        name: X-Role
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Pending verification users
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/response.UserVerificationResponse'
-                  type: array
-              type: object
-      summary: Get pending verification requests
-      tags:
-      - Admin
   /v1/kpu-kota:
     get:
       consumes:
@@ -404,15 +321,16 @@ paths:
       summary: Get All KPU Kota
       tags:
       - kpu_kota
-  /v1/kpu-kota/{id}:
+  /v1/kpu-kota/id:
     get:
       consumes:
       - application/json
-      description: Get KPU Kota By ID
+      description: Get KPU Kota By User ID
       parameters:
       - description: User
         in: header
         name: X-User-Id
+        required: true
         type: string
       - description: Address
         in: header
@@ -421,11 +339,6 @@ paths:
       - description: Role
         in: header
         name: X-Role
-        type: string
-      - description: KPU Kota ID
-        in: path
-        name: id
-        required: true
         type: string
       produces:
       - application/json
@@ -439,16 +352,17 @@ paths:
                 data:
                   $ref: '#/definitions/response.KPUKotaResponse'
               type: object
-      summary: Get KPU Kota By ID
+      summary: Get KPU Kota By User ID
       tags:
       - kpu_kota
-  /v1/kpu-kota/{id}/photo:
+  /v1/kpu-kota/photo:
     get:
       description: Get the photo for a KPU Kota
       parameters:
       - description: User
         in: header
         name: X-User-Id
+        required: true
         type: string
       - description: Address
         in: header
@@ -457,11 +371,6 @@ paths:
       - description: Role
         in: header
         name: X-Role
-        type: string
-      - description: KPU Kota ID
-        in: path
-        name: id
-        required: true
         type: string
       produces:
       - application/octet-stream
@@ -476,22 +385,18 @@ paths:
       - multipart/form-data
       description: Upload a photo for a KPU Kota
       parameters:
-      - description: User
+      - description: User ID
         in: header
         name: X-User-Id
+        required: true
         type: string
-      - description: Address
+      - description: Public Address
         in: header
         name: X-Address-Id
         type: string
       - description: Role
         in: header
         name: X-Role
-        type: string
-      - description: KPU Kota ID
-        in: path
-        name: id
-        required: true
         type: string
       - description: Photo file (jpg, jpeg, png only)
         in: formData
@@ -511,78 +416,6 @@ paths:
                   type: string
               type: object
       summary: Upload photo for KPU Kota
-      tags:
-      - kpu_kota
-  /v1/kpu-kota/address:
-    get:
-      consumes:
-      - application/json
-      description: Get KPU Kota By Address
-      parameters:
-      - description: User
-        in: header
-        name: X-User-Id
-        type: string
-      - description: Address
-        in: header
-        name: X-Address-Id
-        type: string
-      - description: Role
-        in: header
-        name: X-Role
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.KPUKotaResponse'
-              type: object
-      summary: Get KPU Kota By Address
-      tags:
-      - kpu_kota
-  /v1/kpu-kota/register:
-    post:
-      consumes:
-      - application/json
-      description: Register KPU Kota
-      parameters:
-      - description: Register Request
-        in: body
-        name: users
-        required: true
-        schema:
-          $ref: '#/definitions/request.KPUKotaRegistrationRequest'
-      - description: User
-        in: header
-        name: X-User-Id
-        type: string
-      - description: Address
-        in: header
-        name: X-Address-Id
-        type: string
-      - description: Role
-        in: header
-        name: X-Role
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.KPUKotaRegistrationResponse'
-              type: object
-      summary: Register KPU Kota
       tags:
       - kpu_kota
   /v1/kpu-kota/update:
@@ -658,28 +491,24 @@ paths:
       summary: Get All KPU Provinsi
       tags:
       - kpu_provinsi
-  /v1/kpu-provinsi/{id}:
+  /v1/kpu-provinsi/id:
     get:
       consumes:
       - application/json
-      description: Get KPU Provinsi By ID
+      description: Get KPU Provinsi By User ID
       parameters:
-      - description: User
+      - description: User ID
         in: header
         name: X-User-Id
+        required: true
         type: string
-      - description: Address
+      - description: Public Address
         in: header
         name: X-Address-Id
         type: string
       - description: Role
         in: header
         name: X-Role
-        type: string
-      - description: KPU Provinsi ID
-        in: path
-        name: id
-        required: true
         type: string
       produces:
       - application/json
@@ -693,29 +522,25 @@ paths:
                 data:
                   $ref: '#/definitions/response.KPUProvinsiResponse'
               type: object
-      summary: Get KPU Provinsi By ID
+      summary: Get KPU Provinsi By User ID
       tags:
       - kpu_provinsi
-  /v1/kpu-provinsi/{id}/photo:
+  /v1/kpu-provinsi/photo:
     get:
       description: Get the photo for a KPU Provinsi
       parameters:
-      - description: User
+      - description: User ID
         in: header
         name: X-User-Id
+        required: true
         type: string
-      - description: Address
+      - description: Public Address
         in: header
         name: X-Address-Id
         type: string
       - description: Role
         in: header
         name: X-Role
-        type: string
-      - description: KPU Provinsi ID
-        in: path
-        name: id
-        required: true
         type: string
       produces:
       - application/octet-stream
@@ -730,22 +555,18 @@ paths:
       - multipart/form-data
       description: Upload a photo for a KPU Provinsi
       parameters:
-      - description: User
+      - description: User ID
         in: header
         name: X-User-Id
+        required: true
         type: string
-      - description: Address
+      - description: Public Address
         in: header
         name: X-Address-Id
         type: string
       - description: Role
         in: header
         name: X-Role
-        type: string
-      - description: KPU Provinsi ID
-        in: path
-        name: id
-        required: true
         type: string
       - description: Photo file (jpg, jpeg, png only)
         in: formData
@@ -765,78 +586,6 @@ paths:
                   type: string
               type: object
       summary: Upload photo for KPU Provinsi
-      tags:
-      - kpu_provinsi
-  /v1/kpu-provinsi/address:
-    get:
-      consumes:
-      - application/json
-      description: Get KPU Provinsi By Address
-      parameters:
-      - description: User
-        in: header
-        name: X-User-Id
-        type: string
-      - description: Address
-        in: header
-        name: X-Address-Id
-        type: string
-      - description: Role
-        in: header
-        name: X-Role
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.KPUProvinsiResponse'
-              type: object
-      summary: Get KPU Provinsi By Address
-      tags:
-      - kpu_provinsi
-  /v1/kpu-provinsi/register:
-    post:
-      consumes:
-      - application/json
-      description: Register KPU Provinsi
-      parameters:
-      - description: User
-        in: header
-        name: X-User-Id
-        type: string
-      - description: Address
-        in: header
-        name: X-Address-Id
-        type: string
-      - description: Role
-        in: header
-        name: X-Role
-        type: string
-      - description: Register Request
-        in: body
-        name: users
-        required: true
-        schema:
-          $ref: '#/definitions/request.KPUProvinsiRegistrationRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/controller.jsonResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.KPUProvinsiRegistrationResponse'
-              type: object
-      summary: Register KPU Provinsi
       tags:
       - kpu_provinsi
   /v1/kpu-provinsi/update:

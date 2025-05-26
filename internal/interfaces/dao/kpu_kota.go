@@ -5,7 +5,6 @@ import (
 	sql2 "database/sql"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/nocturna-ta/golib/database/sql"
@@ -16,35 +15,24 @@ import (
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
 	utils2 "github.com/nocturna-ta/ums/pkg/utils"
-	kpuManager2 "github.com/nocturna-ta/votechain-contract/binding/kpuManager"
-	"github.com/nocturna-ta/votechain-contract/interfaces"
 	"time"
 )
 
 type KPUKotaRepository struct {
-	client   ethereum.Client
-	contract interfaces.KpuManagerInterface
-	db       *sql.Store
+	client ethereum.Client
+	db     *sql.Store
 }
 
 type OptsKPUKotaRepository struct {
-	Client          ethereum.Client
-	ContractAddress common.Address
-	Contract        interfaces.KpuManagerInterface
-	DB              *sql.Store
+	Client ethereum.Client
+
+	DB *sql.Store
 }
 
 func NewKPUKotaRepository(opts *OptsKPUKotaRepository) repository.KPUKotaRepository {
-	var contractInterface interfaces.KpuManagerInterface
-	contract, err := kpuManager2.NewKpuManager(opts.ContractAddress, opts.Client.GetEthClient())
-	if err != nil {
-		return nil
-	}
-	contractInterface = contract
 	return &KPUKotaRepository{
-		client:   opts.Client,
-		contract: contractInterface,
-		db:       opts.DB,
+		client: opts.Client,
+		db:     opts.DB,
 	}
 }
 
@@ -124,16 +112,9 @@ func (K *KPUKotaRepository) GetAllKPUKota(ctx context.Context) ([]model.KPUKota,
 
 	sqlTrx := utils.GetSqlTx(ctx)
 	var (
-		kpuKotaModels []model.KPUKota
-		err           error
+		kpuKota []model.KPUKota
+		err     error
 	)
-
-	kpuKota, err := K.contract.GetAllKPUKota(nil)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetAllKPUKota] Failed to get all kpu kota")
-	}
 
 	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.username, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active,
 kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created_at, kpu_kota.updated_at`
@@ -142,9 +123,9 @@ kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created
 
 	query := fmt.Sprintf(selectKPUKota, selectQuery, joinQuery, whereQuery)
 	if sqlTrx != nil {
-		err = sqlTrx.SelectContext(ctx, &kpuKotaModels, query)
+		err = sqlTrx.SelectContext(ctx, &kpuKota, query)
 	} else {
-		err = K.db.GetMaster().SelectContext(ctx, &kpuKotaModels, query)
+		err = K.db.GetMaster().SelectContext(ctx, &kpuKota, query)
 	}
 
 	if err != nil {
@@ -154,24 +135,7 @@ kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created
 		return nil, err
 	}
 
-	var matchedKPUKota []model.KPUKota
-	for _, kpuKotas := range kpuKota {
-		for _, kpuKotaModel := range kpuKotaModels {
-			if kpuKotas.Address.Hex() == kpuKotaModel.Address {
-				matchedKPUKota = append(matchedKPUKota, kpuKotaModel)
-				break
-			}
-		}
-	}
-
-	if len(matchedKPUKota) == 0 {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetAllKPUKota] Failed to get all kpu kota")
-		return nil, err
-	}
-
-	return matchedKPUKota, nil
+	return kpuKota, nil
 }
 
 func (K *KPUKotaRepository) GetKPUKotaByAddress(ctx context.Context, address string) (*model.KPUKota, error) {
@@ -180,18 +144,10 @@ func (K *KPUKotaRepository) GetKPUKotaByAddress(ctx context.Context, address str
 
 	sqlTrx := utils.GetSqlTx(ctx)
 	var (
-		kpuKotaModel model.KPUKota
-		err          error
-		args         []any
+		kpuKota model.KPUKota
+		err     error
+		args    []any
 	)
-
-	kpuKota, err := K.contract.GetKpuKotaByAddress(nil, common.HexToAddress(address))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetKPUKotaByAddress] Failed to get kpu kota by address")
-		return nil, err
-	}
 
 	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.username, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active,
 kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created_at, kpu_kota.updated_at`
@@ -201,9 +157,9 @@ kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created
 
 	query := fmt.Sprintf(selectKPUKota, selectQuery, joinQuery, whereQuery)
 	if sqlTrx != nil {
-		err = sqlTrx.GetContext(ctx, &kpuKotaModel, query, args...)
+		err = sqlTrx.GetContext(ctx, &kpuKota, query, args...)
 	} else {
-		err = K.db.GetMaster().GetContext(ctx, &kpuKotaModel, query, args...)
+		err = K.db.GetMaster().GetContext(ctx, &kpuKota, query, args...)
 	}
 
 	if err != nil {
@@ -212,15 +168,7 @@ kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created
 		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetKPUKotaByAddress] Failed to get kpu kota by address")
 		return nil, err
 	}
-
-	if kpuKota.Address.Hex() != kpuKotaModel.Address {
-		log.WithFields(log.Fields{
-			"error": "not matching kpu kota found",
-		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetKPUKotaByAddress] Failed to get kpu kota by address")
-		return nil, ErrNoResult
-	}
-
-	return &kpuKotaModel, nil
+	return &kpuKota, nil
 }
 
 func (K *KPUKotaRepository) UpdateKPUKotaPhoto(ctx context.Context, id uuid.UUID, photoPath string) error {
@@ -340,4 +288,39 @@ func (K *KPUKotaRepository) UpdateKPUKota(ctx context.Context, kpu *model.KPUKot
 	}
 
 	return nil
+}
+
+func (K *KPUKotaRepository) GetKPUKotaByUserID(ctx context.Context, userID uuid.UUID) (*model.KPUKota, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaRepository.GetKPUKotaByUserID")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+	var (
+		kpuKota model.KPUKota
+		err     error
+		args    []any
+	)
+
+	selectQuery := `kpu_kota.id, kpu_kota.user_id, kpu_kota.username, kpu_kota.name, kpu_kota.address, kpu_kota.region, kpu_kota.is_active,
+						kpu_kota.photo_path,kpu_kota.telephone, kpu_kota.registered_at, kpu_kota.created_at, kpu_kota.updated_at`
+	whereQuery := " AND kpu_kota.is_deleted = false AND kpu_kota.user_id = $1"
+	joinQuery := ""
+	args = append(args, userID)
+
+	query := fmt.Sprintf(selectKPUKota, selectQuery, joinQuery, whereQuery)
+	if sqlTrx != nil {
+		err = sqlTrx.GetContext(ctx, &kpuKota, query, args...)
+	} else {
+		err = K.db.GetMaster().GetContext(ctx, &kpuKota, query, args...)
+	}
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":   err,
+			"user_id": userID,
+		}).ErrorWithCtx(ctx, "[KPUKotaRepository.GetKPUKotaByUserID] Failed to get kpu kota by User ID")
+		return nil, err
+	}
+
+	return &kpuKota, nil
 }

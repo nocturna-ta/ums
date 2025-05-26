@@ -282,6 +282,40 @@ func (m *Module) LoginUser(ctx context.Context, req *request.UserLoginRequest) (
 		response.Message = "Your account verification was rejected."
 	}
 
+	var publicAddress string
+	switch existing.Role {
+	case roles.RoleKPUProvinsi:
+		kpuProvinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, existing.ID)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"id":    existing.ID,
+			}).ErrorWithCtx(ctx, "[UserUseCases.LoginUser] Failed to get KPU Provinsi by user ID")
+			return nil, err
+		}
+		publicAddress = kpuProvinsi.Address
+	case roles.RoleVoter:
+		voter, err := m.voterRepo.GetVoterByUserID(ctx, existing.ID)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"id":    existing.ID,
+			}).ErrorWithCtx(ctx, "[UserUseCases.LoginUser] Failed to get voter by user ID")
+			return nil, err
+		}
+		publicAddress = voter.VoterAddress
+	case roles.RoleKPUKota:
+		kpuKota, err := m.kpuKotaRepo.GetKPUKotaByUserID(ctx, existing.ID)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"id":    existing.ID,
+			}).ErrorWithCtx(ctx, "[UserUseCases.LoginUser] Failed to get KPU Kota by user ID")
+			return nil, err
+		}
+		publicAddress = kpuKota.Address
+	}
+
 	if existing.IsActive {
 		expiresAt := jwt.NewNumericDate(time.Now().Add(24 * 7 * time.Hour))
 		token, err := m.jwtSvc.GenerateToken(ctx, jwtsvc.AccessClaims{
@@ -290,8 +324,9 @@ func (m *Module) LoginUser(ctx context.Context, req *request.UserLoginRequest) (
 				ID:        uuid.New().String(),
 			},
 			JwtData: &jwtsvc.JwtData{
-				UserID: existing.ID.String(),
-				Role:   existing.Role,
+				UserID:        existing.ID.String(),
+				Role:          existing.Role,
+				PublicAddress: publicAddress,
 			},
 		})
 
@@ -306,7 +341,6 @@ func (m *Module) LoginUser(ctx context.Context, req *request.UserLoginRequest) (
 		response.Token = token
 		response.ExpiresAt = &expiresAt.Time
 		response.Message = "Login successful."
-
 	}
 
 	return response, nil

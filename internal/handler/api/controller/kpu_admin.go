@@ -35,29 +35,6 @@ func (api *API) GetPendingVerificationsForRole(ctx context.Context, req *router.
 	return rest.NewJSONResponse().SetData(res), nil
 }
 
-// GetPendingVerifications godoc
-// @Summary Get pending verification requests
-// @Description Get all users with pending verification status
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Param X-User-Id header string true "Admin User ID"
-// @Param X-Address-Id header string false "Address"
-// @Param X-Role header string true "Admin Role"
-// @Success 200 {object} jsonResponse{data=[]response.UserVerificationResponse} "Pending verification users"
-// @Router /v1/admin/verifications/pending [get]
-func (api *API) GetPendingVerifications(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
-	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetPendingVerifications")
-	defer span.End()
-
-	res, err := api.userUc.GetPendingVerificationUsers(ctx)
-	if err != nil {
-		return custresp.CustomErrorResponse(err)
-	}
-
-	return rest.NewJSONResponse().SetData(res), nil
-}
-
 // GetPendingVerificationDetails godoc
 // @Summary Get pending verification details for a specific user
 // @Description Get detailed information about a user's pending verification including entity-specific data

@@ -1,7 +1,6 @@
 package consumer
 
 import (
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/nocturna-ta/golib/database/sql"
 	"github.com/nocturna-ta/golib/ethereum"
 	"github.com/nocturna-ta/golib/event"
@@ -34,9 +33,8 @@ func newContainer(opts *options) *container {
 	}
 
 	voterRepo := dao.NewVoterRepository(&dao.OptsVoterRepository{
-		Client:          opts.Client,
-		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.VoterManagerAddress),
-		DB:              opts.DB,
+		Client: opts.Client,
+		DB:     opts.DB,
 	})
 
 	consumerUc := consumer.New(&consumer.Options{

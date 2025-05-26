@@ -66,66 +66,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/admin/verifications/pending": {
-            "get": {
-                "description": "Get all users with pending verification status",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Get pending verification requests",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Admin User ID",
-                        "name": "X-User-Id",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Admin Role",
-                        "name": "X-Role",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Pending verification users",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/response.UserVerificationResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/kpu-kota": {
             "get": {
                 "description": "Get All KPU Kota",
@@ -181,9 +121,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/kpu-kota/address": {
+        "/v1/kpu-kota/id": {
             "get": {
-                "description": "Get KPU Kota By Address",
+                "description": "Get KPU Kota By User ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -193,13 +133,14 @@ const docTemplate = `{
                 "tags": [
                     "kpu_kota"
                 ],
-                "summary": "Get KPU Kota By Address",
+                "summary": "Get KPU Kota By User ID",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "User",
                         "name": "X-User-Id",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
                     },
                     {
                         "type": "string",
@@ -236,34 +177,23 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/kpu-kota/register": {
-            "post": {
-                "description": "Register KPU Kota",
-                "consumes": [
-                    "application/json"
-                ],
+        "/v1/kpu-kota/photo": {
+            "get": {
+                "description": "Get the photo for a KPU Kota",
                 "produces": [
-                    "application/json"
+                    "application/octet-stream"
                 ],
                 "tags": [
                     "kpu_kota"
                 ],
-                "summary": "Register KPU Kota",
+                "summary": "Get photo for KPU Kota",
                 "parameters": [
-                    {
-                        "description": "Register Request",
-                        "name": "users",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.KPUKotaRegistrationRequest"
-                        }
-                    },
                     {
                         "type": "string",
                         "description": "User",
                         "name": "X-User-Id",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
                     },
                     {
                         "type": "string",
@@ -280,6 +210,52 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "description": "Upload a photo for a KPU Kota",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kpu_kota"
+                ],
+                "summary": "Upload photo for KPU Kota",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Public Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Photo file (jpg, jpeg, png only)",
+                        "name": "photo",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
                         "description": "OK",
                         "schema": {
                             "allOf": [
@@ -290,7 +266,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.KPUKotaRegistrationResponse"
+                                            "type": "string"
                                         }
                                     }
                                 }
@@ -365,179 +341,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/kpu-kota/{id}": {
-            "get": {
-                "description": "Get KPU Kota By ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "kpu_kota"
-                ],
-                "summary": "Get KPU Kota By ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User",
-                        "name": "X-User-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Role",
-                        "name": "X-Role",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "KPU Kota ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.KPUKotaResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/kpu-kota/{id}/photo": {
-            "get": {
-                "description": "Get the photo for a KPU Kota",
-                "produces": [
-                    "application/octet-stream"
-                ],
-                "tags": [
-                    "kpu_kota"
-                ],
-                "summary": "Get photo for KPU Kota",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User",
-                        "name": "X-User-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Role",
-                        "name": "X-Role",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "KPU Kota ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            },
-            "post": {
-                "description": "Upload a photo for a KPU Kota",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "kpu_kota"
-                ],
-                "summary": "Upload photo for KPU Kota",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User",
-                        "name": "X-User-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Role",
-                        "name": "X-Role",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "KPU Kota ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Photo file (jpg, jpeg, png only)",
-                        "name": "photo",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/kpu-provinsi": {
             "get": {
                 "description": "Get All KPU Provinsi",
@@ -593,9 +396,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/kpu-provinsi/address": {
+        "/v1/kpu-provinsi/id": {
             "get": {
-                "description": "Get KPU Provinsi By Address",
+                "description": "Get KPU Provinsi By User ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -605,17 +408,18 @@ const docTemplate = `{
                 "tags": [
                     "kpu_provinsi"
                 ],
-                "summary": "Get KPU Provinsi By Address",
+                "summary": "Get KPU Provinsi By User ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User",
+                        "description": "User ID",
                         "name": "X-User-Id",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Address",
+                        "description": "Public Address",
                         "name": "X-Address-Id",
                         "in": "header"
                     },
@@ -648,11 +452,47 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/kpu-provinsi/register": {
+        "/v1/kpu-provinsi/photo": {
+            "get": {
+                "description": "Get the photo for a KPU Provinsi",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "kpu_provinsi"
+                ],
+                "summary": "Get photo for KPU Provinsi",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Public Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
             "post": {
-                "description": "Register KPU Provinsi",
+                "description": "Upload a photo for a KPU Provinsi",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -660,17 +500,18 @@ const docTemplate = `{
                 "tags": [
                     "kpu_provinsi"
                 ],
-                "summary": "Register KPU Provinsi",
+                "summary": "Upload photo for KPU Provinsi",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User",
+                        "description": "User ID",
                         "name": "X-User-Id",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Address",
+                        "description": "Public Address",
                         "name": "X-Address-Id",
                         "in": "header"
                     },
@@ -681,13 +522,11 @@ const docTemplate = `{
                         "in": "header"
                     },
                     {
-                        "description": "Register Request",
-                        "name": "users",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.KPUProvinsiRegistrationRequest"
-                        }
+                        "type": "file",
+                        "description": "Photo file (jpg, jpeg, png only)",
+                        "name": "photo",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -702,7 +541,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.KPUProvinsiRegistrationResponse"
+                                            "type": "string"
                                         }
                                     }
                                 }
@@ -768,179 +607,6 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.KPUProvinsiResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/kpu-provinsi/{id}": {
-            "get": {
-                "description": "Get KPU Provinsi By ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "kpu_provinsi"
-                ],
-                "summary": "Get KPU Provinsi By ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User",
-                        "name": "X-User-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Role",
-                        "name": "X-Role",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "KPU Provinsi ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/response.KPUProvinsiResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/kpu-provinsi/{id}/photo": {
-            "get": {
-                "description": "Get the photo for a KPU Provinsi",
-                "produces": [
-                    "application/octet-stream"
-                ],
-                "tags": [
-                    "kpu_provinsi"
-                ],
-                "summary": "Get photo for KPU Provinsi",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User",
-                        "name": "X-User-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Role",
-                        "name": "X-Role",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "KPU Provinsi ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            },
-            "post": {
-                "description": "Upload a photo for a KPU Provinsi",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "kpu_provinsi"
-                ],
-                "summary": "Upload photo for KPU Provinsi",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User",
-                        "name": "X-User-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "X-Address-Id",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Role",
-                        "name": "X-Role",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
-                        "description": "KPU Provinsi ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Photo file (jpg, jpeg, png only)",
-                        "name": "photo",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.jsonResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
                                         }
                                     }
                                 }
@@ -1972,29 +1638,6 @@ const docTemplate = `{
                 }
             }
         },
-        "request.KPUKotaRegistrationRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "signed_transaction": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "request.KPUKotaUpdateRequest": {
             "type": "object",
             "properties": {
@@ -2008,29 +1651,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "telephone": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.KPUProvinsiRegistrationRequest": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "signed_transaction": {
-                    "type": "string"
-                },
-                "username": {
                     "type": "string"
                 }
             }
@@ -2123,17 +1743,6 @@ const docTemplate = `{
                 }
             }
         },
-        "response.KPUKotaRegistrationResponse": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
-                }
-            }
-        },
         "response.KPUKotaResponse": {
             "type": "object",
             "properties": {
@@ -2166,20 +1775,6 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
-                }
-            }
-        },
-        "response.KPUProvinsiRegistrationResponse": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
                 }
             }
         },

@@ -14,4 +14,5 @@ type KPUProvinsiRepository interface {
 	GetKPUProvinsiByID(ctx context.Context, id uuid.UUID) (*model.KPUProvinsi, error)
 	UpdateKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi) error
 	SendTxKPUProvinsiBlockchain(ctx context.Context, signedTransaction string) (string, error)
+	GetKPUProvinsiByUserID(ctx context.Context, userID uuid.UUID) (*model.KPUProvinsi, error)
 }

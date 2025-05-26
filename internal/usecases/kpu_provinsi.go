@@ -14,7 +14,8 @@ type KPUProvinsiUseCases interface {
 	GetAllKPUProvinsi(ctx context.Context) (*[]response.KPUProvinsiResponse, error)
 	GetKPUProvinsiByAddress(ctx context.Context) (*response.KPUProvinsiResponse, error)
 	GetKPUProvinsiByID(ctx context.Context, id uuid.UUID) (*response.KPUProvinsiResponse, error)
-	UploadKPUProvinsiPhoto(ctx context.Context, kpuProvinsiID uuid.UUID, fileData io.Reader, fileName string) error
-	GetKPUProvinsiPhoto(ctx context.Context, kpuProvinsiID uuid.UUID) (*http.File, string, error)
+	UploadKPUProvinsiPhoto(ctx context.Context, fileData io.Reader, fileName string) error
+	GetKPUProvinsiPhoto(ctx context.Context) (*http.File, string, error)
 	UpdateKPUProvinsi(ctx context.Context, updateRequest *request.KPUProvinsiUpdateRequest) (*response.KPUProvinsiResponse, error)
+	GetKPUProvinsiByUserID(ctx context.Context) (*response.KPUProvinsiResponse, error)
 }

@@ -14,7 +14,8 @@ type KPUKotaUseCases interface {
 	GetAllKPUKota(ctx context.Context) (*[]response.KPUKotaResponse, error)
 	GetKPUKotaByAddress(ctx context.Context) (*response.KPUKotaResponse, error)
 	GetKPUKotaByID(ctx context.Context, id uuid.UUID) (*response.KPUKotaResponse, error)
-	UploadKPUKotaPhoto(ctx context.Context, kpuKotaID uuid.UUID, fileData io.Reader, fileName string) error
-	GetKPUKotaPhoto(ctx context.Context, kpuKotaID uuid.UUID) (*http.File, string, error)
+	UploadKPUKotaPhoto(ctx context.Context, fileData io.Reader, fileName string) error
+	GetKPUKotaPhoto(ctx context.Context) (*http.File, string, error)
 	UpdateKPUKota(ctx context.Context, updateRequest *request.KPUKotaUpdateRequest) (*response.KPUKotaResponse, error)
+	GetKPUKotaByUserID(ctx context.Context) (*response.KPUKotaResponse, error)
 }

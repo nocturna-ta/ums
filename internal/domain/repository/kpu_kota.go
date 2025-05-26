@@ -14,4 +14,5 @@ type KPUKotaRepository interface {
 	GetKPUKotaByID(ctx context.Context, id uuid.UUID) (*model.KPUKota, error)
 	UpdateKPUKota(ctx context.Context, kpu *model.KPUKota) error
 	SendTxKPUKotaBlockchain(ctx context.Context, signedTransaction string) (string, error)
+	GetKPUKotaByUserID(ctx context.Context, userID uuid.UUID) (*model.KPUKota, error)
 }
