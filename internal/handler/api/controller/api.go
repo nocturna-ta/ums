@@ -71,6 +71,7 @@ func (api *API) RegisterRoute() *router.FastRouter {
 
 	myRouter.GET("/health", api.Ping, router.MustAuthorized(false))
 	myRouter.Group("/v1", func(v1 *router.FastRouter) {
+		v1.GET("/kpu-pusat/id", api.GetKPUPusat, router.MustAuthorized(false))
 		v1.Group("/voter", func(voter *router.FastRouter) {
 			voter.POST("/register", api.RegisterVoter, router.MustAuthorized(false))
 			voter.GET("/nik/:nik", api.GetVoterByNIK, router.MustAuthorized(false))

@@ -17,7 +17,7 @@ type AuthUseCases struct {
 }
 
 // ValidateAuthorization provides a mock function with given fields: ctx, req
-func (_m *AuthUseCases) ValidateAuthorization(ctx context.Context, req *request.ValidateAuthorizationRequest) *response.ValidateAuthorizationResponse {
+func (_m *AuthUseCases) ValidateAuthorization(ctx context.Context, req *request.ValidateAuthorizationRequest) (*response.ValidateAuthorizationResponse, error) {
 	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -25,6 +25,10 @@ func (_m *AuthUseCases) ValidateAuthorization(ctx context.Context, req *request.
 	}
 
 	var r0 *response.ValidateAuthorizationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *request.ValidateAuthorizationRequest) (*response.ValidateAuthorizationResponse, error)); ok {
+		return rf(ctx, req)
+	}
 	if rf, ok := ret.Get(0).(func(context.Context, *request.ValidateAuthorizationRequest) *response.ValidateAuthorizationResponse); ok {
 		r0 = rf(ctx, req)
 	} else {
@@ -33,7 +37,13 @@ func (_m *AuthUseCases) ValidateAuthorization(ctx context.Context, req *request.
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, *request.ValidateAuthorizationRequest) error); ok {
+		r1 = rf(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // NewAuthUseCases creates a new instance of AuthUseCases. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

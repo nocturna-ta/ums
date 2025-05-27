@@ -94,6 +94,66 @@ func (_m *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*model.Use
 	return r0, r1
 }
 
+// GetPendingVerificationUsers provides a mock function with given fields: ctx
+func (_m *UserRepository) GetPendingVerificationUsers(ctx context.Context) ([]model.User, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPendingVerificationUsers")
+	}
+
+	var r0 []model.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]model.User, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []model.User); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetPendingVerificationUsersByRequestedRole provides a mock function with given fields: ctx, requestedRole
+func (_m *UserRepository) GetPendingVerificationUsersByRequestedRole(ctx context.Context, requestedRole string) ([]model.User, error) {
+	ret := _m.Called(ctx, requestedRole)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPendingVerificationUsersByRequestedRole")
+	}
+
+	var r0 []model.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]model.User, error)); ok {
+		return rf(ctx, requestedRole)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []model.User); ok {
+		r0 = rf(ctx, requestedRole)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, requestedRole)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Insert provides a mock function with given fields: ctx, user
 func (_m *UserRepository) Insert(ctx context.Context, user *model.User) error {
 	ret := _m.Called(ctx, user)
@@ -112,17 +172,17 @@ func (_m *UserRepository) Insert(ctx context.Context, user *model.User) error {
 	return r0
 }
 
-// Update provides a mock function with given fields: ctx, id, update
-func (_m *UserRepository) Update(ctx context.Context, id uuid.UUID, update *model.UserUpdate) error {
-	ret := _m.Called(ctx, id, update)
+// UpdateVerificationStatus provides a mock function with given fields: ctx, id, status, role
+func (_m *UserRepository) UpdateVerificationStatus(ctx context.Context, id uuid.UUID, status string, role string) error {
+	ret := _m.Called(ctx, id, status, role)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Update")
+		panic("no return value specified for UpdateVerificationStatus")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, *model.UserUpdate) error); ok {
-		r0 = rf(ctx, id, update)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, string) error); ok {
+		r0 = rf(ctx, id, status, role)
 	} else {
 		r0 = ret.Error(0)
 	}

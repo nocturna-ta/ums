@@ -628,6 +628,40 @@ paths:
       summary: Update KPU Provinsi
       tags:
       - kpu_provinsi
+  /v1/kpu-pusat/id:
+    get:
+      consumes:
+      - application/json
+      description: Get KPU Pusat by user ID
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-Id
+        required: true
+        type: string
+      - description: Address ID
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: User Role
+        in: header
+        name: X-Role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: KPU Pusat data
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.KPUProvinsiResponse'
+              type: object
+      summary: Get KPU Pusat
+      tags:
+      - KPU Pusat
   /v1/user/{email}:
     get:
       consumes:

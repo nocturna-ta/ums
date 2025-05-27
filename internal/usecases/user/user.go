@@ -341,6 +341,8 @@ func (m *Module) LoginUser(ctx context.Context, req *request.UserLoginRequest) (
 		response.Token = token
 		response.ExpiresAt = &expiresAt.Time
 		response.Message = "Login successful."
+	} else {
+
 	}
 
 	return response, nil

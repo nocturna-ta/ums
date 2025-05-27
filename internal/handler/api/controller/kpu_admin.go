@@ -12,6 +12,29 @@ import (
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 )
 
+// GetKPUPusat godoc
+// @Summary Get KPU Pusat
+// @Description Get KPU Pusat by user ID
+// @Tags KPU Pusat
+// @Accept json
+// @Produce json
+// @Param X-User-Id header string true "User ID"
+// @Param X-Address-Id header string false "Address ID"
+// @Param X-Role header string false "User Role"
+// @Success 200 {object} jsonResponse{data=response.KPUProvinsiResponse} "KPU Pusat data"
+// @Router /v1/kpu-pusat/id [get]
+func (api *API) GetKPUPusat(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetKPUPusat")
+	defer span.End()
+
+	res, err := api.kpuProvinsiUc.GetKPUPusatByUserID(ctx)
+	if err != nil {
+		return custresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}
+
 // GetPendingVerificationsForRole godoc
 // @Summary Get pending verification requests for the appropriate role
 // @Description Get all users with pending verification status that can be verified by the current user's role

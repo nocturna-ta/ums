@@ -10,6 +10,7 @@ import (
 )
 
 type KPUProvinsiUseCases interface {
+	GetKPUPusatByUserID(ctx context.Context) (*response.KPUProvinsiResponse, error)
 	RegisterKPUProvinsi(ctx context.Context, req *request.KPUProvinsiRegistrationRequest) (*response.KPUProvinsiRegistrationResponse, error)
 	GetAllKPUProvinsi(ctx context.Context) (*[]response.KPUProvinsiResponse, error)
 	GetKPUProvinsiByAddress(ctx context.Context) (*response.KPUProvinsiResponse, error)

@@ -16,6 +16,24 @@ type UserUseCases struct {
 	mock.Mock
 }
 
+// ApproveUserVerification provides a mock function with given fields: ctx, req
+func (_m *UserUseCases) ApproveUserVerification(ctx context.Context, req *request.UserVerificationRequest) error {
+	ret := _m.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApproveUserVerification")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *request.UserVerificationRequest) error); ok {
+		r0 = rf(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ChangePassword provides a mock function with given fields: ctx, req
 func (_m *UserUseCases) ChangePassword(ctx context.Context, req *request.UserChangePasswordRequest) error {
 	ret := _m.Called(ctx, req)
@@ -32,6 +50,36 @@ func (_m *UserUseCases) ChangePassword(ctx context.Context, req *request.UserCha
 	}
 
 	return r0
+}
+
+// CheckVerificationStatus provides a mock function with given fields: ctx, email
+func (_m *UserUseCases) CheckVerificationStatus(ctx context.Context, email string) (*response.UserVerificationResponse, error) {
+	ret := _m.Called(ctx, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckVerificationStatus")
+	}
+
+	var r0 *response.UserVerificationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*response.UserVerificationResponse, error)); ok {
+		return rf(ctx, email)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *response.UserVerificationResponse); ok {
+		r0 = rf(ctx, email)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*response.UserVerificationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetByID provides a mock function with given fields: ctx
@@ -52,6 +100,126 @@ func (_m *UserUseCases) GetByID(ctx context.Context) (*response.UserResponse, er
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*response.UserResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetEnhancedVerificationStatus provides a mock function with given fields: ctx
+func (_m *UserUseCases) GetEnhancedVerificationStatus(ctx context.Context) (*response.EnhancedUserVerificationStatusResponse, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetEnhancedVerificationStatus")
+	}
+
+	var r0 *response.EnhancedUserVerificationStatusResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*response.EnhancedUserVerificationStatusResponse, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *response.EnhancedUserVerificationStatusResponse); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*response.EnhancedUserVerificationStatusResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetMyVerificationStatus provides a mock function with given fields: ctx
+func (_m *UserUseCases) GetMyVerificationStatus(ctx context.Context) (*response.UserVerificationStatusResponse, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMyVerificationStatus")
+	}
+
+	var r0 *response.UserVerificationStatusResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*response.UserVerificationStatusResponse, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *response.UserVerificationStatusResponse); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*response.UserVerificationStatusResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetPendingVerificationUsers provides a mock function with given fields: ctx
+func (_m *UserUseCases) GetPendingVerificationUsers(ctx context.Context) (*[]response.UserVerificationResponse, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPendingVerificationUsers")
+	}
+
+	var r0 *[]response.UserVerificationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*[]response.UserVerificationResponse, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *[]response.UserVerificationResponse); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*[]response.UserVerificationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetPendingVerificationsByRole provides a mock function with given fields: ctx
+func (_m *UserUseCases) GetPendingVerificationsByRole(ctx context.Context) (*[]response.UserVerificationResponse, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPendingVerificationsByRole")
+	}
+
+	var r0 *[]response.UserVerificationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*[]response.UserVerificationResponse, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *[]response.UserVerificationResponse); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*[]response.UserVerificationResponse)
 		}
 	}
 
@@ -87,6 +255,36 @@ func (_m *UserUseCases) GetUserByEmail(ctx context.Context, email string) (*resp
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = rf(ctx, email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetVerificationDetails provides a mock function with given fields: ctx, userIDStr
+func (_m *UserUseCases) GetVerificationDetails(ctx context.Context, userIDStr string) (*response.UserVerificationDetailsResponse, error) {
+	ret := _m.Called(ctx, userIDStr)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetVerificationDetails")
+	}
+
+	var r0 *response.UserVerificationDetailsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*response.UserVerificationDetailsResponse, error)); ok {
+		return rf(ctx, userIDStr)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *response.UserVerificationDetailsResponse); ok {
+		r0 = rf(ctx, userIDStr)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*response.UserVerificationDetailsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userIDStr)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -154,34 +352,22 @@ func (_m *UserUseCases) RegisterUser(ctx context.Context, req *request.UserRegis
 	return r0, r1
 }
 
-// UpdateUser provides a mock function with given fields: ctx, req
-func (_m *UserUseCases) UpdateUser(ctx context.Context, req *request.UserUpdateRequest) (*response.UserResponse, error) {
+// RejectUserVerification provides a mock function with given fields: ctx, req
+func (_m *UserUseCases) RejectUserVerification(ctx context.Context, req *request.UserVerificationRequest) error {
 	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateUser")
+		panic("no return value specified for RejectUserVerification")
 	}
 
-	var r0 *response.UserResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *request.UserUpdateRequest) (*response.UserResponse, error)); ok {
-		return rf(ctx, req)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *request.UserUpdateRequest) *response.UserResponse); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *request.UserVerificationRequest) error); ok {
 		r0 = rf(ctx, req)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*response.UserResponse)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *request.UserUpdateRequest) error); ok {
-		r1 = rf(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // NewUserUseCases creates a new instance of UserUseCases. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

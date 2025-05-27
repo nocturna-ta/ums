@@ -130,6 +130,7 @@ func (m *Module) GetAllKPUProvinsi(ctx context.Context) (*[]response.KPUProvinsi
 			resp := response.KPUProvinsiResponse{
 				ID:           kpuProvinsis.ID.String(),
 				UserID:       kpuProvinsis.UserID.String(),
+				Username:     kpuProvinsis.Username,
 				Name:         kpuProvinsis.Name,
 				Address:      kpuProvinsis.Address,
 				Region:       kpuProvinsis.Region,
@@ -202,6 +203,7 @@ func (m *Module) GetKPUProvinsiByAddress(ctx context.Context) (*response.KPUProv
 	res := &response.KPUProvinsiResponse{
 		ID:           kpuProvinsi.ID.String(),
 		UserID:       kpuProvinsi.UserID.String(),
+		Username:     kpuProvinsi.Username,
 		Name:         kpuProvinsi.Name,
 		Address:      kpuProvinsi.Address,
 		Region:       kpuProvinsi.Region,
@@ -265,6 +267,7 @@ func (m *Module) GetKPUProvinsiByID(ctx context.Context, id uuid.UUID) (*respons
 	res := &response.KPUProvinsiResponse{
 		ID:           kpuProvinsi.ID.String(),
 		UserID:       kpuProvinsi.UserID.String(),
+		Username:     kpuProvinsi.Username,
 		Name:         kpuProvinsi.Name,
 		Address:      kpuProvinsi.Address,
 		Region:       kpuProvinsi.Region,
@@ -446,6 +449,7 @@ func (m *Module) UpdateKPUProvinsi(ctx context.Context, updateRequest *request.K
 		ID:           existing.ID.String(),
 		UserID:       existing.UserID.String(),
 		Name:         existing.Name,
+		Username:     existing.Username,
 		Address:      reqCtx.Address,
 		Region:       existing.Region,
 		IsActive:     existing.IsActive,
@@ -512,6 +516,7 @@ func (m *Module) GetKPUProvinsiByUserID(ctx context.Context) (*response.KPUProvi
 		ID:           kpuProvinsi.ID.String(),
 		UserID:       kpuProvinsi.UserID.String(),
 		Name:         kpuProvinsi.Name,
+		Username:     kpuProvinsi.Username,
 		Address:      kpuProvinsi.Address,
 		Region:       kpuProvinsi.Region,
 		IsActive:     kpuProvinsi.IsActive,
@@ -525,4 +530,49 @@ func (m *Module) GetKPUProvinsiByUserID(ctx context.Context) (*response.KPUProvi
 	}
 
 	return res, nil
+}
+
+func (m *Module) GetKPUPusatByUserID(ctx context.Context) (*response.KPUProvinsiResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiUseCases.GetKPUProvinsiByUserID")
+	defer span.End()
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	kpuProvinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, reqCtx.GetUserId())
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":   err,
+			"id":      kpuProvinsi.ID,
+			"user_id": reqCtx.GetUserId(),
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByUserID] Failed to get kpu provinsi by User ID")
+		return nil, &custerr.ErrChain{
+			Message: "KPU Provinsi not found",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	res := &response.KPUProvinsiResponse{
+		ID:           kpuProvinsi.ID.String(),
+		UserID:       kpuProvinsi.UserID.String(),
+		Name:         kpuProvinsi.Name,
+		Username:     kpuProvinsi.Username,
+		Address:      kpuProvinsi.Address,
+		Region:       kpuProvinsi.Region,
+		IsActive:     kpuProvinsi.IsActive,
+		PhotoURL:     kpuProvinsi.PhotoPath,
+		Telephone:    kpuProvinsi.Telephone,
+		RegisteredAt: kpuProvinsi.RegisteredAt.String(),
+	}
+
+	if kpuProvinsi.PhotoPath != "" {
+		res.PhotoURL = fmt.Sprintf("/v1/kpu-provinsi/%s/photo", kpuProvinsi.ID.String())
+	}
+
+	return res, nil
+
 }
