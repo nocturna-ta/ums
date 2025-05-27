@@ -1,0 +1,36 @@
+package dao
+
+import (
+	"context"
+	"github.com/nocturna-ta/golib/database/sql"
+	"github.com/nocturna-ta/ums/internal/domain/model"
+	"testing"
+)
+
+func TestPendingRegistrationRepository_Insert(t *testing.T) {
+	type fields struct {
+		db *sql.Store
+	}
+	type args struct {
+		ctx          context.Context
+		registration *model.PendingRegistration
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &PendingRegistrationRepository{
+				db: tt.fields.db,
+			}
+			if err := repo.Insert(tt.args.ctx, tt.args.registration); (err != nil) != tt.wantErr {
+				t.Errorf("Insert() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
