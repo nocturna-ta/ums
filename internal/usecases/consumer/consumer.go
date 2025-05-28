@@ -76,7 +76,7 @@ func (m *Module) UpdateVoterVoteStatus(ctx context.Context, message *event.Event
 	}
 
 	voter.HasVoted = true
-	voter.VotedAt = voteProcessedMessage.ProcessedAt
+	voter.VotedAt = &voteProcessedMessage.ProcessedAt
 
 	err = m.voterRepo.UpdateVoter(ctx, voter)
 	if err != nil {

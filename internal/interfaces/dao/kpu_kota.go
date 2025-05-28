@@ -25,8 +25,7 @@ type KPUKotaRepository struct {
 
 type OptsKPUKotaRepository struct {
 	Client ethereum.Client
-
-	DB *sql.Store
+	DB     *sql.Store
 }
 
 func NewKPUKotaRepository(opts *OptsKPUKotaRepository) repository.KPUKotaRepository {

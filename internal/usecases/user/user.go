@@ -641,6 +641,7 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 			}
 
 			layout := "2006-01-02"
+			now := time.Now()
 			birthDate, err := time.Parse(layout, voterData.BirthDate)
 			if err != nil {
 				return nil, err
@@ -648,7 +649,7 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 
 			voter := &model.Voter{
 				BaseModel: model.BaseModel{
-					CreatedAt: time.Now(),
+					CreatedAt: now,
 					UpdatedAt: time.Now(),
 					IsDeleted: false,
 				},
@@ -665,8 +666,8 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				KTPPhotoPath:       voterData.KTPPhotoPath,
 				IsRegistered:       true,
 				HasVoted:           false,
-				VotedAt:            time.Time{},
-				LastLogin:          time.Now(),
+				VotedAt:            nil,
+				LastLogin:          &now,
 			}
 
 			errTx := m.voterRepo.InsertVoter(txCtx, voter)

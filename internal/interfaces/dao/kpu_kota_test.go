@@ -2,18 +2,18 @@ package dao
 
 import (
 	"context"
+	sql2 "database/sql"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/nocturna-ta/golib/database/sql"
-	"github.com/nocturna-ta/golib/ethereum"
+	"github.com/nocturna-ta/golib/ethereum/mocks"
 	"github.com/nocturna-ta/golib/txmanager/utils"
 	"github.com/nocturna-ta/ums/internal/domain/model"
-	"github.com/nocturna-ta/ums/internal/domain/repository"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -146,238 +146,401 @@ func TestKPUKotaRepository_InsertKPUKota(t *testing.T) {
 }
 
 func TestKPUKotaRepository_GetAllKPUKota(t *testing.T) {
-	type fields struct {
-		client ethereum.Client
-		db     *sql.Store
+	db, mockDb, _ := sqlmock.New()
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	dataStore := &sql.Store{
+		Master: &sql.DB{DBConnection: sqlxDB},
+		Slave:  &sql.DB{DBConnection: sqlxDB},
 	}
+
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{
+		"id", "user_id", "username", "name", "address", "region", "is_active",
+		"photo_path", "telephone", "registered_at", "created_at", "updated_at",
+	}).AddRow(
+		uuid.New(), uuid.New(), "test_kpu", "Test KPU", "0x123", "Test Region", true,
+		"/photo", "081234", now, now, now,
+	)
+
 	type args struct {
 		ctx context.Context
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    []model.KPUKota
 		wantErr bool
+		fn      func()
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "Success",
+			args:    args{ctx: context.Background()},
+			wantErr: false,
+			fn: func() {
+				mockDb.ExpectQuery(`SELECT .+ FROM kpu_kota`).WillReturnRows(rows)
+			},
+		},
+		{
+			name:    "ShouldError_QueryFailed",
+			args:    args{ctx: context.Background()},
+			wantErr: true,
+			fn: func() {
+				mockDb.ExpectQuery(`SELECT .+ FROM kpu_kota`).WillReturnError(errors.New("query failed"))
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			K := &KPUKotaRepository{
-				client: tt.fields.client,
-				db:     tt.fields.db,
-			}
-			got, err := K.GetAllKPUKota(tt.args.ctx)
+			tt.fn()
+			k := NewKPUKotaRepository(&OptsKPUKotaRepository{
+				Client: nil,
+				DB:     dataStore,
+			})
+			_, err := k.GetAllKPUKota(tt.args.ctx)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetAllKPUKota() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAllKPUKota() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
 func TestKPUKotaRepository_GetKPUKotaByAddress(t *testing.T) {
-	type fields struct {
-		client ethereum.Client
-		db     *sql.Store
+	db, mockDb, _ := sqlmock.New()
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	dataStore := &sql.Store{
+		Master: &sql.DB{DBConnection: sqlxDB},
+		Slave:  &sql.DB{DBConnection: sqlxDB},
 	}
+
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{
+		"id", "user_id", "username", "name", "address", "region", "is_active",
+		"photo_path", "telephone", "registered_at", "created_at", "updated_at",
+	}).AddRow(
+		uuid.New(), uuid.New(), "test_kpu", "Test KPU", "0x123", "Test Region", true,
+		"/photo", "081234", now, now, now,
+	)
+
 	type args struct {
 		ctx     context.Context
 		address string
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    *model.KPUKota
 		wantErr bool
+		fn      func()
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "Success",
+			args:    args{ctx: context.Background(), address: "0x123"},
+			wantErr: false,
+			fn: func() {
+				mockDb.ExpectQuery(`SELECT .+ FROM kpu_kota`).WithArgs("0x123").WillReturnRows(rows)
+			},
+		},
+		{
+			name:    "ShouldError_NotFound",
+			args:    args{ctx: context.Background(), address: "0x456"},
+			wantErr: true,
+			fn: func() {
+				mockDb.ExpectQuery(`SELECT .+ FROM kpu_kota`).WithArgs("0x456").WillReturnError(sql2.ErrNoRows)
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			K := &KPUKotaRepository{
-				client: tt.fields.client,
-				db:     tt.fields.db,
-			}
-			got, err := K.GetKPUKotaByAddress(tt.args.ctx, tt.args.address)
+			tt.fn()
+			k := NewKPUKotaRepository(&OptsKPUKotaRepository{
+				Client: nil,
+				DB:     dataStore,
+			})
+			_, err := k.GetKPUKotaByAddress(tt.args.ctx, tt.args.address)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetKPUKotaByAddress() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetKPUKotaByAddress() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
 func TestKPUKotaRepository_GetKPUKotaByID(t *testing.T) {
-	type fields struct {
-		client ethereum.Client
-		db     *sql.Store
+	db, mockDb, _ := sqlmock.New()
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	dataStore := &sql.Store{
+		Master: &sql.DB{DBConnection: sqlxDB},
+		Slave:  &sql.DB{DBConnection: sqlxDB},
 	}
+
+	id := uuid.New()
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{
+		"id", "user_id", "username", "name", "address", "region", "is_active",
+		"photo_path", "telephone", "registered_at", "created_at", "updated_at",
+	}).AddRow(
+		id, uuid.New(), "test_kpu", "Test KPU", "0x123", "Test Region", true,
+		"/photo", "081234", now, now, now,
+	)
+
 	type args struct {
 		ctx context.Context
 		id  uuid.UUID
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    *model.KPUKota
 		wantErr bool
+		fn      func()
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "Success",
+			args:    args{ctx: context.Background(), id: id},
+			wantErr: false,
+			fn: func() {
+				mockDb.ExpectQuery(`SELECT .+ FROM kpu_kota`).WithArgs(id).WillReturnRows(rows)
+			},
+		},
+		{
+			name:    "ShouldError_NotFound",
+			args:    args{ctx: context.Background(), id: uuid.New()},
+			wantErr: true,
+			fn: func() {
+				mockDb.ExpectQuery(`SELECT .+ FROM kpu_kota`).WithArgs(sqlmock.AnyArg()).WillReturnError(sql2.ErrNoRows)
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			K := &KPUKotaRepository{
-				client: tt.fields.client,
-				db:     tt.fields.db,
-			}
-			got, err := K.GetKPUKotaByID(tt.args.ctx, tt.args.id)
+			tt.fn()
+			k := NewKPUKotaRepository(&OptsKPUKotaRepository{
+				Client: nil,
+				DB:     dataStore,
+			})
+			_, err := k.GetKPUKotaByID(tt.args.ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetKPUKotaByID() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetKPUKotaByID() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
 func TestKPUKotaRepository_GetKPUKotaByUserID(t *testing.T) {
-	type fields struct {
-		client ethereum.Client
-		db     *sql.Store
+	db, mockDb, _ := sqlmock.New()
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	dataStore := &sql.Store{
+		Master: &sql.DB{DBConnection: sqlxDB},
+		Slave:  &sql.DB{DBConnection: sqlxDB},
 	}
+
+	userID := uuid.New()
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{
+		"id", "user_id", "username", "name", "address", "region", "is_active",
+		"photo_path", "telephone", "registered_at", "created_at", "updated_at",
+	}).AddRow(
+		uuid.New(), userID, "test_kpu", "Test KPU", "0x123", "Test Region", true,
+		"/photo", "081234", now, now, now,
+	)
+
 	type args struct {
 		ctx    context.Context
 		userID uuid.UUID
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    *model.KPUKota
 		wantErr bool
+		fn      func()
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "Success",
+			args:    args{ctx: context.Background(), userID: userID},
+			wantErr: false,
+			fn: func() {
+				mockDb.ExpectQuery(`SELECT .+ FROM kpu_kota`).WithArgs(userID).WillReturnRows(rows)
+			},
+		},
+		{
+			name:    "ShouldError_NotFound",
+			args:    args{ctx: context.Background(), userID: uuid.New()},
+			wantErr: true,
+			fn: func() {
+				mockDb.ExpectQuery(`SELECT .+ FROM kpu_kota`).WithArgs(sqlmock.AnyArg()).WillReturnError(sql2.ErrNoRows)
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			K := &KPUKotaRepository{
-				client: tt.fields.client,
-				db:     tt.fields.db,
-			}
-			got, err := K.GetKPUKotaByUserID(tt.args.ctx, tt.args.userID)
+			tt.fn()
+			k := NewKPUKotaRepository(&OptsKPUKotaRepository{
+				Client: nil,
+				DB:     dataStore,
+			})
+			_, err := k.GetKPUKotaByUserID(tt.args.ctx, tt.args.userID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetKPUKotaByUserID() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetKPUKotaByUserID() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestKPUKotaRepository_InsertKPUKota1(t *testing.T) {
-	type fields struct {
-		client ethereum.Client
-		db     *sql.Store
-	}
-	type args struct {
-		ctx context.Context
-		kpu *model.KPUKota
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			K := &KPUKotaRepository{
-				client: tt.fields.client,
-				db:     tt.fields.db,
-			}
-			if err := K.InsertKPUKota(tt.args.ctx, tt.args.kpu); (err != nil) != tt.wantErr {
-				t.Errorf("InsertKPUKota() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
 func TestKPUKotaRepository_SendTxKPUKotaBlockchain(t *testing.T) {
-	type fields struct {
-		client ethereum.Client
-		db     *sql.Store
-	}
+	const validTxHex = "0x02f9015282053942843b9aca00843b9db93083042ce6946957afa20f78cd0556d57b5ca5506d0b2c81540280b8e495b79907000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000000002432633733663862612d383833342d346433372d386637382d6531333061653231623634330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000023032000000000000000000000000000000000000000000000000000000000000c001a07b4100fff3bd2f748c0ed83bc9bf3ede2634fa65605a1000198a8444c3d30dd5a0019691ecb8b350b04a3291cb520db89e38cdfa0521148087b379b06497a00525"
+
+	mockClient := mocks.NewClient(t)
+
 	type args struct {
 		ctx               context.Context
 		signedTransaction string
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    string
 		wantErr bool
+		fn      func()
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "Success",
+			args:    args{ctx: context.Background(), signedTransaction: validTxHex},
+			want:    "0x123abc456def789",
+			wantErr: false,
+			fn: func() {
+				mockClient.On("SendTransaction",
+					mock.Anything,
+					mock.Anything,
+				).Return("0x123abc456def789", nil).Once()
+			},
+		},
+		{
+			name: "ShouldError_SendTransactionFailed",
+			args: args{
+				ctx:               context.Background(),
+				signedTransaction: validTxHex,
+			},
+			wantErr: true,
+			fn: func() {
+				// Mock the SendTransaction to return an error
+				mockClient.On("SendTransaction",
+					mock.Anything,
+					mock.Anything,
+				).Return("", errors.New("blockchain error")).Once()
+			},
+		},
+		{
+			name:    "ShouldError_InvalidTransaction",
+			args:    args{ctx: context.Background(), signedTransaction: "invalid"},
+			wantErr: true,
+			fn: func() {
+				// No mocking needed as error occurs in StringToTx conversion
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			K := &KPUKotaRepository{
-				client: tt.fields.client,
-				db:     tt.fields.db,
-			}
-			got, err := K.SendTxKPUKotaBlockchain(tt.args.ctx, tt.args.signedTransaction)
+			tt.fn()
+
+			k := NewKPUKotaRepository(&OptsKPUKotaRepository{
+				Client: mockClient,
+				DB:     nil,
+			})
+
+			got, err := k.SendTxKPUKotaBlockchain(tt.args.ctx, tt.args.signedTransaction)
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SendTxKPUKotaBlockchain() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+
+			if !tt.wantErr && got != tt.want {
 				t.Errorf("SendTxKPUKotaBlockchain() got = %v, want %v", got, tt.want)
+			}
+
+			if !tt.wantErr {
+				mockClient.AssertExpectations(t)
 			}
 		})
 	}
 }
 
 func TestKPUKotaRepository_UpdateKPUKota(t *testing.T) {
-	type fields struct {
-		client ethereum.Client
-		db     *sql.Store
+	db, mockDb, _ := sqlmock.New()
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	dataStore := &sql.Store{
+		Master: &sql.DB{DBConnection: sqlxDB},
+		Slave:  &sql.DB{DBConnection: sqlxDB},
 	}
+
+	id := uuid.New()
+	now := time.Now()
+	kpu := &model.KPUKota{
+		BaseModel: model.BaseModel{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		ID:        id,
+		Name:      "Updated Name",
+		Region:    "Updated Region",
+		Telephone: "081234567890",
+		Username:  "updated_username",
+	}
+
 	type args struct {
 		ctx context.Context
 		kpu *model.KPUKota
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		wantErr bool
+		fn      func()
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "Success",
+			args:    args{ctx: context.Background(), kpu: kpu},
+			wantErr: false,
+			fn: func() {
+				mockDb.ExpectExec(`UPDATE kpu_kota SET`).WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+		},
+		{
+			name:    "ShouldError_NoRowsAffected",
+			args:    args{ctx: context.Background(), kpu: kpu},
+			wantErr: true,
+			fn: func() {
+				mockDb.ExpectExec(`UPDATE kpu_kota SET`).WillReturnResult(sqlmock.NewResult(1, 0))
+			},
+		},
+		{
+			name:    "ShouldError_UpdateFailed",
+			args:    args{ctx: context.Background(), kpu: kpu},
+			wantErr: true,
+			fn: func() {
+				mockDb.ExpectExec(`UPDATE kpu_kota SET`).WillReturnError(errors.New("update failed"))
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			K := &KPUKotaRepository{
-				client: tt.fields.client,
-				db:     tt.fields.db,
-			}
-			if err := K.UpdateKPUKota(tt.args.ctx, tt.args.kpu); (err != nil) != tt.wantErr {
+			tt.fn()
+			k := NewKPUKotaRepository(&OptsKPUKotaRepository{
+				Client: nil,
+				DB:     dataStore,
+			})
+			if err := k.UpdateKPUKota(tt.args.ctx, tt.args.kpu); (err != nil) != tt.wantErr {
 				t.Errorf("UpdateKPUKota() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -385,10 +548,17 @@ func TestKPUKotaRepository_UpdateKPUKota(t *testing.T) {
 }
 
 func TestKPUKotaRepository_UpdateKPUKotaPhoto(t *testing.T) {
-	type fields struct {
-		client ethereum.Client
-		db     *sql.Store
+	db, mockDb, _ := sqlmock.New()
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	dataStore := &sql.Store{
+		Master: &sql.DB{DBConnection: sqlxDB},
+		Slave:  &sql.DB{DBConnection: sqlxDB},
 	}
+
+	id := uuid.New()
+	photoPath := "/new/photo/path.jpg"
+
 	type args struct {
 		ctx       context.Context
 		id        uuid.UUID
@@ -396,40 +566,37 @@ func TestKPUKotaRepository_UpdateKPUKotaPhoto(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		wantErr bool
+		fn      func()
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "Success",
+			args:    args{ctx: context.Background(), id: id, photoPath: photoPath},
+			wantErr: false,
+			fn: func() {
+				mockDb.ExpectExec(`UPDATE kpu_kota SET`).WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+		},
+		{
+			name:    "ShouldError_UpdateFailed",
+			args:    args{ctx: context.Background(), id: id, photoPath: photoPath},
+			wantErr: true,
+			fn: func() {
+				mockDb.ExpectExec(`UPDATE kpu_kota SET`).WillReturnError(errors.New("update failed"))
+			},
+		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			K := &KPUKotaRepository{
-				client: tt.fields.client,
-				db:     tt.fields.db,
-			}
-			if err := K.UpdateKPUKotaPhoto(tt.args.ctx, tt.args.id, tt.args.photoPath); (err != nil) != tt.wantErr {
-				t.Errorf("UpdateKPUKotaPhoto() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
 
-func TestNewKPUKotaRepository(t *testing.T) {
-	type args struct {
-		opts *OptsKPUKotaRepository
-	}
-	tests := []struct {
-		name string
-		args args
-		want repository.KPUKotaRepository
-	}{
-		// TODO: Add test cases.
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewKPUKotaRepository(tt.args.opts); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewKPUKotaRepository() = %v, want %v", got, tt.want)
+			tt.fn()
+			k := NewKPUKotaRepository(&OptsKPUKotaRepository{
+				Client: nil,
+				DB:     dataStore,
+			})
+			if err := k.UpdateKPUKotaPhoto(tt.args.ctx, tt.args.id, tt.args.photoPath); (err != nil) != tt.wantErr {
+				t.Errorf("UpdateKPUKotaPhoto() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

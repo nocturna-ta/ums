@@ -128,6 +128,7 @@ func (repo *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*model.U
 			"error": err,
 			"id":    id,
 		}).ErrorWithCtx(ctx, "[UserRepository.GetById] Failed to get user by id")
+		return nil, err
 	}
 	return &user, nil
 }
@@ -185,7 +186,11 @@ func (repo *UserRepository) GetByEmail(ctx context.Context, email string) (*mode
 
 	decodedEmail, err := url.QueryUnescape(email)
 	if err != nil {
-		decodedEmail = email
+		log.WithFields(log.Fields{
+			"error": err,
+			"email": email,
+		}).ErrorWithCtx(ctx, "[UserRepository.GetByEmail] Failed to decode email")
+		return nil, err
 	}
 
 	selectQuery := "users.id, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
