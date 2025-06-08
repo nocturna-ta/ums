@@ -1,4 +1,4 @@
-package cutresp
+package custresp
 
 import "errors"
 

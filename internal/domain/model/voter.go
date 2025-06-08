@@ -9,21 +9,21 @@ import (
 
 type Voter struct {
 	BaseModel
-	ID                 uuid.UUID `db:"id"`
-	UserID             uuid.UUID `db:"user_id"`
-	NIK                string    `db:"nik"`
-	FullName           string    `db:"full_name"`
-	Gender             string    `db:"gender"`
-	BirthPlace         string    `db:"birth_place"`
-	BirthDate          time.Time `db:"birth_date"`
-	ResidentialAddress string    `db:"residential_address"`
-	VoterAddress       string    `db:"voter_address"`
-	Region             string    `db:"region"`
-	IsRegistered       bool      `db:"is_registered"`
-	KTPPhotoPath       string    `db:"ktp_photo_path"`
-	HasVoted           bool      `db:"has_voted"`
-	VotedAt            time.Time `db:"voted_at"`
-	LastLogin          time.Time `db:"last_login"`
+	ID                 uuid.UUID  `db:"id"`
+	UserID             uuid.UUID  `db:"user_id"`
+	NIK                string     `db:"nik"`
+	FullName           string     `db:"full_name"`
+	Gender             string     `db:"gender"`
+	BirthPlace         string     `db:"birth_place"`
+	BirthDate          time.Time  `db:"birth_date"`
+	ResidentialAddress string     `db:"residential_address"`
+	VoterAddress       string     `db:"voter_address"`
+	Region             string     `db:"region"`
+	IsRegistered       bool       `db:"is_registered"`
+	KTPPhotoPath       string     `db:"ktp_photo_path"`
+	HasVoted           bool       `db:"has_voted"`
+	VotedAt            *time.Time `db:"voted_at"`
+	LastLogin          *time.Time `db:"last_login"`
 }
 
 func (v *Voter) ToMessageModel() *event.VoterMessage {
@@ -69,8 +69,8 @@ func ConstructRegistration(req *request.VoterRegistrationRequest) *Voter {
 		Region:             req.Region,
 		IsRegistered:       false,
 		HasVoted:           false,
-		VotedAt:            time.Time{},
-		LastLogin:          now,
+		VotedAt:            &time.Time{},
+		LastLogin:          &now,
 	}
 	return user
 }

@@ -71,37 +71,35 @@ func (api *API) RegisterRoute() *router.FastRouter {
 
 	myRouter.GET("/health", api.Ping, router.MustAuthorized(false))
 	myRouter.Group("/v1", func(v1 *router.FastRouter) {
+		v1.GET("/kpu-pusat/id", api.GetKPUPusat, router.MustAuthorized(false))
 		v1.Group("/voter", func(voter *router.FastRouter) {
 			voter.POST("/register", api.RegisterVoter, router.MustAuthorized(false))
 			voter.GET("/nik/:nik", api.GetVoterByNIK, router.MustAuthorized(false))
 			voter.GET("/address", api.GetVoterByAddress, router.MustAuthorized(false))
 			voter.GET("/region/:region", api.GetVoterByRegion, router.MustAuthorized(false))
 			voter.GET("/", api.GetAllVoter, router.MustAuthorized(false))
+			voter.ATTACHMENT("/:id/photo", api.GetVoterKTPPhoto, router.MustAuthorized(false))
 		})
 		v1.Group("/kpu-provinsi", func(kpuProvinsi *router.FastRouter) {
-			kpuProvinsi.GET("/", middleware.KPUProvinsiOnly()(api.GetAllKPUProvinsi), router.MustAuthorized(false))
-			kpuProvinsi.POST("/register", api.RegisterKPUProvinsi, router.MustAuthorized(false))
-			kpuProvinsi.GET("/address", api.GetKPUProvinsiByAddress, router.MustAuthorized(false))
-			kpuProvinsi.GET("/:id", api.GetKPUProvinsiByID, router.MustAuthorized(false))
-			kpuProvinsi.POST("/:id/photo", api.UploadKPUProvinsiPhoto, router.MustAuthorized(false))
-			kpuProvinsi.ATTACHMENT("/:id/photo", api.GetKPUProvinsiPhoto, router.MustAuthorized(false))
+			kpuProvinsi.GET("/", api.GetAllKPUProvinsi, router.MustAuthorized(false))
+			kpuProvinsi.GET("/id", api.GetKPUProvinsiByUserID, router.MustAuthorized(false))
+			kpuProvinsi.POST("/photo", api.UploadKPUProvinsiPhoto, router.MustAuthorized(false))
+			kpuProvinsi.ATTACHMENT("/photo", api.GetKPUProvinsiPhoto, router.MustAuthorized(false))
 			kpuProvinsi.PUT("/update", api.UpdateKPUProvinsi, router.MustAuthorized(false))
 
 		})
 		v1.Group("/kpu-kota", func(kpuKota *router.FastRouter) {
 			kpuKota.GET("/", api.GetAllKPUKota, router.MustAuthorized(false))
-			kpuKota.POST("/register", api.RegisterKPUKota, router.MustAuthorized(false))
-			kpuKota.GET("/address", api.GetKPUKotaByAddress, router.MustAuthorized(false))
-			kpuKota.GET("/:id", api.GetKPUKotaByID, router.MustAuthorized(false))
-			kpuKota.POST("/:id/photo", api.UploadKPUKotaPhoto, router.MustAuthorized(false))
-			kpuKota.ATTACHMENT("/:id/photo", api.GetKPUKotaPhoto, router.MustAuthorized(false))
+			kpuKota.GET("/id", api.GetKPUKotaByUserID, router.MustAuthorized(false))
+			kpuKota.POST("/photo", api.UploadKPUKotaPhoto, router.MustAuthorized(false))
+			kpuKota.ATTACHMENT("/photo", api.GetKPUKotaPhoto, router.MustAuthorized(false))
 			kpuKota.PUT("/update", api.UpdateKPUKota, router.MustAuthorized(false))
 		})
 		v1.Group("/user", func(user *router.FastRouter) {
 			user.POST("/register", api.RegisterUser, router.MustAuthorized(false))
-			user.GET("/me", api.GetByID)
+			user.GET("/me", api.GetByID, router.MustAuthorized(false))
 			user.POST("/login", api.LoginUser, router.MustAuthorized(false))
-
+			user.GET("/:email", api.GetUserByEmail, router.MustAuthorized(false))
 			user.GET("/verification-status/:email", api.CheckVerificationStatus, router.MustAuthorized(false))
 			user.GET("/my-verification-status", api.GetMyVerificationStatus)
 		})
@@ -123,15 +121,9 @@ func (api *API) RegisterRoute() *router.FastRouter {
 				roles.RoleKPUPusat,
 				roles.RoleKPUProvinsi,
 				roles.RoleKPUKota)(api.RejectVerification))
-		})
-
-		v1.Group("/admin", func(admin *router.FastRouter) {
-			admin.Group("/verifications", func(verifications *router.FastRouter) {
-				verifications.GET("/pending", middleware.KPUPusat()(api.GetPendingVerifications))
-				verifications.GET("/details/:user_id", middleware.KPUPusat()(api.GetPendingVerificationDetails))
-				verifications.POST("/approve", middleware.KPUPusat()(api.ApproveVerification))
-				verifications.POST("/reject", middleware.KPUPusat()(api.RejectVerification))
-			})
+			verifications.GET("/details/:user_id", middleware.KPUPusat()(api.GetPendingVerificationDetails))
+			verifications.POST("/approve", middleware.KPUPusat()(api.ApproveVerification))
+			verifications.POST("/reject", middleware.KPUPusat()(api.RejectVerification))
 		})
 	})
 

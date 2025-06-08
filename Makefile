@@ -14,6 +14,10 @@ run-grpc: dependency
 	@echo ">> Running gRPC Server"
 	@go run main.go serve-grpc
 
+run-consumer: dependency swag-init
+	@echo ">> Running Kafka Consumer"
+	@go run main.go run-consumer
+
 migrate-up:
 	@echo ">> Running Migrate Up"
 	@migrate -path db/migrations -database "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable" up

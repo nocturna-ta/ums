@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
@@ -38,7 +39,7 @@ func (m *Module) RegisterKPUProvinsi(ctx context.Context, req *request.KPUProvin
 		kpuProvinsi = model.ConstructRegistrationKPUProvinsi(req)
 		kpuProvinsi.UserID = reqCtx.GetUserId()
 
-		txHash, errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi, req.SignedTransaction)
+		errTx := m.kpuProvinsiRepo.InsertKPUProvinsi(txCtx, kpuProvinsi)
 		if errTx != nil {
 			if errors.Is(errTx, dao.ErrDuplicate) {
 				return nil, &custerr.ErrChain{
@@ -49,6 +50,15 @@ func (m *Module) RegisterKPUProvinsi(ctx context.Context, req *request.KPUProvin
 				}
 			}
 
+			return nil, errTx
+		}
+
+		txHash, errTx := m.kpuProvinsiRepo.SendTxKPUProvinsiBlockchain(txCtx, req.SignedTransaction)
+		if errTx != nil {
+			log.WithFields(log.Fields{
+				"error": errTx,
+				"id":    kpuProvinsi.ID,
+			}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.RegisterKPUProvinsi] Failed to send transaction to blockchain")
 			return nil, errTx
 		}
 
@@ -88,27 +98,54 @@ func (m *Module) GetAllKPUProvinsi(ctx context.Context) (*[]response.KPUProvinsi
 		log.WithFields(log.Fields{
 			"error": err,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetAllKPUProvinsi] Failed to get all kpu provinsi")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get all KPU Provinsi",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	kpuProvinsiContract, err := m.kpuContract.GetAllKPUProvinsi(nil)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetAllKPUProvinsi] Failed to get all kpu provinsi from contract")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get all KPU Provinsi from contract",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	contractAddress := make(map[string]bool)
+	for _, contract := range kpuProvinsiContract {
+		contractAddress[contract.Address.String()] = true
 	}
 
 	var res []response.KPUProvinsiResponse
 	for _, kpuProvinsis := range kpuProvinsi {
-		resp := response.KPUProvinsiResponse{
-			ID:           kpuProvinsis.ID.String(),
-			UserID:       kpuProvinsis.UserID.String(),
-			Name:         kpuProvinsis.Name,
-			Address:      kpuProvinsis.Address,
-			Region:       kpuProvinsis.Region,
-			IsActive:     kpuProvinsis.IsActive,
-			PhotoURL:     kpuProvinsis.PhotoPath,
-			Telephone:    kpuProvinsis.Telephone,
-			RegisteredAt: kpuProvinsis.RegisteredAt.String(),
-		}
+		if contractAddress[kpuProvinsis.Address] {
+			resp := response.KPUProvinsiResponse{
+				ID:           kpuProvinsis.ID.String(),
+				UserID:       kpuProvinsis.UserID.String(),
+				Username:     kpuProvinsis.Username,
+				Name:         kpuProvinsis.Name,
+				Address:      kpuProvinsis.Address,
+				Region:       kpuProvinsis.Region,
+				IsActive:     kpuProvinsis.IsActive,
+				PhotoURL:     kpuProvinsis.PhotoPath,
+				Telephone:    kpuProvinsis.Telephone,
+				RegisteredAt: kpuProvinsis.RegisteredAt.String(),
+			}
 
-		if kpuProvinsis.PhotoPath != "" {
-			resp.PhotoURL = fmt.Sprintf("/v1/kpu-provinsi/%s/photo", kpuProvinsis.ID.String())
-		}
+			if kpuProvinsis.PhotoPath != "" {
+				resp.PhotoURL = fmt.Sprintf("/v1/kpu-provinsi/%s/photo", kpuProvinsis.ID.String())
+			}
 
-		res = append(res, resp)
+			res = append(res, resp)
+		}
 	}
 
 	return &res, err
@@ -129,11 +166,44 @@ func (m *Module) GetKPUProvinsiByAddress(ctx context.Context) (*response.KPUProv
 			"error":   err,
 			"address": reqCtx.Address,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByAddress] Failed to get kpu provinsi by address")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get KPU Provinsi by address",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	kpuProvinsiContract, err := m.kpuContract.GetKpuProvinsiByAddress(nil, common.HexToAddress(reqCtx.GetAddress()))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":   err,
+			"address": reqCtx.Address,
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByAddress] Failed to get kpu provinsi from contract")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get KPU Provinsi from contract",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	if kpuProvinsiContract.Address.String() != kpuProvinsi.Address {
+		log.WithFields(log.Fields{
+			"address":          kpuProvinsi.Address,
+			"contract_address": kpuProvinsiContract.Address.String(),
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByAddress] Address mismatch between contract and database")
+		return nil, &custerr.ErrChain{
+			Message: "Address mismatch between contract and database",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+		}
 	}
 
 	res := &response.KPUProvinsiResponse{
 		ID:           kpuProvinsi.ID.String(),
 		UserID:       kpuProvinsi.UserID.String(),
+		Username:     kpuProvinsi.Username,
 		Name:         kpuProvinsi.Name,
 		Address:      kpuProvinsi.Address,
 		Region:       kpuProvinsi.Region,
@@ -160,12 +230,44 @@ func (m *Module) GetKPUProvinsiByID(ctx context.Context, id uuid.UUID) (*respons
 			"error": err,
 			"id":    id,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByID] Failed to get kpu provinsi by ID")
-		return nil, err
+		return nil, &custerr.ErrChain{
+			Message: "KPU Provinsi not found",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	kpuProvinsiContract, err := m.kpuContract.GetKpuProvinsiByAddress(nil, common.HexToAddress(kpuProvinsi.Address))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"id":    id,
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByID] Failed to get kpu provinsi from contract")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get KPU Provinsi from contract",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	if kpuProvinsiContract.Address.String() != kpuProvinsi.Address {
+		log.WithFields(log.Fields{
+			"address":          kpuProvinsi.Address,
+			"contract_address": kpuProvinsiContract.Address.String(),
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByID] Address mismatch between contract and database")
+		return nil, &custerr.ErrChain{
+			Message: "Address mismatch between contract and database",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+		}
 	}
 
 	res := &response.KPUProvinsiResponse{
 		ID:           kpuProvinsi.ID.String(),
 		UserID:       kpuProvinsi.UserID.String(),
+		Username:     kpuProvinsi.Username,
 		Name:         kpuProvinsi.Name,
 		Address:      kpuProvinsi.Address,
 		Region:       kpuProvinsi.Region,
@@ -182,11 +284,16 @@ func (m *Module) GetKPUProvinsiByID(ctx context.Context, id uuid.UUID) (*respons
 	return res, nil
 }
 
-func (m *Module) UploadKPUProvinsiPhoto(ctx context.Context, kpuProvinsiID uuid.UUID, fileData io.Reader, fileName string) error {
+func (m *Module) UploadKPUProvinsiPhoto(ctx context.Context, fileData io.Reader, fileName string) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiUseCases.UploadKPUProvinsiPhoto")
 	defer span.End()
 
-	kpuProvinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByID(ctx, kpuProvinsiID)
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	kpuProvinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, reqCtx.GetUserId())
 	if err != nil {
 		return &custerr.ErrChain{
 			Message: "KPU Provinsi not found",
@@ -207,8 +314,9 @@ func (m *Module) UploadKPUProvinsiPhoto(ctx context.Context, kpuProvinsiID uuid.
 	photoPath, err := fileutils.StoreFile(ctx, fileData, fileName, fileConfig)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"error": err,
-			"id":    kpuProvinsiID,
+			"error":   err,
+			"id":      kpuProvinsi.ID,
+			"user_id": reqCtx.GetUserId(),
 		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UploadKPUProvinsiPhoto] Failed to store file")
 		return &custerr.ErrChain{
 			Message: "Failed to upload photo",
@@ -218,7 +326,7 @@ func (m *Module) UploadKPUProvinsiPhoto(ctx context.Context, kpuProvinsiID uuid.
 		}
 	}
 
-	err = m.kpuProvinsiRepo.UpdateKPUProvinsiPhoto(ctx, kpuProvinsiID, photoPath)
+	err = m.kpuProvinsiRepo.UpdateKPUProvinsiPhoto(ctx, kpuProvinsi.ID, photoPath)
 	if err != nil {
 		_ = fileutils.DeleteFile(ctx, photoPath)
 		return &custerr.ErrChain{
@@ -231,11 +339,16 @@ func (m *Module) UploadKPUProvinsiPhoto(ctx context.Context, kpuProvinsiID uuid.
 	return nil
 }
 
-func (m *Module) GetKPUProvinsiPhoto(ctx context.Context, kpuProvinsiID uuid.UUID) (*http.File, string, error) {
+func (m *Module) GetKPUProvinsiPhoto(ctx context.Context) (*http.File, string, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiUseCases.GetKPUProvinsiPhoto")
 	defer span.End()
 
-	provinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByID(ctx, kpuProvinsiID)
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+
+	provinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, reqCtx.GetUserId())
 	if err != nil {
 		return nil, "", &custerr.ErrChain{
 			Message: "KPU Provinsi not found",
@@ -293,12 +406,21 @@ func (m *Module) UpdateKPUProvinsi(ctx context.Context, updateRequest *request.K
 		existing.Telephone = updateRequest.Telephone
 		existing.Region = updateRequest.Region
 
-		txHash, errTx := m.kpuProvinsiRepo.UpdateKPUProvinsi(ctx, existing, updateRequest.SignedTransaction)
+		errTx = m.kpuProvinsiRepo.UpdateKPUProvinsi(ctx, existing)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": errTx,
 				"id":    existing.ID,
 			}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UpdateKPUProvinsi] Failed to update kpu provinsi")
+			return nil, errTx
+		}
+
+		txHash, errTx := m.kpuProvinsiRepo.SendTxKPUProvinsiBlockchain(ctx, updateRequest.SignedTransaction)
+		if errTx != nil {
+			log.WithFields(log.Fields{
+				"error": errTx,
+				"id":    existing.ID,
+			}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UpdateKPUProvinsi] Failed to send transaction to blockchain")
 			return nil, errTx
 		}
 
@@ -327,6 +449,7 @@ func (m *Module) UpdateKPUProvinsi(ctx context.Context, updateRequest *request.K
 		ID:           existing.ID.String(),
 		UserID:       existing.UserID.String(),
 		Name:         existing.Name,
+		Username:     existing.Username,
 		Address:      reqCtx.Address,
 		Region:       existing.Region,
 		IsActive:     existing.IsActive,
@@ -336,4 +459,120 @@ func (m *Module) UpdateKPUProvinsi(ctx context.Context, updateRequest *request.K
 	}
 
 	return res, nil
+}
+
+func (m *Module) GetKPUProvinsiByUserID(ctx context.Context) (*response.KPUProvinsiResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiUseCases.GetKPUProvinsiByUserID")
+	defer span.End()
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	kpuProvinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, reqCtx.GetUserId())
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":   err,
+			"id":      kpuProvinsi.ID,
+			"user_id": reqCtx.GetUserId(),
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByUserID] Failed to get kpu provinsi by User ID")
+		return nil, &custerr.ErrChain{
+			Message: "KPU Provinsi not found",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	kpuProvinsiContract, err := m.kpuContract.GetKpuProvinsiByAddress(nil, common.HexToAddress(kpuProvinsi.Address))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":   err,
+			"id":      kpuProvinsi.ID,
+			"user_id": reqCtx.GetUserId(),
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByID] Failed to get kpu provinsi from contract")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get KPU Provinsi from contract",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	if kpuProvinsiContract.Address.String() != kpuProvinsi.Address {
+		log.WithFields(log.Fields{
+			"address":          kpuProvinsi.Address,
+			"contract_address": kpuProvinsiContract.Address.String(),
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByID] Address mismatch between contract and database")
+		return nil, &custerr.ErrChain{
+			Message: "Address mismatch between contract and database",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+		}
+	}
+
+	res := &response.KPUProvinsiResponse{
+		ID:           kpuProvinsi.ID.String(),
+		UserID:       kpuProvinsi.UserID.String(),
+		Name:         kpuProvinsi.Name,
+		Username:     kpuProvinsi.Username,
+		Address:      kpuProvinsi.Address,
+		Region:       kpuProvinsi.Region,
+		IsActive:     kpuProvinsi.IsActive,
+		PhotoURL:     kpuProvinsi.PhotoPath,
+		Telephone:    kpuProvinsi.Telephone,
+		RegisteredAt: kpuProvinsi.RegisteredAt.String(),
+	}
+
+	if kpuProvinsi.PhotoPath != "" {
+		res.PhotoURL = fmt.Sprintf("/v1/kpu-provinsi/%s/photo", kpuProvinsi.ID.String())
+	}
+
+	return res, nil
+}
+
+func (m *Module) GetKPUPusatByUserID(ctx context.Context) (*response.KPUProvinsiResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiUseCases.GetKPUProvinsiByUserID")
+	defer span.End()
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	kpuProvinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, reqCtx.GetUserId())
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":   err,
+			"id":      kpuProvinsi.ID,
+			"user_id": reqCtx.GetUserId(),
+		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByUserID] Failed to get kpu provinsi by User ID")
+		return nil, &custerr.ErrChain{
+			Message: "KPU Provinsi not found",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	res := &response.KPUProvinsiResponse{
+		ID:           kpuProvinsi.ID.String(),
+		UserID:       kpuProvinsi.UserID.String(),
+		Name:         kpuProvinsi.Name,
+		Username:     kpuProvinsi.Username,
+		Address:      kpuProvinsi.Address,
+		Region:       kpuProvinsi.Region,
+		IsActive:     kpuProvinsi.IsActive,
+		PhotoURL:     kpuProvinsi.PhotoPath,
+		Telephone:    kpuProvinsi.Telephone,
+		RegisteredAt: kpuProvinsi.RegisteredAt.String(),
+	}
+
+	if kpuProvinsi.PhotoPath != "" {
+		res.PhotoURL = fmt.Sprintf("/v1/kpu-provinsi/%s/photo", kpuProvinsi.ID.String())
+	}
+
+	return res, nil
+
 }

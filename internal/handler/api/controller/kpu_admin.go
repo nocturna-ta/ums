@@ -8,9 +8,32 @@ import (
 	"github.com/nocturna-ta/golib/response/rest"
 	"github.com/nocturna-ta/golib/router"
 	"github.com/nocturna-ta/golib/tracing"
-	"github.com/nocturna-ta/ums/internal/infrastructures/cutresp"
+	"github.com/nocturna-ta/ums/internal/infrastructures/custresp"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 )
+
+// GetKPUPusat godoc
+// @Summary Get KPU Pusat
+// @Description Get KPU Pusat by user ID
+// @Tags KPU Pusat
+// @Accept json
+// @Produce json
+// @Param X-User-Id header string true "User ID"
+// @Param X-Address-Id header string false "Address ID"
+// @Param X-Role header string false "User Role"
+// @Success 200 {object} jsonResponse{data=response.KPUProvinsiResponse} "KPU Pusat data"
+// @Router /v1/kpu-pusat/id [get]
+func (api *API) GetKPUPusat(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetKPUPusat")
+	defer span.End()
+
+	res, err := api.kpuProvinsiUc.GetKPUPusatByUserID(ctx)
+	if err != nil {
+		return custresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}
 
 // GetPendingVerificationsForRole godoc
 // @Summary Get pending verification requests for the appropriate role
@@ -29,30 +52,7 @@ func (api *API) GetPendingVerificationsForRole(ctx context.Context, req *router.
 
 	res, err := api.userUc.GetPendingVerificationsByRole(ctx)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
-	}
-
-	return rest.NewJSONResponse().SetData(res), nil
-}
-
-// GetPendingVerifications godoc
-// @Summary Get pending verification requests
-// @Description Get all users with pending verification status
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Param X-User-Id header string true "Admin User ID"
-// @Param X-Address-Id header string false "Address"
-// @Param X-Role header string true "Admin Role"
-// @Success 200 {object} jsonResponse{data=[]response.UserVerificationResponse} "Pending verification users"
-// @Router /v1/admin/verifications/pending [get]
-func (api *API) GetPendingVerifications(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
-	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetPendingVerifications")
-	defer span.End()
-
-	res, err := api.userUc.GetPendingVerificationUsers(ctx)
-	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -76,7 +76,7 @@ func (api *API) GetPendingVerificationDetails(ctx context.Context, req *router.R
 
 	userID := req.Params("user_id")
 	if userID == "" {
-		return cutresp.CustomErrorResponse(&custerr.ErrChain{
+		return custresp.CustomErrorResponse(&custerr.ErrChain{
 			Message: "User ID is required",
 			Code:    400,
 			Type:    response.ErrBadRequest,
@@ -85,7 +85,7 @@ func (api *API) GetPendingVerificationDetails(ctx context.Context, req *router.R
 
 	res, err := api.userUc.GetVerificationDetails(ctx, userID)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData(res), nil
@@ -110,17 +110,17 @@ func (api *API) ApproveVerification(ctx context.Context, req *router.Request) (*
 	var verificationReq request.UserVerificationRequest
 	err := json.Unmarshal(req.RawBody(), &verificationReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = verificationReq.ValidateVerificationRequest()
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = api.userUc.ApproveUserVerification(ctx, &verificationReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData("User verification approved successfully"), nil
@@ -145,17 +145,17 @@ func (api *API) RejectVerification(ctx context.Context, req *router.Request) (*r
 	var verificationReq request.UserVerificationRequest
 	err := json.Unmarshal(req.RawBody(), &verificationReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = verificationReq.ValidateVerificationRequest()
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	err = api.userUc.RejectUserVerification(ctx, &verificationReq)
 	if err != nil {
-		return cutresp.CustomErrorResponse(err)
+		return custresp.CustomErrorResponse(err)
 	}
 
 	return rest.NewJSONResponse().SetData("User verification rejected"), nil

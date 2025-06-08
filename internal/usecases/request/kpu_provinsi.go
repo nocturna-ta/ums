@@ -7,6 +7,7 @@ import (
 )
 
 type KPUProvinsiRegistrationRequest struct {
+	Username          string `json:"username"`
 	Name              string `json:"name"`
 	Address           string `json:"address"`
 	Region            string `json:"region"`

@@ -15,15 +15,19 @@ type PendingRegistration struct {
 }
 
 type KPUProvinsiData struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Region  string `json:"region"`
+	Username  string `json:"username"`
+	Name      string `json:"name"`
+	Address   string `json:"address"`
+	Region    string `json:"region"`
+	Telephone string `json:"telephone"`
 }
 
 type KPUKotaData struct {
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	Region  string `json:"region"`
+	Username  string `json:"username"`
+	Name      string `json:"name"`
+	Address   string `json:"address"`
+	Region    string `json:"region"`
+	Telephone string `json:"telephone"`
 }
 
 type VoterData struct {

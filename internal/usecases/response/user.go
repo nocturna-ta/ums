@@ -28,11 +28,12 @@ type UserLoginResponse struct {
 }
 
 type UserVerificationResponse struct {
-	ID                 string    `json:"id"`
-	Email              string    `json:"email"`
-	RequestedRole      string    `json:"requested_role"`
-	VerificationStatus string    `json:"verification_status"`
-	CreatedAt          time.Time `json:"created_at"`
+	ID                 string                 `json:"id"`
+	Email              string                 `json:"email"`
+	RequestedRole      string                 `json:"requested_role"`
+	VerificationStatus string                 `json:"verification_status"`
+	EntityData         map[string]interface{} `json:"entity_data,omitempty"`
+	CreatedAt          time.Time              `json:"created_at"`
 }
 
 type UserVerificationDetailsResponse struct {

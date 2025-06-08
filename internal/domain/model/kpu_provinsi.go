@@ -11,6 +11,7 @@ type KPUProvinsi struct {
 	BaseModel
 	ID           uuid.UUID `db:"id"`
 	UserID       uuid.UUID `db:"user_id"`
+	Username     string    `db:"username"`
 	Name         string    `db:"name"`
 	Address      string    `db:"address"`
 	Region       string    `db:"region"`
@@ -45,6 +46,7 @@ func ConstructRegistrationKPUProvinsi(req *request.KPUProvinsiRegistrationReques
 		},
 		ID:           uuid.New(),
 		Name:         req.Name,
+		Username:     req.Username,
 		Address:      req.Address,
 		Region:       req.Region,
 		IsActive:     req.IsActive,

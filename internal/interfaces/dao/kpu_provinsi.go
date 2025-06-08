@@ -2,9 +2,9 @@ package dao
 
 import (
 	"context"
+	sql2 "database/sql"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/nocturna-ta/golib/database/sql"
@@ -15,84 +15,49 @@ import (
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
 	utils2 "github.com/nocturna-ta/ums/pkg/utils"
-	kpuManager2 "github.com/nocturna-ta/votechain-contract/binding/kpuManager"
-	"github.com/nocturna-ta/votechain-contract/interfaces"
 	"time"
 )
 
 type KPUProvinsiRepository struct {
-	client   ethereum.Client
-	contract interfaces.KpuManagerInterface
-	db       *sql.Store
+	client ethereum.Client
+	db     *sql.Store
 }
 
 type OptsKPUProvinsiRepository struct {
-	Client          ethereum.Client
-	ContractAddress common.Address
-	Contract        interfaces.KpuManagerInterface
-	DB              *sql.Store
+	Client ethereum.Client
+	DB     *sql.Store
 }
 
 func NewKPUProvinsiRepository(opts *OptsKPUProvinsiRepository) repository.KPUProvinsiRepository {
-	var contractInterface interfaces.KpuManagerInterface
-	contract, err := kpuManager2.NewKpuManager(opts.ContractAddress, opts.Client.GetEthClient())
-	if err != nil {
-		return nil
-	}
-	contractInterface = contract
 	return &KPUProvinsiRepository{
-		client:   opts.Client,
-		contract: contractInterface,
-		db:       opts.DB,
+		client: opts.Client,
+		db:     opts.DB,
 	}
 }
 
 const (
-	insertKPUProvinsi = `INSERT INTO kpu_provinsi (id, user_id, name, address, region, is_active, photo_path, telephone, registered_at, created_at, updated_at)
-    						VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`
+	insertKPUProvinsi = `INSERT INTO kpu_provinsi (id, user_id, username, name, address, region, is_active, photo_path, telephone, registered_at, created_at, updated_at)
+    						VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, $12)`
 	selectKPUProvinsi = `SELECT %s FROM kpu_provinsi %s WHERE TRUE %s`
 	updateKPUProvinsi = `UPDATE kpu_provinsi SET %s WHERE TRUE %s`
 )
 
-func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi, signedTransaction string) (string, error) {
+func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiRepository.InsertKPUProvinsi")
 	defer span.End()
 
-	tx, err := utils2.StringToTx(signedTransaction)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to convert signed transaction to transaction")
-		return "", err
-	}
+	var err error
+
 	sqlTrx := utils.GetSqlTx(ctx)
 
-	var ownTransaction bool
-	if sqlTrx == nil {
-		sqlTrx, err = K.db.GetMaster().BeginTxx(ctx, nil)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to begin transaction")
-			return "", err
-
-		}
-
-		ownTransaction = true
-
-		defer func() {
-			if err != nil && ownTransaction {
-				rollbackErr := sqlTrx.Rollback()
-				if rollbackErr != nil {
-					log.WithFields(log.Fields{
-						"error": rollbackErr,
-					}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to rollback transaction")
-				}
-			}
-		}()
+	if sqlTrx != nil {
+		_, err = sqlTrx.ExecContext(ctx, insertKPUProvinsi, kpu.ID, kpu.UserID, kpu.Username, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive,
+			kpu.PhotoPath, kpu.Telephone, kpu.RegisteredAt, kpu.CreatedAt, kpu.UpdatedAt)
+	} else {
+		_, err = K.db.GetMaster().ExecContext(ctx, insertKPUProvinsi, kpu.ID, kpu.UserID, kpu.Username, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive,
+			kpu.PhotoPath, kpu.Telephone, kpu.RegisteredAt, kpu.CreatedAt, kpu.UpdatedAt)
 	}
 
-	_, err = sqlTrx.ExecContext(ctx, insertKPUProvinsi, kpu.ID, kpu.UserID, kpu.Name, kpu.Address, kpu.Region, kpu.IsActive, kpu.PhotoPath, kpu.Telephone, kpu.RegisteredAt, kpu.CreatedAt, kpu.UpdatedAt)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {
@@ -102,14 +67,29 @@ func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *mode
 					"error": err,
 					"kpu":   kpu,
 				}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Duplicate entry")
-				return "", ErrDuplicate
+				return ErrDuplicate
 			}
 		}
 
 		log.WithFields(log.Fields{
 			"error": err,
 			"kpu":   kpu,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to insert kpu kota")
+		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to insert kpu provinsi")
+		return err
+	}
+
+	return nil
+}
+
+func (K *KPUProvinsiRepository) SendTxKPUProvinsiBlockchain(ctx context.Context, signedTransaction string) (string, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiRepository.SendTxKPUProvinsiBlockchain")
+	defer span.End()
+
+	tx, err := utils2.StringToTx(signedTransaction)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.SendTxKPUProvinsiBlockchain] Failed to convert signed transaction to transaction")
 		return "", err
 	}
 
@@ -117,26 +97,9 @@ func (K *KPUProvinsiRepository) InsertKPUProvinsi(ctx context.Context, kpu *mode
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to send transaction")
-
-		if ownTransaction {
-			rollbackErr := sqlTrx.Rollback()
-			if rollbackErr != nil {
-				log.WithFields(log.Fields{
-					"error": rollbackErr,
-				}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to rollback transaction")
-			}
-		}
+			"tx":    tx,
+		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.SendTxKPUProvinsiBlockchain] Failed to send transaction")
 		return "", err
-	}
-
-	if ownTransaction {
-		if err = sqlTrx.Commit(); err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.InsertKPUProvinsi] Failed to commit transaction")
-			return "", err
-		}
 	}
 
 	return txHash, nil
@@ -148,27 +111,20 @@ func (K *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]model.
 
 	sqlTrx := utils.GetSqlTx(ctx)
 	var (
-		kpuProvinsiModels []model.KPUProvinsi
-		err               error
+		kpuProvinsi []model.KPUProvinsi
+		err         error
 	)
 
-	kpuProvinsi, err := K.contract.GetAllKPUProvinsi(nil)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetAllKPUProvinsi] Failed to get all kpu provinsi")
-	}
-
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
-	kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.telephone, kpu_provinsi.registered_at, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.username, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
+			kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.telephone, kpu_provinsi.registered_at, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false"
 	joinQuery := ""
 
 	query := fmt.Sprintf(selectKPUProvinsi, selectQuery, joinQuery, whereQuery)
 	if sqlTrx != nil {
-		err = sqlTrx.SelectContext(ctx, &kpuProvinsiModels, query)
+		err = sqlTrx.SelectContext(ctx, &kpuProvinsi, query)
 	} else {
-		err = K.db.GetMaster().SelectContext(ctx, &kpuProvinsiModels, query)
+		err = K.db.GetMaster().SelectContext(ctx, &kpuProvinsi, query)
 	}
 
 	if err != nil {
@@ -178,24 +134,7 @@ func (K *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]model.
 		return nil, err
 	}
 
-	var matchedKPUProvinsi []model.KPUProvinsi
-	for _, kpuProvins := range kpuProvinsi {
-		for _, kpuProvinsiModel := range kpuProvinsiModels {
-			if kpuProvins.Address.Hex() == kpuProvinsiModel.Address {
-				matchedKPUProvinsi = append(matchedKPUProvinsi, kpuProvinsiModel)
-				break
-			}
-		}
-	}
-
-	if len(matchedKPUProvinsi) == 0 {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetAllKPUProvinsi] Failed to get all kpu provinsi")
-		return nil, err
-	}
-
-	return matchedKPUProvinsi, nil
+	return kpuProvinsi, nil
 }
 
 func (K *KPUProvinsiRepository) GetKPUProvinsiByAddress(ctx context.Context, address string) (*model.KPUProvinsi, error) {
@@ -204,20 +143,12 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByAddress(ctx context.Context, add
 
 	sqlTrx := utils.GetSqlTx(ctx)
 	var (
-		kpuProvinsiModel model.KPUProvinsi
-		err              error
-		args             []any
+		kpuProvinsi model.KPUProvinsi
+		err         error
+		args        []any
 	)
 
-	kpuProvinsi, err := K.contract.GetKpuProvinsiByAddress(nil, common.HexToAddress(address))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetKPUProvinsiByAddress] Failed to get kpu provinsi by address")
-		return nil, err
-	}
-
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.username, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
 	kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.telephone, kpu_provinsi.registered_at, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false AND kpu_provinsi.address = $1"
 	joinQuery := ""
@@ -225,9 +156,9 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByAddress(ctx context.Context, add
 
 	query := fmt.Sprintf(selectKPUProvinsi, selectQuery, joinQuery, whereQuery)
 	if sqlTrx != nil {
-		err = sqlTrx.GetContext(ctx, &kpuProvinsiModel, query, args...)
+		err = sqlTrx.GetContext(ctx, &kpuProvinsi, query, args...)
 	} else {
-		err = K.db.GetMaster().GetContext(ctx, &kpuProvinsiModel, query, args...)
+		err = K.db.GetMaster().GetContext(ctx, &kpuProvinsi, query, args...)
 	}
 
 	if err != nil {
@@ -236,15 +167,7 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByAddress(ctx context.Context, add
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetKPUProvinsiByAddress] Failed to get kpu provinsi by address")
 		return nil, err
 	}
-
-	if kpuProvinsi.Address.Hex() != kpuProvinsiModel.Address {
-		log.WithFields(log.Fields{
-			"error": "not matching kpu provinsi] found",
-		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetKPUProvinsiByAddress] Failed to get kpu provinsi by address")
-		return nil, ErrNoResult
-	}
-
-	return &kpuProvinsiModel, nil
+	return &kpuProvinsi, nil
 }
 
 func (K *KPUProvinsiRepository) GetKPUProvinsiByID(ctx context.Context, id uuid.UUID) (*model.KPUProvinsi, error) {
@@ -253,12 +176,12 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByID(ctx context.Context, id uuid.
 
 	sqlTrx := utils.GetSqlTx(ctx)
 	var (
-		kpuProvinsiModel model.KPUProvinsi
-		err              error
-		args             []any
+		kpuProvinsi model.KPUProvinsi
+		err         error
+		args        []any
 	)
 
-	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.username, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
 	kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.telephone, kpu_provinsi.registered_at, kpu_provinsi.created_at, kpu_provinsi.updated_at`
 	whereQuery := " AND kpu_provinsi.is_deleted = false AND kpu_provinsi.id = $1"
 	joinQuery := ""
@@ -266,9 +189,9 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByID(ctx context.Context, id uuid.
 
 	query := fmt.Sprintf(selectKPUProvinsi, selectQuery, joinQuery, whereQuery)
 	if sqlTrx != nil {
-		err = sqlTrx.GetContext(ctx, &kpuProvinsiModel, query, args...)
+		err = sqlTrx.GetContext(ctx, &kpuProvinsi, query, args...)
 	} else {
-		err = K.db.GetMaster().GetContext(ctx, &kpuProvinsiModel, query, args...)
+		err = K.db.GetMaster().GetContext(ctx, &kpuProvinsi, query, args...)
 	}
 
 	if err != nil {
@@ -279,7 +202,7 @@ func (K *KPUProvinsiRepository) GetKPUProvinsiByID(ctx context.Context, id uuid.
 		return nil, err
 	}
 
-	return &kpuProvinsiModel, nil
+	return &kpuProvinsi, nil
 }
 
 func (K *KPUProvinsiRepository) UpdateKPUProvinsiPhoto(ctx context.Context, id uuid.UUID, photoPath string) error {
@@ -318,93 +241,84 @@ func (K *KPUProvinsiRepository) UpdateKPUProvinsiPhoto(ctx context.Context, id u
 	return nil
 }
 
-func (K *KPUProvinsiRepository) UpdateKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi, signedTransaction string) (string, error) {
+func (K *KPUProvinsiRepository) UpdateKPUProvinsi(ctx context.Context, kpu *model.KPUProvinsi) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiRepository.UpdateKPUProvinsi")
 	defer span.End()
 
 	sqlTrx := utils.GetSqlTx(ctx)
 
-	tx, err := utils2.StringToTx(signedTransaction)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to convert signed transaction to transaction")
-		return "", err
-	}
+	var (
+		err    error
+		args   []any
+		result sql2.Result
+	)
 
-	var ownTransaction bool
-	if sqlTrx == nil {
-		sqlTrx, err = K.db.GetMaster().BeginTxx(ctx, nil)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to begin transaction")
-			return "", err
-		}
-
-		ownTransaction = true
-
-		defer func() {
-			if err != nil && ownTransaction {
-				rollbackErr := sqlTrx.Rollback()
-				if rollbackErr != nil {
-					log.WithFields(log.Fields{
-						"error": rollbackErr,
-					}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to rollback transaction")
-				}
-			}
-		}()
-	}
-
-	setQuery := "name = $1, region = $2, telephone = $3, updated_at = $4"
-	whereQuery := " AND address = $5 AND is_deleted = false"
+	setQuery := "name = $1, region = $2, telephone = $3, username = $4, updated_at = $5"
+	whereQuery := " AND id = $6 AND is_deleted = false"
+	args = append(args, kpu.Name, kpu.Region, kpu.Telephone, kpu.Username, time.Now(), kpu.ID)
 	query := fmt.Sprintf(updateKPUProvinsi, setQuery, whereQuery)
 
-	result, err := sqlTrx.ExecContext(ctx, query, kpu.Name, kpu.Region, kpu.Telephone, time.Now(), kpu.Address)
+	if sqlTrx != nil {
+		result, err = sqlTrx.ExecContext(ctx, query, args...)
+	} else {
+		result, err = K.db.GetMaster().ExecContext(ctx, query, args...)
+	}
+
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
+			"kpu":   kpu,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to update kpu provinsi")
-		return "", err
+		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	rowAffected, err := result.RowsAffected()
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
+			"kpu":   kpu,
 		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to get rows affected")
-		return "", err
+		return err
 	}
 
-	if rowsAffected == 0 {
-		return "", ErrNoUpdateHappened
+	if rowAffected == 0 {
+		return ErrNoUpdateHappened
 	}
 
-	txHash, err := K.client.SendTransaction(ctx, tx)
+	return nil
+}
+
+func (K *KPUProvinsiRepository) GetKPUProvinsiByUserID(ctx context.Context, userID uuid.UUID) (*model.KPUProvinsi, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiRepository.GetKPUProvinsiByID")
+	defer span.End()
+
+	sqlTrx := utils.GetSqlTx(ctx)
+	var (
+		kpuProvinsi model.KPUProvinsi
+		err         error
+		args        []any
+	)
+
+	selectQuery := `kpu_provinsi.id, kpu_provinsi.user_id, kpu_provinsi.username, kpu_provinsi.name, kpu_provinsi.address, kpu_provinsi.region,
+	kpu_provinsi.is_active, kpu_provinsi.photo_path, kpu_provinsi.telephone, kpu_provinsi.registered_at, kpu_provinsi.created_at, kpu_provinsi.updated_at`
+	whereQuery := " AND kpu_provinsi.is_deleted = false AND kpu_provinsi.user_id = $1"
+	joinQuery := ""
+	args = append(args, userID)
+
+	query := fmt.Sprintf(selectKPUProvinsi, selectQuery, joinQuery, whereQuery)
+	if sqlTrx != nil {
+		err = sqlTrx.GetContext(ctx, &kpuProvinsi, query, args...)
+	} else {
+		err = K.db.GetMaster().GetContext(ctx, &kpuProvinsi, query, args...)
+	}
+
 	if err != nil {
 		log.WithFields(log.Fields{
-			"error": err,
-		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to send transaction")
-
-		if ownTransaction {
-			rollbackErr := sqlTrx.Rollback()
-			if rollbackErr != nil {
-				log.WithFields(log.Fields{
-					"error": rollbackErr,
-				}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to rollback transaction")
-			}
-		}
-		return "", err
+			"error":   err,
+			"user_id": userID,
+		}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.GetKPUProvinsiByID] Failed to get kpu provinsi by User ID")
+		return nil, err
 	}
 
-	if ownTransaction {
-		if err = sqlTrx.Commit(); err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(ctx, "[KPUProvinsiRepository.UpdateKPUProvinsi] Failed to commit transaction")
-			return "", err
-		}
-	}
-
-	return txHash, nil
+	return &kpuProvinsi, nil
 }

@@ -16,12 +16,14 @@ type UserRegistrationRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
-	Address  string `json:"address,omitempty"`
+	Address  string `json:"address"`
 
 	// Role-specific fields
 	// For KPU Provinsi and KPU Kota
-	KPUName string `json:"kpu-name,omitempty"`
-	Region  string `json:"region,omitempty"`
+	KPUUsername string `json:"kpu_username,omitempty"`
+	KPUName     string `json:"kpu_name,omitempty"`
+	Region      string `json:"region,omitempty"`
+	Telephone   string `json:"telephone,omitempty"`
 
 	// For Voter
 	NIK                string    `json:"nik,omitempty"`

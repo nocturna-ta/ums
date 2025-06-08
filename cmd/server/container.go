@@ -39,21 +39,18 @@ type options struct {
 func newContainer(opts *options) *container {
 
 	voterRepo := dao.NewVoterRepository(&dao.OptsVoterRepository{
-		DB:              opts.DB,
-		Client:          opts.Client,
-		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.VoterManagerAddress),
+		DB:     opts.DB,
+		Client: opts.Client,
 	})
 
 	kpuKotaRepo := dao.NewKPUKotaRepository(&dao.OptsKPUKotaRepository{
-		DB:              opts.DB,
-		Client:          opts.Client,
-		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.KPUManagerAddress),
+		DB:     opts.DB,
+		Client: opts.Client,
 	})
 
 	kpuProvinsiRepo := dao.NewKPUProvinsiRepository(&dao.OptsKPUProvinsiRepository{
-		DB:              opts.DB,
-		Client:          opts.Client,
-		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.KPUManagerAddress),
+		DB:     opts.DB,
+		Client: opts.Client,
 	})
 
 	usersRepo := dao.NewUserRepository(&dao.OptsUserRepository{
@@ -79,19 +76,23 @@ func newContainer(opts *options) *container {
 	})
 
 	voterUc := voter.New(&voter.Opts{
-		VoterRepo: voterRepo,
-		TxMgr:     txMgr,
-		JwtSvc:    jwtSvc,
-		Publisher: opts.Publisher,
-		Topics:    opts.Cfg.Kafka.Topics,
+		VoterRepo:       voterRepo,
+		TxMgr:           txMgr,
+		JwtSvc:          jwtSvc,
+		Publisher:       opts.Publisher,
+		Topics:          opts.Cfg.Kafka.Topics,
+		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.VoterManagerAddress),
+		Client:          opts.Client,
 	})
 
 	kpuKotaUc := kpu_kota.New(&kpu_kota.Opts{
-		KpuKotaRepo: kpuKotaRepo,
-		TxMgr:       txMgr,
-		JwtSvc:      jwtSvc,
-		Publisher:   opts.Publisher,
-		Topics:      opts.Cfg.Kafka.Topics,
+		KpuKotaRepo:     kpuKotaRepo,
+		TxMgr:           txMgr,
+		JwtSvc:          jwtSvc,
+		Publisher:       opts.Publisher,
+		Topics:          opts.Cfg.Kafka.Topics,
+		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.KPUManagerAddress),
+		Client:          opts.Client,
 	})
 
 	kpuProvinsiUc := kpu_provinsi.New(&kpu_provinsi.Opts{
@@ -100,6 +101,8 @@ func newContainer(opts *options) *container {
 		JwtSvc:          jwtSvc,
 		Publisher:       opts.Publisher,
 		Topics:          opts.Cfg.Kafka.Topics,
+		Client:          opts.Client,
+		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.KPUManagerAddress),
 	})
 
 	userUc := user.New(&user.Opts{
