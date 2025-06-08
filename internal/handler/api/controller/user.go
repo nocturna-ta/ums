@@ -3,10 +3,8 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/http/filehandler"
-	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/response/rest"
 	"github.com/nocturna-ta/golib/router"
@@ -107,10 +105,6 @@ func (api *API) GetUserByEmail(ctx context.Context, req *router.Request) (*rest.
 func (api *API) GetByID(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetByID")
 	defer span.End()
-
-	userID := req.Header("X-User-Id")
-	fmt.Println("X-User-Id:", userID)
-	log.Print("X-User-Id:", userID)
 
 	res, err := api.userUc.GetByID(ctx)
 	if err != nil {

@@ -88,8 +88,8 @@ BlockchainConfig:
 
 Cors:
   AllowOrigins: "*"
-  AllowMethods: "GET,POST,PUT,DELETE,OPTIONS"
+  AllowMethods: "*"
   AllowHeaders: "*"
   AllowCredentials: false
-  ExposeHeaders: "X-Custom-Header"
+  ExposeHeaders: "*"
   MaxAge: 3600g

@@ -189,8 +189,6 @@ func (m *Module) GetByID(ctx context.Context) (*response.UserResponse, error) {
 		return nil, err
 	}
 
-	log.Print(reqCtx.GetUserId())
-	fmt.Print(reqCtx.GetUserId())
 	user, err := m.userRepo.GetById(ctx, reqCtx.GetUserId())
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -828,7 +826,6 @@ func (m *Module) CheckVerificationStatus(ctx context.Context, email string) (*re
 	defer span.End()
 
 	user, err := m.userRepo.GetByEmail(ctx, email)
-	fmt.Println(user)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
