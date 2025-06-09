@@ -5,8 +5,10 @@ import (
 	"github.com/nocturna-ta/golib/txmanager"
 	"github.com/nocturna-ta/ums/config"
 	"github.com/nocturna-ta/ums/internal/domain/repository"
+	"github.com/nocturna-ta/ums/internal/infrastructures/wilayah"
 	"github.com/nocturna-ta/ums/internal/interfaces/jwtsvc"
 	"github.com/nocturna-ta/ums/internal/usecases"
+	"time"
 )
 
 type Module struct {
@@ -22,6 +24,8 @@ type Module struct {
 	jwtSvc              jwtsvc.JWT
 	publisher           event.MessagePublisher
 	topics              config.KafkaTopics
+	wilayahAPIClient    *wilayah.WilayahAPIClient
+	regionCache         *wilayah.RegionCache
 }
 
 type Opts struct {
@@ -37,9 +41,17 @@ type Opts struct {
 	JWTSvc              jwtsvc.JWT
 	Publisher           event.MessagePublisher
 	Topics              config.KafkaTopics
+	WilayahAPIClient    *wilayah.WilayahAPIClient
+	RegionCache         *wilayah.RegionCache
 }
 
 func New(opts *Opts) usecases.UserUseCases {
+	var wilayahClient *wilayah.WilayahAPIClient
+	var regionCache *wilayah.RegionCache
+
+	wilayahClient = wilayah.NewWilayahAPIClient()
+	regionCache = wilayah.NewRegionCache(24 * time.Hour)
+
 	return &Module{
 		userRepo:            opts.UserRepo,
 		pendingRegRepo:      opts.PendingRegRepo,
@@ -53,5 +65,7 @@ func New(opts *Opts) usecases.UserUseCases {
 		jwtSvc:              opts.JWTSvc,
 		publisher:           opts.Publisher,
 		topics:              opts.Topics,
+		wilayahAPIClient:    wilayahClient,
+		regionCache:         regionCache,
 	}
 }

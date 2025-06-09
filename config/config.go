@@ -17,6 +17,7 @@ type (
 		Encryption EncryptionConfig `yaml:"Encryption"`
 		Cors       CorsConfig       `yaml:"Cors"`
 		GrpcServer GrpcServerConfig `yaml:"GrpcServer"`
+		RegionAPI  RegionAPIConfig  `yaml:"RegionAPI"`
 	}
 
 	ServerConfig struct {
@@ -114,6 +115,20 @@ type (
 		Value        string `yaml:"Value" env:"KAFKA_TOPIC_VALUE"`
 		ErrorHandler string `yaml:"ErrorHandler"`
 		WithBackOff  bool   `yaml:"WithBackOff"`
+	}
+
+	RegionAPIConfig struct {
+		Provider         string          `yaml:"Provider"`
+		WilayahID        WilayahIDConfig `yaml:"WilayahID"`
+		FallbackStrategy string          `yaml:"FallbackStrategy"`
+	}
+
+	WilayahIDConfig struct {
+		BaseURL       string        `yaml:"BaseURL"`
+		Timeout       time.Duration `yaml:"Timeout"`
+		CacheTTL      time.Duration `yaml:"CacheTTL"`
+		RetryAttempts int           `yaml:"RetryAttempts"`
+		RetryDelay    time.Duration `yaml:"RetryDelay"`
 	}
 )
 

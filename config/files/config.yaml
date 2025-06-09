@@ -93,3 +93,13 @@ Cors:
   AllowCredentials: false
   ExposeHeaders: "*"
   MaxAge: 3600g
+
+RegionAPI:
+  Provider: "wilayah_id"
+  WilayahID:
+    BaseURL: "https://wilayah.id/api"
+    Timeout: 30s
+    CacheTTL: 24h
+    RetryAttempts: 3
+    RetryDelay: 2s
+  FallbackStrategy: "allow_all"
