@@ -9,19 +9,27 @@ import (
 )
 
 type Module struct {
-	voterRepo  repository.VoterRepository
-	publisher  event.MessagePublisher
-	topics     config.KafkaTopics
-	maxRetries int
-	encryptor  *encryption.Encryption
+	voterRepo       repository.VoterRepository
+	kpuProvinsiRepo repository.KPUProvinsiRepository
+	kpuKotaRepo     repository.KPUKotaRepository
+	userRepo        repository.UserRepository
+	userLogRepo     repository.UserLogRepository
+	publisher       event.MessagePublisher
+	topics          config.KafkaTopics
+	maxRetries      int
+	encryptor       *encryption.Encryption
 }
 
 type Options struct {
-	VoterRepo  repository.VoterRepository
-	Publisher  event.MessagePublisher
-	Topics     config.KafkaTopics
-	MaxRetries int
-	Encryptor  *encryption.Encryption
+	VoterRepo       repository.VoterRepository
+	KPUProvinsiRepo repository.KPUProvinsiRepository
+	KPUKotaRepo     repository.KPUKotaRepository
+	UserRepo        repository.UserRepository
+	UserLogRepo     repository.UserLogRepository
+	Publisher       event.MessagePublisher
+	Topics          config.KafkaTopics
+	MaxRetries      int
+	Encryptor       *encryption.Encryption
 }
 
 func New(opts *Options) usecases.Consumer {
@@ -31,10 +39,14 @@ func New(opts *Options) usecases.Consumer {
 	}
 
 	return &Module{
-		voterRepo:  opts.VoterRepo,
-		publisher:  opts.Publisher,
-		topics:     opts.Topics,
-		maxRetries: maxRetries,
-		encryptor:  opts.Encryptor,
+		voterRepo:       opts.VoterRepo,
+		kpuProvinsiRepo: opts.KPUProvinsiRepo,
+		kpuKotaRepo:     opts.KPUKotaRepo,
+		userRepo:        opts.UserRepo,
+		userLogRepo:     opts.UserLogRepo,
+		publisher:       opts.Publisher,
+		topics:          opts.Topics,
+		maxRetries:      maxRetries,
+		encryptor:       opts.Encryptor,
 	}
 }

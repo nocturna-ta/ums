@@ -16,6 +16,14 @@ Database:
   MaxConn: 10
   ConnMaxLifetime: 10s
 
+DatabaseClickhouse:
+  SlaveDSN: "clickhouse://default:changeme@localhost:19000/user_logs"
+  MasterDSN: "clickhouse://default:changeme@localhost:19000/user_logs"
+  RetryInterval: 10
+  MaxIdleConn: 10
+  MaxConn: 10
+  ConnMaxLifetime: 10s
+
 Kafka:
   Producer:
     Brokers:
@@ -55,6 +63,10 @@ Kafka:
       Value: "ums.masterdata-kpu-provinsi"
       ErrorHandler: "Phase1"
       WithBackOff: true
+    UserLogs:
+      Value: "ums.user-logs"
+      ErrorHandler: "Phase1"
+      WithBackOff: true
     VoteSubmitData:
       Value: "votes.submit"
       ErrorHandler: "Phase1"
@@ -86,13 +98,6 @@ BlockchainConfig:
   VotechainBaseAddress: "0xB1aDFD125A736f17Fc8914c993698934BA834B13"
 
 
-Cors:
-  AllowOrigins: "*"
-  AllowMethods: "*"
-  AllowHeaders: "*"
-  AllowCredentials: false
-  ExposeHeaders: "*"
-  MaxAge: 3600g
 
 RegionAPI:
   Provider: "wilayah_id"

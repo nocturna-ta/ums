@@ -10,8 +10,6 @@ import (
 	"github.com/nocturna-ta/golib/fileutils"
 	"github.com/nocturna-ta/golib/http/filehandler"
 	"github.com/nocturna-ta/golib/response"
-	"github.com/nocturna-ta/golib/router"
-	"github.com/nocturna-ta/ums/config"
 	"io"
 	"mime/multipart"
 )
@@ -129,13 +127,17 @@ func StringToTx(signedTx string) (*types.Transaction, error) {
 	return tx, nil
 }
 
-func ConvertToRouterCorsConfig(configCors *config.CorsConfig) *router.CorsConfig {
-	return &router.CorsConfig{
-		AllowOrigins:     configCors.AllowOrigins,
-		AllowMethods:     configCors.AllowMethods,
-		AllowHeaders:     configCors.AllowHeaders,
-		AllowCredentials: configCors.AllowCredentials,
-		ExposeHeaders:    configCors.ExposeHeaders,
-		MaxAge:           configCors.MaxAge,
+func NormalizeRegionName(name string) string {
+	normalized := strings.TrimSpace(name)
+	normalized = strings.ToLower(normalized)
+
+	prefixes := []string{"kota ", "kabupaten ", "kab. ", "kab ", "kot. ", "kot ", "provinsi "}
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(normalized, prefix) {
+			normalized = strings.TrimPrefix(normalized, prefix)
+			break
+		}
 	}
+
+	return normalized
 }

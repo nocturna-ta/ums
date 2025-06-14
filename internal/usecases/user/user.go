@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/nocturna-ta/common-model/models/event"
+	"github.com/nocturna-ta/common-model/models/logging"
 	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/fileutils"
@@ -22,7 +24,7 @@ import (
 	"github.com/nocturna-ta/ums/pkg/constants"
 	"github.com/nocturna-ta/ums/pkg/constants/errorcode"
 	"github.com/nocturna-ta/ums/pkg/roles"
-	"strings"
+	"github.com/nocturna-ta/ums/pkg/utils"
 	"time"
 )
 
@@ -35,6 +37,11 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 		pendingRegistration *model.PendingRegistration
 		KTPPhotoPath        string
 	)
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	transaction := func(txCtx context.Context) (any, error) {
 		user = model.ConstructUserRegistration(req)
@@ -144,10 +151,24 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 			return nil, errTx
 		}
 
+		errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+			BaseModelMessage: event.BaseModelMessage{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				IsDeleted: false,
+			},
+			UserID:   reqCtx.GetUserId().String(),
+			Address:  reqCtx.GetAddress(),
+			Role:     reqCtx.Role,
+			Activity: "User Registered With ID " + user.ID.String(),
+		}, map[string]any{
+			constants.MetaDataOperation: constants.Create,
+		})
+
 		return nil, nil
 
 	}
-	_, err := m.txMgr.Execute(ctx, transaction, nil)
+	_, err = m.txMgr.Execute(ctx, transaction, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -579,6 +600,24 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				return nil, errTx
 			}
 
+			errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+				BaseModelMessage: event.BaseModelMessage{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+					IsDeleted: false,
+				},
+				UserID:   reqCtx.GetUserId().String(),
+				Address:  reqCtx.GetAddress(),
+				Role:     reqCtx.Role,
+				Activity: "Approve KPU Provinsi User Verification with User ID " + userID.String() + "by " + reqCtx.GetUserId().String(),
+			}, map[string]any{
+				constants.MetaDataOperation: constants.Create,
+			})
+
+			if errTx != nil {
+				return nil, errTx
+			}
+
 		case roles.RoleKPUKota:
 			kpuKotaData, errData := pendingReg.GetKPUKotaData()
 			if errData != nil {
@@ -624,6 +663,24 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 			errTx = m.publisher.Publish(txCtx, m.topics.MasterDataKPUKota.Value, kpuKota.ID.String(), kpuKota.ToMessageModel(), map[string]any{
 				constants.MetaDataOperation: constants.Create,
 			})
+			if errTx != nil {
+				return nil, errTx
+			}
+
+			errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+				BaseModelMessage: event.BaseModelMessage{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+					IsDeleted: false,
+				},
+				UserID:   reqCtx.GetUserId().String(),
+				Address:  reqCtx.GetAddress(),
+				Role:     reqCtx.Role,
+				Activity: "Approve KPU Kota User Verification with User ID " + userID.String() + "by " + reqCtx.GetUserId().String(),
+			}, map[string]any{
+				constants.MetaDataOperation: constants.Create,
+			})
+
 			if errTx != nil {
 				return nil, errTx
 			}
@@ -695,6 +752,24 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 			errTx = m.publisher.Publish(txCtx, m.topics.MasterDataVoter.Value, voter.ID.String(), voter.ToMessageModel(), map[string]any{
 				constants.MetaDataOperation: constants.Create,
 			})
+			if errTx != nil {
+				return nil, errTx
+			}
+
+			errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+				BaseModelMessage: event.BaseModelMessage{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+					IsDeleted: false,
+				},
+				UserID:   reqCtx.GetUserId().String(),
+				Address:  reqCtx.GetAddress(),
+				Role:     reqCtx.Role,
+				Activity: "Approve Voter User Verification with User ID " + userID.String() + "by " + reqCtx.GetUserId().String(),
+			}, map[string]any{
+				constants.MetaDataOperation: constants.Create,
+			})
+
 			if errTx != nil {
 				return nil, errTx
 			}
@@ -811,6 +886,24 @@ func (m *Module) RejectUserVerification(ctx context.Context, req *request.UserVe
 		}
 
 		errTx = m.publisher.Publish(txCtx, m.topics.MasterDataUser.Value, user.ID.String(), user.ToMessageModel(), metadata)
+		if errTx != nil {
+			return nil, errTx
+		}
+
+		errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+			BaseModelMessage: event.BaseModelMessage{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				IsDeleted: false,
+			},
+			UserID:   reqCtx.GetUserId().String(),
+			Address:  reqCtx.GetAddress(),
+			Role:     reqCtx.Role,
+			Activity: "Reject User Verification with User ID " + userID.String() + "by " + reqCtx.GetUserId().String(),
+		}, map[string]any{
+			constants.MetaDataOperation: constants.Update,
+		})
+
 		if errTx != nil {
 			return nil, errTx
 		}
@@ -978,6 +1071,66 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 				}
 			}
 		}
+	} else if currentRole == roles.RoleKPUKota {
+		kpuKota, err := m.kpuKotaRepo.GetKPUKotaByUserID(ctx, currentUserID)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":  err,
+				"userID": currentUserID,
+			}).ErrorWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to get KPU Kota data")
+			return nil, err
+		}
+
+		for _, user := range users {
+			if roles.CanVerify(currentRole, user.RequestedRole) {
+				if user.RequestedRole == roles.RoleVoter {
+					pendingReg, err := m.pendingRegRepo.GetByUserID(ctx, user.ID)
+					if err != nil {
+						log.WithFields(log.Fields{
+							"error":  err,
+							"userID": user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to get pending registration for voter region check")
+						continue
+					}
+
+					var entityData map[string]interface{}
+					if err := json.Unmarshal(pendingReg.EntityData, &entityData); err != nil {
+						log.WithFields(log.Fields{
+							"error": err,
+							"id":    user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to unmarshal voter entity data")
+						continue
+					}
+
+					voterRegion, ok := entityData["region"].(string)
+					if !ok {
+						log.WithFields(log.Fields{
+							"userID": user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Voter region not found in entity data")
+						continue
+					}
+
+					if utils.NormalizeRegionName(voterRegion) == utils.NormalizeRegionName(kpuKota.Region) {
+						filteredUsers = append(filteredUsers, user)
+						log.WithFields(log.Fields{
+							"kpuKotaRegion": kpuKota.Region,
+							"voterRegion":   voterRegion,
+							"userID":        user.ID,
+							"userEmail":     user.Email,
+						}).InfoWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Voter allowed for KPU Kota region")
+					} else {
+						log.WithFields(log.Fields{
+							"kpuKotaRegion": kpuKota.Region,
+							"voterRegion":   voterRegion,
+							"userID":        user.ID,
+							"userEmail":     user.Email,
+						}).InfoWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Voter filtered out due to region mismatch with KPU Kota")
+					}
+				} else {
+					filteredUsers = append(filteredUsers, user)
+				}
+			}
+		}
 	} else {
 		for _, user := range users {
 			if roles.CanVerify(currentRole, user.RequestedRole) {
@@ -1130,9 +1283,9 @@ func (m *Module) checkRegionInCache(provinceName, regencyName string) (bool, boo
 		return false, false
 	}
 
-	normalizedRegencyName := normalizeRegionName(regencyName)
+	normalizedRegencyName := utils.NormalizeRegionName(regencyName)
 	for _, regency := range regencies {
-		if normalizeRegionName(regency) == normalizedRegencyName {
+		if utils.NormalizeRegionName(regency) == normalizedRegencyName {
 			return true, true
 		}
 	}
@@ -1176,19 +1329,4 @@ func (m *Module) updateRegionCache(ctx context.Context, provinceName string) {
 		"provinceCode": provinceCode,
 		"regencyCount": len(regencyNames),
 	}).InfoWithCtx(ctx, "[UserUseCases.updateRegionCache] Cache updated successfully")
-}
-
-func normalizeRegionName(name string) string {
-	normalized := strings.TrimSpace(name)
-	normalized = strings.ToLower(normalized)
-
-	prefixes := []string{"kota ", "kabupaten ", "kab. ", "kab ", "kot. ", "kot ", "provinsi "}
-	for _, prefix := range prefixes {
-		if strings.HasPrefix(normalized, prefix) {
-			normalized = strings.TrimPrefix(normalized, prefix)
-			break
-		}
-	}
-
-	return normalized
 }

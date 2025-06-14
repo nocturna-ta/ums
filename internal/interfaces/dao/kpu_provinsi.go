@@ -105,13 +105,13 @@ func (K *KPUProvinsiRepository) SendTxKPUProvinsiBlockchain(ctx context.Context,
 	return txHash, nil
 }
 
-func (K *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]model.KPUProvinsi, error) {
+func (K *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]*model.KPUProvinsi, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiRepository.GetAllKPUProvinsi")
 	defer span.End()
 
 	sqlTrx := utils.GetSqlTx(ctx)
 	var (
-		kpuProvinsi []model.KPUProvinsi
+		kpuProvinsi []*model.KPUProvinsi
 		err         error
 	)
 

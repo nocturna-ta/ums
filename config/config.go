@@ -8,16 +8,17 @@ import (
 
 type (
 	MainConfig struct {
-		Server     ServerConfig     `yaml:"Server"`
-		API        APIConfig        `yaml:"API"`
-		Database   DBConfig         `yaml:"Database"`
-		Blockchain BlockchainConfig `yaml:"BlockchainConfig"`
-		JWT        JWTConfig        `yaml:"JWT"`
-		Kafka      KafkaConfig      `yaml:"Kafka"`
-		Encryption EncryptionConfig `yaml:"Encryption"`
-		Cors       CorsConfig       `yaml:"Cors"`
-		GrpcServer GrpcServerConfig `yaml:"GrpcServer"`
-		RegionAPI  RegionAPIConfig  `yaml:"RegionAPI"`
+		Server             ServerConfig     `yaml:"Server"`
+		API                APIConfig        `yaml:"API"`
+		Database           DBConfig         `yaml:"Database"`
+		DatabaseClickhouse DBConfig         `yaml:"DatabaseClickhouse"`
+		Blockchain         BlockchainConfig `yaml:"BlockchainConfig"`
+		JWT                JWTConfig        `yaml:"JWT"`
+		Kafka              KafkaConfig      `yaml:"Kafka"`
+		Encryption         EncryptionConfig `yaml:"Encryption"`
+		Cors               CorsConfig       `yaml:"Cors"`
+		GrpcServer         GrpcServerConfig `yaml:"GrpcServer"`
+		RegionAPI          RegionAPIConfig  `yaml:"RegionAPI"`
 	}
 
 	ServerConfig struct {
@@ -106,6 +107,7 @@ type (
 		MasterDataVoter       KafkaTopicConfig `yaml:"MasterDataVoter"`
 		MasterDataKPUProvinsi KafkaTopicConfig `yaml:"MasterDataKpuProvinsi"`
 		MasterDataKPUKota     KafkaTopicConfig `yaml:"MasterDataKpuKota"`
+		UserLogs              KafkaTopicConfig `yaml:"UserLogs"`
 		VoteSubmitData        KafkaTopicConfig `yaml:"VoteSubmitData"`
 		VoteProcessed         KafkaTopicConfig `yaml:"VoteProcessed"`
 		VoteDLQ               KafkaTopicConfig `yaml:"VoteDLQ"`

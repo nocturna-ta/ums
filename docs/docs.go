@@ -364,7 +364,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Address",
-                        "name": "X-Address-Id",
+                        "name": "X-Address",
                         "in": "header"
                     },
                     {
@@ -663,6 +663,435 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.KPUProvinsiResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-logs": {
+            "get": {
+                "description": "Get user logs with pagination",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User Log"
+                ],
+                "summary": "Get user logs",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit of logs to return (default: 10, max: 1000)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.UserLogResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-statistic/approved-dpt": {
+            "get": {
+                "description": "Get the percentage of approved DPTs and total DPTs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserStatistic"
+                ],
+                "summary": "Get Approved DPT Statistic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Region to filter the statistic",
+                        "name": "region",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.ApprovedDPTResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-statistic/kota-information-dpt": {
+            "get": {
+                "description": "Get the percentage of DPTs with kota information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserStatistic"
+                ],
+                "summary": "Get Kota Information DPT Statistic",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.DPTInformationResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-statistic/kpu-kota-staff": {
+            "get": {
+                "description": "Get the percentage of KPU Kota staff and total DPTs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserStatistic"
+                ],
+                "summary": "Get KPU Kota Staff Statistic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Region to filter the statistic",
+                        "name": "region",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.StaffKPUResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-statistic/kpu-provinsi-staff": {
+            "get": {
+                "description": "Get the percentage of KPU staff and total DPTs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserStatistic"
+                ],
+                "summary": "Get KPU Staff Statistic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Region to filter the statistic",
+                        "name": "region",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.StaffKPUResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-statistic/pending-dpt": {
+            "get": {
+                "description": "Get the percentage of pending DPTs and total DPTs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserStatistic"
+                ],
+                "summary": "Get Pending DPT Statistic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Region to filter the statistic",
+                        "name": "region",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.PendingDPTResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-statistic/province-information-dpt": {
+            "get": {
+                "description": "Get the percentage of DPTs with province information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserStatistic"
+                ],
+                "summary": "Get Province Information DPT Statistic",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.DPTInformationResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-statistic/rejected-dpt": {
+            "get": {
+                "description": "Get the percentage of rejected DPTs and total DPTs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserStatistic"
+                ],
+                "summary": "Get Rejected DPT Statistic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Region to filter the statistic",
+                        "name": "region",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.RejectedDPTResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-statistic/total-dpt": {
+            "get": {
+                "description": "Get the total number of DPTs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserStatistic"
+                ],
+                "summary": "Get Total DPT Statistic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Region to filter the statistic",
+                        "name": "region",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.TotalDPTResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user-statistic/voted": {
+            "get": {
+                "description": "Get the percentage of users who have voted",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserStatistic"
+                ],
+                "summary": "Get Voted Statistic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Region to filter the statistic",
+                        "name": "region",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.jsonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.VotedStatisticResponse"
                                         }
                                     }
                                 }
@@ -1799,6 +2228,34 @@ const docTemplate = `{
                 }
             }
         },
+        "response.ApprovedDPTResponse": {
+            "type": "object",
+            "properties": {
+                "percentage": {
+                    "type": "number"
+                },
+                "total_approved_dpt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.DPTInformationResponse": {
+            "type": "object",
+            "properties": {
+                "dpt_voted_percentage": {
+                    "type": "number"
+                },
+                "kpu_region": {
+                    "type": "string"
+                },
+                "staff_count": {
+                    "type": "integer"
+                },
+                "total_dpt": {
+                    "type": "integer"
+                }
+            }
+        },
         "response.KPUKotaResponse": {
             "type": "object",
             "properties": {
@@ -1859,6 +2316,85 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "telephone": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.PendingDPTResponse": {
+            "type": "object",
+            "properties": {
+                "percentage": {
+                    "type": "number"
+                },
+                "total_pending_dpt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.RejectedDPTResponse": {
+            "type": "object",
+            "properties": {
+                "percentage": {
+                    "type": "number"
+                },
+                "total_rejected_dpt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.StaffKPUResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "region_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.TotalDPTResponse": {
+            "type": "object",
+            "properties": {
+                "approved_dpt": {
+                    "type": "integer"
+                },
+                "pending_dpt": {
+                    "type": "integer"
+                },
+                "rejected_dpt": {
+                    "type": "integer"
+                },
+                "total_dpt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.UserLogResponse": {
+            "type": "object",
+            "properties": {
+                "activity": {
+                    "type": "string"
+                },
+                "activity_type": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "time": {
                     "type": "string"
                 },
                 "user_id": {
@@ -1997,6 +2533,17 @@ const docTemplate = `{
                 },
                 "verification_status": {
                     "type": "string"
+                }
+            }
+        },
+        "response.VotedStatisticResponse": {
+            "type": "object",
+            "properties": {
+                "percentage": {
+                    "type": "number"
+                },
+                "total_dpt": {
+                    "type": "integer"
                 }
             }
         },

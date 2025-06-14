@@ -6,15 +6,16 @@ import (
 	"github.com/nocturna-ta/ums/config"
 	"github.com/nocturna-ta/ums/internal/handler/api/controller"
 	"github.com/nocturna-ta/ums/internal/usecases"
-	"github.com/nocturna-ta/ums/pkg/utils"
 )
 
 type Options struct {
-	Cfg           config.MainConfig
-	VoterUc       usecases.VoterUseCases
-	UserUc        usecases.UserUseCases
-	KpuProvinsiUc usecases.KPUProvinsiUseCases
-	KpuKotaUc     usecases.KPUKotaUseCases
+	Cfg             config.MainConfig
+	VoterUc         usecases.VoterUseCases
+	UserUc          usecases.UserUseCases
+	KpuProvinsiUc   usecases.KPUProvinsiUseCases
+	KpuKotaUc       usecases.KPUKotaUseCases
+	UserLogUc       usecases.UserLogUseCases
+	UserStatisticUc usecases.UserStatisticUseCases
 }
 
 type Handler struct {
@@ -29,17 +30,18 @@ func New(opts *Options) *Handler {
 	}
 
 	handler.myRouter = controller.New(&controller.Options{
-		Prefix:         opts.Cfg.API.BasePath,
-		Port:           opts.Cfg.Server.Port,
-		ReadTimeout:    opts.Cfg.Server.ReadTimeout,
-		WriteTimeout:   opts.Cfg.Server.WriteTimeout,
-		RequestTimeout: opts.Cfg.API.APITimeout,
-		EnableSwagger:  opts.Cfg.API.EnableSwagger,
-		CorsConfig:     utils.ConvertToRouterCorsConfig(&opts.Cfg.Cors),
-		VoterUc:        opts.VoterUc,
-		UserUc:         opts.UserUc,
-		KpuProvinsiUc:  opts.KpuProvinsiUc,
-		KpuKotaUc:      opts.KpuKotaUc,
+		Prefix:          opts.Cfg.API.BasePath,
+		Port:            opts.Cfg.Server.Port,
+		ReadTimeout:     opts.Cfg.Server.ReadTimeout,
+		WriteTimeout:    opts.Cfg.Server.WriteTimeout,
+		RequestTimeout:  opts.Cfg.API.APITimeout,
+		EnableSwagger:   opts.Cfg.API.EnableSwagger,
+		VoterUc:         opts.VoterUc,
+		UserUc:          opts.UserUc,
+		KpuProvinsiUc:   opts.KpuProvinsiUc,
+		KpuKotaUc:       opts.KpuKotaUc,
+		UserLogUc:       opts.UserLogUc,
+		UserStatisticUc: opts.UserStatisticUc,
 	}).RegisterRoute()
 
 	return handler
