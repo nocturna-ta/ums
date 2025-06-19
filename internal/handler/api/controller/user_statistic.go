@@ -14,6 +14,9 @@ import (
 // @Tags UserStatistic
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param region query string false "Region to filter the statistic"
 // @Success 200 {object} jsonResponse{data=response.ApprovedDPTResponse}
 // @Router /v1/user-statistic/approved-dpt [get]
@@ -37,6 +40,9 @@ func (api *API) GetApprovedDPTStatistic(ctx context.Context, req *router.Request
 // @Tags UserStatistic
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param region query string false "Region to filter the statistic"
 // @Success 200 {object} jsonResponse{data=response.RejectedDPTResponse}
 // @Router /v1/user-statistic/rejected-dpt [get]
@@ -60,6 +66,9 @@ func (api *API) GetRejectedDPTStatistic(ctx context.Context, req *router.Request
 // @Tags UserStatistic
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param region query string false "Region to filter the statistic"
 // @Success 200 {object} jsonResponse{data=response.PendingDPTResponse}
 // @Router /v1/user-statistic/pending-dpt [get]
@@ -83,6 +92,9 @@ func (api *API) GetPendingDPTStatistic(ctx context.Context, req *router.Request)
 // @Tags UserStatistic
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param region query string false "Region to filter the statistic"
 // @Success 200 {object} jsonResponse{data=response.StaffKPUResponse}
 // @Router /v1/user-statistic/kpu-provinsi-staff [get]
@@ -106,6 +118,9 @@ func (api *API) GetKPUProvinceStaffStatistic(ctx context.Context, req *router.Re
 // @Tags UserStatistic
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param region query string false "Region to filter the statistic"
 // @Success 200 {object} jsonResponse{data=response.StaffKPUResponse}
 // @Router /v1/user-statistic/kpu-kota-staff [get]
@@ -129,6 +144,9 @@ func (api *API) GetKPUKotaStaffStatistic(ctx context.Context, req *router.Reques
 // @Tags UserStatistic
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param region query string false "Region to filter the statistic"
 // @Success 200 {object} jsonResponse{data=response.TotalDPTResponse}
 // @Router /v1/user-statistic/total-dpt [get]
@@ -152,6 +170,9 @@ func (api *API) GetTotalDPTStatistic(ctx context.Context, req *router.Request) (
 // @Tags UserStatistic
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Success 200 {object} jsonResponse{data=[]response.DPTInformationResponse}
 // @Router /v1/user-statistic/province-information-dpt [get]
 func (api *API) GetProvinceInformationDPTStatistic(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
@@ -172,6 +193,9 @@ func (api *API) GetProvinceInformationDPTStatistic(ctx context.Context, req *rou
 // @Tags UserStatistic
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Success 200 {object} jsonResponse{data=[]response.DPTInformationResponse}
 // @Router /v1/user-statistic/kota-information-dpt [get]
 func (api *API) GetKotaInformationDPTStatistic(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
@@ -192,6 +216,9 @@ func (api *API) GetKotaInformationDPTStatistic(ctx context.Context, req *router.
 // @Tags UserStatistic
 // @Accept json
 // @Produce json
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
 // @Param region query string false "Region to filter the statistic"
 // @Success 200 {object} jsonResponse{data=response.VotedStatisticResponse}
 // @Router /v1/user-statistic/voted [get]

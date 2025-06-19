@@ -2,9 +2,12 @@ package user_statistic
 
 import (
 	"context"
+	"fmt"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/tracing"
+	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
+	"github.com/nocturna-ta/ums/pkg/utils"
 )
 
 func (m *Module) GetApprovedDPTStatistic(ctx context.Context, region string) (*response.ApprovedDPTResponse, error) {
@@ -237,9 +240,16 @@ func (m *Module) GetProvinceInformationDPTStatistic(ctx context.Context) ([]*res
 		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetInformationDPTStatistic] GetAllKPUProvinsi failed")
 		return nil, err
 	}
-
 	var dptInfoResponses []*response.DPTInformationResponse
 	for _, province := range provinces {
+		cities, err := m.getCitiesInProvince(ctx, province.Region)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":    err,
+				"province": province.Name,
+			}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetInformationDPTStatistic] getCitiesInProvince failed")
+			return nil, err
+		}
 		staffCount, err := m.userStatisticRepo.GetKPUProvinsiStaff(ctx, &province.Region)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -248,31 +258,45 @@ func (m *Module) GetProvinceInformationDPTStatistic(ctx context.Context) ([]*res
 			return nil, err
 		}
 
-		totalDPT, err := m.userStatisticRepo.GetDPTTotal(ctx, &province.Region)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetInformationDPTStatistic] GetDPTTotal failed")
-			return nil, err
-		}
+		fmt.Println("Cities in province:", province.Name, "->", cities)
 
-		votedCount, err := m.userStatisticRepo.GetDPTVoted(ctx, &province.Region)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetInformationDPTStatistic] GetDPTVoted failed")
-			return nil, err
+		var dpt, votecount int
+
+		for _, city := range cities {
+			totalDPT, err := m.userStatisticRepo.GetDPTTotal(ctx, &city)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetInformationDPTStatistic] GetDPTTotal failed")
+				return nil, err
+			}
+
+			fmt.Println("Total DPT in city:", city, "->", totalDPT)
+
+			votedCount, err := m.userStatisticRepo.GetDPTVoted(ctx, &city)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetInformationDPTStatistic] GetDPTVoted failed")
+				return nil, err
+			}
+
+			votecount += votedCount
+			dpt += totalDPT
 		}
 
 		var votedPercentage float64 = 0
-		if totalDPT > 0 {
-			votedPercentage = float64(votedCount) / float64(totalDPT) * 100
+		if dpt > 0 {
+			votedPercentage = float64(votecount) / float64(dpt) * 100
+		} else {
+			votedPercentage = 0
 		}
+
 		dptInfoResponses = append(dptInfoResponses, &response.DPTInformationResponse{
 			KPURegion:          province.Name,
 			StaffCount:         staffCount,
 			DPTVotedPercentage: votedPercentage,
-			TotalDPT:           totalDPT,
+			TotalDPT:           dpt,
 		})
 
 	}
@@ -368,4 +392,39 @@ func (m *Module) GetVotedStatistic(ctx context.Context, region string) (*respons
 		Percentage: percentage,
 		TotalDPT:   totalDPT,
 	}, nil
+}
+
+func (m *Module) getCitiesInProvince(ctx context.Context, province string) ([]string, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "UserStatisticUseCases.getCitiesInProvince")
+	defer span.End()
+
+	cities, err := m.wilayahAPIClient.GetRegenciesByProvinceName(ctx, province)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":    err,
+			"province": province,
+		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.getCitiesInProvince] GetRegenciesByProvinceName failed")
+	}
+
+	allKpuKota, err := m.kpuKotaRepo.GetAllKPUKota(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.getCitiesInProvince] GetAllKPUKota failed")
+		return nil, err
+	}
+
+	kpuKotaMap := make(map[string]model.KPUKota)
+	for _, kota := range allKpuKota {
+		normalizedRegion := utils.NormalizeRegionName(kota.Region)
+		kpuKotaMap[normalizedRegion] = kota
+	}
+
+	var citiesToAdd []string
+
+	for _, city := range cities {
+		citiesToAdd = append(citiesToAdd, city.Name)
+	}
+
+	return citiesToAdd, nil
 }

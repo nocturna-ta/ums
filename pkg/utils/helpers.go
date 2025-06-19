@@ -12,6 +12,7 @@ import (
 	"github.com/nocturna-ta/golib/response"
 	"io"
 	"mime/multipart"
+	"strings"
 )
 
 type FileUploadConfig struct {

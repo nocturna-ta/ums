@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"github.com/nocturna-ta/api-gateway-grpc-lib/proto"
 	"github.com/nocturna-ta/golib/tracing"
 	"github.com/nocturna-ta/ums/internal/usecases/request"
@@ -21,8 +20,6 @@ func (s *server) ValidateAuthorization(ctx context.Context, req *proto.AuthValid
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(res.ExplodeHeader)
 
 	return &proto.AuthValidateResponse{
 		IsValid:       res.IsValid,
