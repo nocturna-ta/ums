@@ -266,8 +266,12 @@ github.com/nocturna-ta/api-gateway-grpc-lib v1.0.0 h1:rEUnnPsG0vWt5TBt1PKiMTRjUU
 github.com/nocturna-ta/api-gateway-grpc-lib v1.0.0/go.mod h1:UvLICO0sOJp5ksNx4aucsAnqrOYmWLvWrOTTk8OcjHk=
 github.com/nocturna-ta/common-model v1.7.2 h1:W0Usd41ANVEBbkoiQqvbMCKZXY2yZ4aNfzFcoCDEmUE=
 github.com/nocturna-ta/common-model v1.7.2/go.mod h1:ri/K6cjFoDwvTB0y6YVSE9vWpp1RPMOOenfLj+2qVPY=
+github.com/nocturna-ta/common-model v1.7.3 h1:uJf7sVZMndudY98X5GdKFm3lKoQoN7Y7KkIg8XYr1gY=
+github.com/nocturna-ta/common-model v1.7.3/go.mod h1:ri/K6cjFoDwvTB0y6YVSE9vWpp1RPMOOenfLj+2qVPY=
 github.com/nocturna-ta/golib v1.2.1 h1:YcQdG3g/L6qPgLThElUPaRBJj+CQSuXwdgPAAuJvC64=
 github.com/nocturna-ta/golib v1.2.1/go.mod h1:6NCQiSzp2YFRkGJu8ChCTgHKXVWBhedKkCwP4C7GSms=
+github.com/nocturna-ta/golib v1.3.1 h1:P72jebl3FrrIY7Pq36Bg5igRjiWjoimilwYfiV7fWkE=
+github.com/nocturna-ta/golib v1.3.1/go.mod h1:6NCQiSzp2YFRkGJu8ChCTgHKXVWBhedKkCwP4C7GSms=
 github.com/nocturna-ta/votechain-contract v1.2.3 h1:mG1rUK6MFtd0RkT7lwRjJo210JgpNiNwgHGMjn5UVoE=
 github.com/nocturna-ta/votechain-contract v1.2.3/go.mod h1:z0ZULdWNTUM5T+75y4mp4ezVuj1jHkzefElnbBbJ7dc=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=

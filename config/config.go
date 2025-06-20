@@ -8,15 +8,17 @@ import (
 
 type (
 	MainConfig struct {
-		Server     ServerConfig     `yaml:"Server"`
-		API        APIConfig        `yaml:"API"`
-		Database   DBConfig         `yaml:"Database"`
-		Blockchain BlockchainConfig `yaml:"BlockchainConfig"`
-		JWT        JWTConfig        `yaml:"JWT"`
-		Kafka      KafkaConfig      `yaml:"Kafka"`
-		Encryption EncryptionConfig `yaml:"Encryption"`
-		Cors       CorsConfig       `yaml:"Cors"`
-		GrpcServer GrpcServerConfig `yaml:"GrpcServer"`
+		Server             ServerConfig     `yaml:"Server"`
+		API                APIConfig        `yaml:"API"`
+		Database           DBConfig         `yaml:"Database"`
+		DatabaseClickhouse DBConfig         `yaml:"DatabaseClickhouse"`
+		Blockchain         BlockchainConfig `yaml:"BlockchainConfig"`
+		JWT                JWTConfig        `yaml:"JWT"`
+		Kafka              KafkaConfig      `yaml:"Kafka"`
+		Encryption         EncryptionConfig `yaml:"Encryption"`
+		Cors               CorsConfig       `yaml:"Cors"`
+		GrpcServer         GrpcServerConfig `yaml:"GrpcServer"`
+		RegionAPI          RegionAPIConfig  `yaml:"RegionAPI"`
 	}
 
 	ServerConfig struct {
@@ -105,6 +107,7 @@ type (
 		MasterDataVoter       KafkaTopicConfig `yaml:"MasterDataVoter"`
 		MasterDataKPUProvinsi KafkaTopicConfig `yaml:"MasterDataKpuProvinsi"`
 		MasterDataKPUKota     KafkaTopicConfig `yaml:"MasterDataKpuKota"`
+		UserLogs              KafkaTopicConfig `yaml:"UserLogs"`
 		VoteSubmitData        KafkaTopicConfig `yaml:"VoteSubmitData"`
 		VoteProcessed         KafkaTopicConfig `yaml:"VoteProcessed"`
 		VoteDLQ               KafkaTopicConfig `yaml:"VoteDLQ"`
@@ -114,6 +117,20 @@ type (
 		Value        string `yaml:"Value" env:"KAFKA_TOPIC_VALUE"`
 		ErrorHandler string `yaml:"ErrorHandler"`
 		WithBackOff  bool   `yaml:"WithBackOff"`
+	}
+
+	RegionAPIConfig struct {
+		Provider         string          `yaml:"Provider"`
+		WilayahID        WilayahIDConfig `yaml:"WilayahID"`
+		FallbackStrategy string          `yaml:"FallbackStrategy"`
+	}
+
+	WilayahIDConfig struct {
+		BaseURL       string        `yaml:"BaseURL"`
+		Timeout       time.Duration `yaml:"Timeout"`
+		CacheTTL      time.Duration `yaml:"CacheTTL"`
+		RetryAttempts int           `yaml:"RetryAttempts"`
+		RetryDelay    time.Duration `yaml:"RetryDelay"`
 	}
 )
 

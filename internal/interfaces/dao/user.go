@@ -35,7 +35,7 @@ func NewUserRepository(opts *OptsUserRepository) repository.UserRepository {
 const (
 	insertUser = `INSERT INTO users (id, email, password, password_salt, role, requested_role, is_active, verification_status, created_at, updated_at) 
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
-	selectUser = `SELECT %s FROM users WHERE TRUE %s`
+	selectUser = `SELECT %s FROM users %s WHERE TRUE %s`
 	updateUser = `UPDATE users SET %s WHERE TRUE %s`
 )
 
@@ -112,7 +112,7 @@ func (repo *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*model.U
 	whereQuery := " AND users.id = $1 AND users.is_deleted = FALSE"
 	args = append(args, id)
 
-	query := fmt.Sprintf(selectUser, selectQuery, whereQuery)
+	query := fmt.Sprintf(selectUser, selectQuery, "", whereQuery)
 
 	if sqlTrx != nil {
 		err = sqlTrx.GetContext(ctx, &user, query, args...)
@@ -197,7 +197,7 @@ func (repo *UserRepository) GetByEmail(ctx context.Context, email string) (*mode
 	whereQuery := " AND users.email = $1 AND users.is_deleted = FALSE"
 	args = append(args, decodedEmail)
 
-	query := fmt.Sprintf(selectUser, selectQuery, whereQuery)
+	query := fmt.Sprintf(selectUser, selectQuery, "", whereQuery)
 
 	if sqlTrx != nil {
 		err = sqlTrx.GetContext(ctx, &user, query, args...)
@@ -267,7 +267,7 @@ func (repo *UserRepository) GetPendingVerificationUsers(ctx context.Context) ([]
 	selectQuery := "users.id, users.email, users.password, users.password_salt, users.role, users.requested_role, users.is_active, users.verification_status, users.created_at, users.updated_at"
 	whereQuery := "  AND users.is_deleted = FALSE"
 
-	query := fmt.Sprintf(selectUser, selectQuery, whereQuery)
+	query := fmt.Sprintf(selectUser, selectQuery, "", whereQuery)
 
 	if sqlTrx != nil {
 		err := sqlTrx.SelectContext(ctx, &users, query, args...)
@@ -305,7 +305,7 @@ func (repo *UserRepository) GetPendingVerificationUsersByRequestedRole(ctx conte
 	whereQuery := " AND users.verification_status = $1 AND users.requested_role = $2 AND users.is_deleted = FALSE"
 	args = append(args, model.VerificationStatusPending, requestedRole)
 
-	query := fmt.Sprintf(selectUser, selectQuery, whereQuery)
+	query := fmt.Sprintf(selectUser, selectQuery, "", whereQuery)
 
 	if sqlTrx != nil {
 		err := sqlTrx.SelectContext(ctx, &users, query, args...)

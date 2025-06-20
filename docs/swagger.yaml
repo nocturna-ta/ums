@@ -85,6 +85,24 @@ definitions:
       voter_address:
         type: string
     type: object
+  response.ApprovedDPTResponse:
+    properties:
+      percentage:
+        type: number
+      total_approved_dpt:
+        type: integer
+    type: object
+  response.DPTInformationResponse:
+    properties:
+      dpt_voted_percentage:
+        type: number
+      kpu_region:
+        type: string
+      staff_count:
+        type: integer
+      total_dpt:
+        type: integer
+    type: object
   response.KPUKotaResponse:
     properties:
       address:
@@ -125,6 +143,57 @@ definitions:
       registered_at:
         type: string
       telephone:
+        type: string
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  response.PendingDPTResponse:
+    properties:
+      percentage:
+        type: number
+      total_pending_dpt:
+        type: integer
+    type: object
+  response.RejectedDPTResponse:
+    properties:
+      percentage:
+        type: number
+      total_rejected_dpt:
+        type: integer
+    type: object
+  response.StaffKPUResponse:
+    properties:
+      count:
+        type: integer
+      region_count:
+        type: integer
+    type: object
+  response.TotalDPTResponse:
+    properties:
+      approved_dpt:
+        type: integer
+      pending_dpt:
+        type: integer
+      rejected_dpt:
+        type: integer
+      total_dpt:
+        type: integer
+    type: object
+  response.UserLogResponse:
+    properties:
+      activity:
+        type: string
+      activity_type:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+      time:
         type: string
       user_id:
         type: string
@@ -216,6 +285,13 @@ definitions:
         type: string
       verification_status:
         type: string
+    type: object
+  response.VotedStatisticResponse:
+    properties:
+      percentage:
+        type: number
+      total_dpt:
+        type: integer
     type: object
   response.VoterRegistrationResponse:
     properties:
@@ -470,7 +546,7 @@ paths:
         type: string
       - description: Address
         in: header
-        name: X-Address-Id
+        name: X-Address
         type: string
       - description: Role
         in: header
@@ -662,6 +738,366 @@ paths:
       summary: Get KPU Pusat
       tags:
       - KPU Pusat
+  /v1/user-logs:
+    get:
+      consumes:
+      - application/json
+      description: Get user logs with pagination
+      parameters:
+      - description: 'Limit of logs to return (default: 10, max: 1000)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Offset for pagination (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.UserLogResponse'
+                  type: array
+              type: object
+      summary: Get user logs
+      tags:
+      - User Log
+  /v1/user-statistic/approved-dpt:
+    get:
+      consumes:
+      - application/json
+      description: Get the percentage of approved DPTs and total DPTs
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Region to filter the statistic
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.ApprovedDPTResponse'
+              type: object
+      summary: Get Approved DPT Statistic
+      tags:
+      - UserStatistic
+  /v1/user-statistic/kota-information-dpt:
+    get:
+      consumes:
+      - application/json
+      description: Get the percentage of DPTs with kota information
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.DPTInformationResponse'
+                  type: array
+              type: object
+      summary: Get Kota Information DPT Statistic
+      tags:
+      - UserStatistic
+  /v1/user-statistic/kpu-kota-staff:
+    get:
+      consumes:
+      - application/json
+      description: Get the percentage of KPU Kota staff and total DPTs
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Region to filter the statistic
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.StaffKPUResponse'
+              type: object
+      summary: Get KPU Kota Staff Statistic
+      tags:
+      - UserStatistic
+  /v1/user-statistic/kpu-provinsi-staff:
+    get:
+      consumes:
+      - application/json
+      description: Get the percentage of KPU staff and total DPTs
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Region to filter the statistic
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.StaffKPUResponse'
+              type: object
+      summary: Get KPU Staff Statistic
+      tags:
+      - UserStatistic
+  /v1/user-statistic/pending-dpt:
+    get:
+      consumes:
+      - application/json
+      description: Get the percentage of pending DPTs and total DPTs
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Region to filter the statistic
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.PendingDPTResponse'
+              type: object
+      summary: Get Pending DPT Statistic
+      tags:
+      - UserStatistic
+  /v1/user-statistic/province-information-dpt:
+    get:
+      consumes:
+      - application/json
+      description: Get the percentage of DPTs with province information
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.DPTInformationResponse'
+                  type: array
+              type: object
+      summary: Get Province Information DPT Statistic
+      tags:
+      - UserStatistic
+  /v1/user-statistic/rejected-dpt:
+    get:
+      consumes:
+      - application/json
+      description: Get the percentage of rejected DPTs and total DPTs
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Region to filter the statistic
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.RejectedDPTResponse'
+              type: object
+      summary: Get Rejected DPT Statistic
+      tags:
+      - UserStatistic
+  /v1/user-statistic/total-dpt:
+    get:
+      consumes:
+      - application/json
+      description: Get the total number of DPTs
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Region to filter the statistic
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TotalDPTResponse'
+              type: object
+      summary: Get Total DPT Statistic
+      tags:
+      - UserStatistic
+  /v1/user-statistic/voted:
+    get:
+      consumes:
+      - application/json
+      description: Get the percentage of users who have voted
+      parameters:
+      - description: User
+        in: header
+        name: X-User-Id
+        type: string
+      - description: Address
+        in: header
+        name: X-Address-Id
+        type: string
+      - description: Role
+        in: header
+        name: X-Role
+        type: string
+      - description: Region to filter the statistic
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.jsonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.VotedStatisticResponse'
+              type: object
+      summary: Get Voted Statistic
+      tags:
+      - UserStatistic
   /v1/user/{email}:
     get:
       consumes:

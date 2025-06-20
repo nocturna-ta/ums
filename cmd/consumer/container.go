@@ -20,10 +20,11 @@ type container struct {
 }
 
 type options struct {
-	Cfg       *config.MainConfig
-	Publisher event.MessagePublisher
-	DB        *sql.Store
-	Client    ethereum.Client
+	Cfg          *config.MainConfig
+	Publisher    event.MessagePublisher
+	DB           *sql.Store
+	DBClickhouse *sql.Store
+	Client       ethereum.Client
 }
 
 func newContainer(opts *options) *container {
@@ -37,12 +38,34 @@ func newContainer(opts *options) *container {
 		DB:     opts.DB,
 	})
 
+	kpuPorvinsiRepo := dao.NewKPUProvinsiRepository(&dao.OptsKPUProvinsiRepository{
+		DB:     opts.DB,
+		Client: opts.Client,
+	})
+
+	kpuKotaRepo := dao.NewKPUKotaRepository(&dao.OptsKPUKotaRepository{
+		DB:     opts.DB,
+		Client: opts.Client,
+	})
+
+	userRepo := dao.NewUserRepository(&dao.OptsUserRepository{
+		DB: opts.DB,
+	})
+
+	userLogRepo := dao.NewUserLogRepository(&dao.OptsUserLogRepository{
+		DB: opts.DBClickhouse,
+	})
+
 	consumerUc := consumer.New(&consumer.Options{
-		VoterRepo:  voterRepo,
-		Publisher:  opts.Publisher,
-		Topics:     opts.Cfg.Kafka.Topics,
-		MaxRetries: opts.Cfg.Kafka.Consumer.MaxRetries,
-		Encryptor:  encryptor,
+		VoterRepo:       voterRepo,
+		KPUProvinsiRepo: kpuPorvinsiRepo,
+		KPUKotaRepo:     kpuKotaRepo,
+		UserRepo:        userRepo,
+		UserLogRepo:     userLogRepo,
+		Publisher:       opts.Publisher,
+		Topics:          opts.Cfg.Kafka.Topics,
+		MaxRetries:      opts.Cfg.Kafka.Consumer.MaxRetries,
+		Encryptor:       encryptor,
 	})
 
 	eventHandler := handler.New(&handler.Options{

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
+	"github.com/nocturna-ta/common-model/models/event"
+	"github.com/nocturna-ta/common-model/models/logging"
 	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/http"
@@ -17,6 +19,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
 	"github.com/nocturna-ta/ums/pkg/constants"
+	"time"
 )
 
 func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrationRequest) (*response.VoterRegistrationResponse, error) {
@@ -69,6 +72,20 @@ func (m *Module) RegisterVoter(ctx context.Context, req *request.VoterRegistrati
 		if errTx != nil {
 			return nil, errTx
 		}
+
+		errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+			BaseModelMessage: event.BaseModelMessage{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				IsDeleted: false,
+			},
+			UserID:   reqCtx.GetUserId().String(),
+			Address:  reqCtx.GetAddress(),
+			Role:     reqCtx.Role,
+			Activity: "Voter Registered With ID : " + voter.ID.String() + " by " + reqCtx.GetUserId().String(),
+		}, map[string]any{
+			constants.MetaDataOperation: constants.Create,
+		})
 
 		return nil, nil
 	}

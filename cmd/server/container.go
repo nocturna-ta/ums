@@ -17,27 +17,31 @@ import (
 	"github.com/nocturna-ta/ums/internal/usecases/kpu_kota"
 	"github.com/nocturna-ta/ums/internal/usecases/kpu_provinsi"
 	"github.com/nocturna-ta/ums/internal/usecases/user"
+	"github.com/nocturna-ta/ums/internal/usecases/user_log"
+	"github.com/nocturna-ta/ums/internal/usecases/user_statistic"
 	"github.com/nocturna-ta/ums/internal/usecases/voter"
 )
 
 type container struct {
-	Cfg         config.MainConfig
-	VoterUc     usecases.VoterUseCases
-	AuthUc      usecases.AuthUseCases
-	UserUc      usecases.UserUseCases
-	KpuKota     usecases.KPUKotaUseCases
-	KpuProvinsi usecases.KPUProvinsiUseCases
+	Cfg             config.MainConfig
+	VoterUc         usecases.VoterUseCases
+	AuthUc          usecases.AuthUseCases
+	UserUc          usecases.UserUseCases
+	KpuKota         usecases.KPUKotaUseCases
+	KpuProvinsi     usecases.KPUProvinsiUseCases
+	UserLogUc       usecases.UserLogUseCases
+	UserStatisticUc usecases.UserStatisticUseCases
 }
 
 type options struct {
-	Cfg       *config.MainConfig
-	DB        *sql.Store
-	Client    ethereum.Client
-	Publisher event.MessagePublisher
+	Cfg          *config.MainConfig
+	DB           *sql.Store
+	DBClickhouse *sql.Store
+	Client       ethereum.Client
+	Publisher    event.MessagePublisher
 }
 
 func newContainer(opts *options) *container {
-
 	voterRepo := dao.NewVoterRepository(&dao.OptsVoterRepository{
 		DB:     opts.DB,
 		Client: opts.Client,
@@ -58,6 +62,14 @@ func newContainer(opts *options) *container {
 	})
 
 	pendingRepo := dao.NewPendingRegistrationRepository(&dao.OptsPendingRegistrationRepository{
+		DB: opts.DB,
+	})
+
+	userLogRepo := dao.NewUserLogRepository(&dao.OptsUserLogRepository{
+		DB: opts.DBClickhouse,
+	})
+
+	userStatisticRepo := dao.NewUserStatisticRepository(&dao.OptsUserStatisticRepository{
 		DB: opts.DB,
 	})
 
@@ -117,17 +129,29 @@ func newContainer(opts *options) *container {
 		Topics:          opts.Cfg.Kafka.Topics,
 	})
 
+	userLogUc := user_log.New(&user_log.Opts{
+		UserLogRepo: userLogRepo,
+	})
+
+	userstatisticUc := user_statistic.New(&user_statistic.Opts{
+		UserStatisticRepo: userStatisticRepo,
+		KPUProvinsiRepo:   kpuProvinsiRepo,
+		KPUKotaRepo:       kpuKotaRepo,
+	})
+
 	authUc := auth.New(&auth.Opts{
 		JwtSvc: jwtSvc,
 	})
 
 	return &container{
-		Cfg:         *opts.Cfg,
-		VoterUc:     voterUc,
-		AuthUc:      authUc,
-		UserUc:      userUc,
-		KpuKota:     kpuKotaUc,
-		KpuProvinsi: kpuProvinsiUc,
+		Cfg:             *opts.Cfg,
+		VoterUc:         voterUc,
+		AuthUc:          authUc,
+		UserUc:          userUc,
+		KpuKota:         kpuKotaUc,
+		KpuProvinsi:     kpuProvinsiUc,
+		UserLogUc:       userLogUc,
+		UserStatisticUc: userstatisticUc,
 	}
 
 }

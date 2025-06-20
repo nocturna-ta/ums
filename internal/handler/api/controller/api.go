@@ -11,46 +11,49 @@ import (
 )
 
 type API struct {
-	prefix         string
-	port           uint
-	readTimeout    time.Duration
-	writeTimeout   time.Duration
-	requestTimeout time.Duration
-	enableSwagger  bool
-	corsConfig     *router.CorsConfig
-	voterUc        usecases.VoterUseCases
-	userUc         usecases.UserUseCases
-	kpuProvinsiUc  usecases.KPUProvinsiUseCases
-	kpuKotaUc      usecases.KPUKotaUseCases
+	prefix          string
+	port            uint
+	readTimeout     time.Duration
+	writeTimeout    time.Duration
+	requestTimeout  time.Duration
+	enableSwagger   bool
+	voterUc         usecases.VoterUseCases
+	userUc          usecases.UserUseCases
+	kpuProvinsiUc   usecases.KPUProvinsiUseCases
+	kpuKotaUc       usecases.KPUKotaUseCases
+	userLogUc       usecases.UserLogUseCases
+	userStatisticUc usecases.UserStatisticUseCases
 }
 
 type Options struct {
-	Prefix         string
-	Port           uint
-	ReadTimeout    time.Duration
-	WriteTimeout   time.Duration
-	RequestTimeout time.Duration
-	EnableSwagger  bool
-	CorsConfig     *router.CorsConfig
-	VoterUc        usecases.VoterUseCases
-	UserUc         usecases.UserUseCases
-	KpuProvinsiUc  usecases.KPUProvinsiUseCases
-	KpuKotaUc      usecases.KPUKotaUseCases
+	Prefix          string
+	Port            uint
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	RequestTimeout  time.Duration
+	EnableSwagger   bool
+	VoterUc         usecases.VoterUseCases
+	UserUc          usecases.UserUseCases
+	KpuProvinsiUc   usecases.KPUProvinsiUseCases
+	KpuKotaUc       usecases.KPUKotaUseCases
+	UserLogUc       usecases.UserLogUseCases
+	UserStatisticUc usecases.UserStatisticUseCases
 }
 
 func New(opts *Options) *API {
 	return &API{
-		prefix:         opts.Prefix,
-		port:           opts.Port,
-		readTimeout:    opts.ReadTimeout,
-		writeTimeout:   opts.WriteTimeout,
-		requestTimeout: opts.RequestTimeout,
-		enableSwagger:  opts.EnableSwagger,
-		corsConfig:     opts.CorsConfig,
-		voterUc:        opts.VoterUc,
-		userUc:         opts.UserUc,
-		kpuProvinsiUc:  opts.KpuProvinsiUc,
-		kpuKotaUc:      opts.KpuKotaUc,
+		prefix:          opts.Prefix,
+		port:            opts.Port,
+		readTimeout:     opts.ReadTimeout,
+		writeTimeout:    opts.WriteTimeout,
+		requestTimeout:  opts.RequestTimeout,
+		enableSwagger:   opts.EnableSwagger,
+		voterUc:         opts.VoterUc,
+		userUc:          opts.UserUc,
+		kpuProvinsiUc:   opts.KpuProvinsiUc,
+		kpuKotaUc:       opts.KpuKotaUc,
+		userLogUc:       opts.UserLogUc,
+		userStatisticUc: opts.UserStatisticUc,
 	}
 }
 
@@ -62,11 +65,10 @@ func (api *API) RegisterRoute() *router.FastRouter {
 		ReadTimeout:    api.readTimeout,
 		WriteTimeout:   api.writeTimeout,
 		RequestTimeout: api.requestTimeout,
-		CorsConfig:     api.corsConfig,
 	})
 
 	if api.enableSwagger {
-		myRouter.CustomHandler("GET", "/docs/*", swagger.HandlerDefault, router.MustAuthorized(false))
+		myRouter.CustomHandler("GET", "/user/docs/*", swagger.HandlerDefault, router.MustAuthorized(false))
 	}
 
 	myRouter.GET("/health", api.Ping, router.MustAuthorized(false))
@@ -98,12 +100,12 @@ func (api *API) RegisterRoute() *router.FastRouter {
 		v1.Group("/user", func(user *router.FastRouter) {
 			user.POST("/register", api.RegisterUser, router.MustAuthorized(false))
 			user.GET("/me", api.GetByID, router.MustAuthorized(false))
+			user.PUT("/change-password", api.ChangePassword, router.MustAuthorized(false))
 			user.POST("/login", api.LoginUser, router.MustAuthorized(false))
 			user.GET("/:email", api.GetUserByEmail, router.MustAuthorized(false))
 			user.GET("/verification-status/:email", api.CheckVerificationStatus, router.MustAuthorized(false))
 			user.GET("/my-verification-status", api.GetMyVerificationStatus)
 		})
-
 		v1.Group("/verifications", func(verifications *router.FastRouter) {
 			verifications.GET("/pending", middleware.RequireAnyRole(
 				roles.RoleKPUPusat,
@@ -124,6 +126,20 @@ func (api *API) RegisterRoute() *router.FastRouter {
 			verifications.GET("/details/:user_id", middleware.KPUPusat()(api.GetPendingVerificationDetails))
 			verifications.POST("/approve", middleware.KPUPusat()(api.ApproveVerification))
 			verifications.POST("/reject", middleware.KPUPusat()(api.RejectVerification))
+		})
+		v1.Group("/user-logs", func(userLogs *router.FastRouter) {
+			userLogs.GET("/", api.GetLogs, router.MustAuthorized(false))
+		})
+		v1.Group("/user-statistic", func(userStatistic *router.FastRouter) {
+			userStatistic.GET("/approved-dpt", api.GetApprovedDPTStatistic, router.MustAuthorized(false))
+			userStatistic.GET("/rejected-dpt", api.GetRejectedDPTStatistic, router.MustAuthorized(false))
+			userStatistic.GET("/pending-dpt", api.GetPendingDPTStatistic, router.MustAuthorized(false))
+			userStatistic.GET("/total-dpt", api.GetTotalDPTStatistic, router.MustAuthorized(false))
+			userStatistic.GET("/kpu-provinsi-staff", api.GetKPUProvinceStaffStatistic, router.MustAuthorized(false))
+			userStatistic.GET("/kpu-kota-staff", api.GetKPUKotaStaffStatistic, router.MustAuthorized(false))
+			userStatistic.GET("/province-information-dpt", api.GetProvinceInformationDPTStatistic, router.MustAuthorized(false))
+			userStatistic.GET("/kota-information-dpt", api.GetKotaInformationDPTStatistic, router.MustAuthorized(false))
+			userStatistic.GET("/voted", api.GetVotedStatistic, router.MustAuthorized(false))
 		})
 	})
 

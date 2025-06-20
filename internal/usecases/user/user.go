@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/nocturna-ta/common-model/models/event"
+	"github.com/nocturna-ta/common-model/models/logging"
 	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/fileutils"
@@ -22,6 +24,7 @@ import (
 	"github.com/nocturna-ta/ums/pkg/constants"
 	"github.com/nocturna-ta/ums/pkg/constants/errorcode"
 	"github.com/nocturna-ta/ums/pkg/roles"
+	"github.com/nocturna-ta/ums/pkg/utils"
 	"time"
 )
 
@@ -34,6 +37,11 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 		pendingRegistration *model.PendingRegistration
 		KTPPhotoPath        string
 	)
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	transaction := func(txCtx context.Context) (any, error) {
 		user = model.ConstructUserRegistration(req)
@@ -143,10 +151,24 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 			return nil, errTx
 		}
 
+		errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+			BaseModelMessage: event.BaseModelMessage{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				IsDeleted: false,
+			},
+			UserID:   reqCtx.GetUserId().String(),
+			Address:  reqCtx.GetAddress(),
+			Role:     reqCtx.Role,
+			Activity: "User Registered With ID " + user.ID.String(),
+		}, map[string]any{
+			constants.MetaDataOperation: constants.Create,
+		})
+
 		return nil, nil
 
 	}
-	_, err := m.txMgr.Execute(ctx, transaction, nil)
+	_, err = m.txMgr.Execute(ctx, transaction, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -578,6 +600,24 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				return nil, errTx
 			}
 
+			errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+				BaseModelMessage: event.BaseModelMessage{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+					IsDeleted: false,
+				},
+				UserID:   reqCtx.GetUserId().String(),
+				Address:  reqCtx.GetAddress(),
+				Role:     reqCtx.Role,
+				Activity: "Approve KPU Provinsi User Verification with User ID " + userID.String() + "by " + reqCtx.GetUserId().String(),
+			}, map[string]any{
+				constants.MetaDataOperation: constants.Create,
+			})
+
+			if errTx != nil {
+				return nil, errTx
+			}
+
 		case roles.RoleKPUKota:
 			kpuKotaData, errData := pendingReg.GetKPUKotaData()
 			if errData != nil {
@@ -623,6 +663,24 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 			errTx = m.publisher.Publish(txCtx, m.topics.MasterDataKPUKota.Value, kpuKota.ID.String(), kpuKota.ToMessageModel(), map[string]any{
 				constants.MetaDataOperation: constants.Create,
 			})
+			if errTx != nil {
+				return nil, errTx
+			}
+
+			errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+				BaseModelMessage: event.BaseModelMessage{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+					IsDeleted: false,
+				},
+				UserID:   reqCtx.GetUserId().String(),
+				Address:  reqCtx.GetAddress(),
+				Role:     reqCtx.Role,
+				Activity: "Approve KPU Kota User Verification with User ID " + userID.String() + "by " + reqCtx.GetUserId().String(),
+			}, map[string]any{
+				constants.MetaDataOperation: constants.Create,
+			})
+
 			if errTx != nil {
 				return nil, errTx
 			}
@@ -694,6 +752,24 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 			errTx = m.publisher.Publish(txCtx, m.topics.MasterDataVoter.Value, voter.ID.String(), voter.ToMessageModel(), map[string]any{
 				constants.MetaDataOperation: constants.Create,
 			})
+			if errTx != nil {
+				return nil, errTx
+			}
+
+			errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+				BaseModelMessage: event.BaseModelMessage{
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+					IsDeleted: false,
+				},
+				UserID:   reqCtx.GetUserId().String(),
+				Address:  reqCtx.GetAddress(),
+				Role:     reqCtx.Role,
+				Activity: "Approve Voter User Verification with User ID " + userID.String() + "by " + reqCtx.GetUserId().String(),
+			}, map[string]any{
+				constants.MetaDataOperation: constants.Create,
+			})
+
 			if errTx != nil {
 				return nil, errTx
 			}
@@ -814,6 +890,24 @@ func (m *Module) RejectUserVerification(ctx context.Context, req *request.UserVe
 			return nil, errTx
 		}
 
+		errTx = m.publisher.Publish(txCtx, m.topics.UserLogs.Value, reqCtx.GetUserId().String(), logging.KPULogs{
+			BaseModelMessage: event.BaseModelMessage{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				IsDeleted: false,
+			},
+			UserID:   reqCtx.GetUserId().String(),
+			Address:  reqCtx.GetAddress(),
+			Role:     reqCtx.Role,
+			Activity: "Reject User Verification with User ID " + userID.String() + "by " + reqCtx.GetUserId().String(),
+		}, map[string]any{
+			constants.MetaDataOperation: constants.Update,
+		})
+
+		if errTx != nil {
+			return nil, errTx
+		}
+
 		return nil, nil
 	}
 
@@ -898,6 +992,7 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 	}
 
 	currentRole := reqCtx.GetRole()
+	currentUserID := reqCtx.GetUserId()
 
 	users, err := m.userRepo.GetPendingVerificationUsers(ctx)
 	if err != nil {
@@ -908,9 +1003,139 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 	}
 
 	var filteredUsers []model.User
-	for _, user := range users {
-		if roles.CanVerify(currentRole, user.RequestedRole) {
-			filteredUsers = append(filteredUsers, user)
+
+	if currentRole == roles.RoleKPUProvinsi {
+		kpuProvinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, currentUserID)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":  err,
+				"userID": currentUserID,
+			}).ErrorWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to get KPU Provinsi data")
+			return nil, err
+		}
+
+		for _, user := range users {
+			if roles.CanVerify(currentRole, user.RequestedRole) {
+				if user.RequestedRole == roles.RoleKPUKota {
+					pendingReg, err := m.pendingRegRepo.GetByUserID(ctx, user.ID)
+					if err != nil {
+						log.WithFields(log.Fields{
+							"error":  err,
+							"userID": user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to get pending registration for region check")
+						continue
+					}
+
+					var entityData map[string]interface{}
+					if err := json.Unmarshal(pendingReg.EntityData, &entityData); err != nil {
+						log.WithFields(log.Fields{
+							"error": err,
+							"id":    user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to unmarshal entity data")
+						continue
+					}
+
+					kotaRegion, ok := entityData["region"].(string)
+					if !ok {
+						log.WithFields(log.Fields{
+							"userID": user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Region not found in entity data")
+						continue
+					}
+
+					isAllowed, err := m.isRegionAllowedByWilayahAPI(ctx, kpuProvinsi.Region, kotaRegion)
+					if err != nil {
+						log.WithFields(log.Fields{
+							"error":    err,
+							"province": kpuProvinsi.Region,
+							"city":     kotaRegion,
+							"userID":   user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to check region via wilayah.id API")
+
+						filteredUsers = append(filteredUsers, user)
+						continue
+					}
+
+					if isAllowed {
+						filteredUsers = append(filteredUsers, user)
+					} else {
+						log.WithFields(log.Fields{
+							"province":  kpuProvinsi.Region,
+							"city":      kotaRegion,
+							"userID":    user.ID,
+							"userEmail": user.Email,
+						}).InfoWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] User filtered out due to region mismatch")
+					}
+				} else {
+					filteredUsers = append(filteredUsers, user)
+				}
+			}
+		}
+	} else if currentRole == roles.RoleKPUKota {
+		kpuKota, err := m.kpuKotaRepo.GetKPUKotaByUserID(ctx, currentUserID)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":  err,
+				"userID": currentUserID,
+			}).ErrorWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to get KPU Kota data")
+			return nil, err
+		}
+
+		for _, user := range users {
+			if roles.CanVerify(currentRole, user.RequestedRole) {
+				if user.RequestedRole == roles.RoleVoter {
+					pendingReg, err := m.pendingRegRepo.GetByUserID(ctx, user.ID)
+					if err != nil {
+						log.WithFields(log.Fields{
+							"error":  err,
+							"userID": user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to get pending registration for voter region check")
+						continue
+					}
+
+					var entityData map[string]interface{}
+					if err := json.Unmarshal(pendingReg.EntityData, &entityData); err != nil {
+						log.WithFields(log.Fields{
+							"error": err,
+							"id":    user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to unmarshal voter entity data")
+						continue
+					}
+
+					voterRegion, ok := entityData["region"].(string)
+					if !ok {
+						log.WithFields(log.Fields{
+							"userID": user.ID,
+						}).WarnWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Voter region not found in entity data")
+						continue
+					}
+
+					if utils.NormalizeRegionName(voterRegion) == utils.NormalizeRegionName(kpuKota.Region) {
+						filteredUsers = append(filteredUsers, user)
+						log.WithFields(log.Fields{
+							"kpuKotaRegion": kpuKota.Region,
+							"voterRegion":   voterRegion,
+							"userID":        user.ID,
+							"userEmail":     user.Email,
+						}).InfoWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Voter allowed for KPU Kota region")
+					} else {
+						log.WithFields(log.Fields{
+							"kpuKotaRegion": kpuKota.Region,
+							"voterRegion":   voterRegion,
+							"userID":        user.ID,
+							"userEmail":     user.Email,
+						}).InfoWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Voter filtered out due to region mismatch with KPU Kota")
+					}
+				} else {
+					filteredUsers = append(filteredUsers, user)
+				}
+			}
+		}
+	} else {
+		for _, user := range users {
+			if roles.CanVerify(currentRole, user.RequestedRole) {
+				filteredUsers = append(filteredUsers, user)
+			}
 		}
 	}
 
@@ -921,7 +1146,7 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 			log.WithFields(log.Fields{
 				"error":  err,
 				"userID": user.ID,
-			}).ErrorWithCtx(ctx, "[UserUseCases.GetVerificationDetails] Failed to get pending registration")
+			}).ErrorWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to get pending registration")
 			return nil, err
 		}
 
@@ -930,7 +1155,7 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 			log.WithFields(log.Fields{
 				"error": err,
 				"id":    user.ID,
-			}).ErrorWithCtx(ctx, "[UserUseCases.GetVerificationDetails] Failed to unmarshal entity data")
+			}).ErrorWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Failed to unmarshal entity data")
 			return nil, &custerr.ErrChain{
 				Message: "Failed to parse entity data",
 				Code:    500,
@@ -948,6 +1173,13 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 			CreatedAt:          user.CreatedAt,
 		})
 	}
+
+	log.WithFields(log.Fields{
+		"totalUsers":    len(users),
+		"filteredUsers": len(filteredUsers),
+		"currentRole":   currentRole,
+		"currentUserID": currentUserID,
+	}).InfoWithCtx(ctx, "[UserUseCases.GetPendingVerificationsByRole] Successfully filtered pending verifications")
 
 	return &result, nil
 }
@@ -999,4 +1231,102 @@ func (m *Module) GetEnhancedVerificationStatus(ctx context.Context) (*response.E
 	}
 
 	return response, nil
+}
+
+func (m *Module) isRegionAllowedByWilayahAPI(ctx context.Context, provinceName, regencyName string) (bool, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "UserUseCases.isRegionAllowedByWilayahAPI")
+	defer span.End()
+
+	if !m.regionCache.IsExpired() {
+		if allowed, found := m.checkRegionInCache(provinceName, regencyName); found {
+			log.WithFields(log.Fields{
+				"province": provinceName,
+				"regency":  regencyName,
+				"allowed":  allowed,
+				"source":   "cache",
+			}).InfoWithCtx(ctx, "[UserUseCases.isRegionAllowedByWilayahAPI] Using cached result")
+			return allowed, nil
+		}
+	}
+
+	allowed, err := m.wilayahAPIClient.IsRegencyInProvince(ctx, provinceName, regencyName)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":    err,
+			"province": provinceName,
+			"regency":  regencyName,
+		}).ErrorWithCtx(ctx, "[UserUseCases.isRegionAllowedByWilayahAPI] API call failed")
+
+		return true, nil
+	}
+
+	go m.updateRegionCache(context.Background(), provinceName)
+
+	log.WithFields(log.Fields{
+		"province": provinceName,
+		"regency":  regencyName,
+		"allowed":  allowed,
+		"source":   "api",
+	}).InfoWithCtx(ctx, "[UserUseCases.isRegionAllowedByWilayahAPI] Using API result")
+
+	return allowed, nil
+}
+
+func (m *Module) checkRegionInCache(provinceName, regencyName string) (bool, bool) {
+	provinceCode, provinceExists := m.regionCache.GetProvinceCode(provinceName)
+	if !provinceExists {
+		return false, false
+	}
+
+	regencies, regenciesExist := m.regionCache.GetRegencies(provinceCode)
+	if !regenciesExist {
+		return false, false
+	}
+
+	normalizedRegencyName := utils.NormalizeRegionName(regencyName)
+	for _, regency := range regencies {
+		if utils.NormalizeRegionName(regency) == normalizedRegencyName {
+			return true, true
+		}
+	}
+
+	return false, true
+}
+
+func (m *Module) updateRegionCache(ctx context.Context, provinceName string) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "UserUseCases.updateRegionCache")
+	defer span.End()
+
+	provinceCode, err := m.wilayahAPIClient.FindProvinceByName(ctx, provinceName)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":    err,
+			"province": provinceName,
+		}).ErrorWithCtx(ctx, "[UserUseCases.updateRegionCache] Failed to find province code")
+		return
+	}
+
+	regencies, err := m.wilayahAPIClient.GetRegenciesByProvinceCode(ctx, provinceCode)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":        err,
+			"province":     provinceName,
+			"provinceCode": provinceCode,
+		}).ErrorWithCtx(ctx, "[UserUseCases.updateRegionCache] Failed to get regencies")
+		return
+	}
+
+	m.regionCache.SetProvinceMapping(provinceName, provinceCode)
+
+	regencyNames := make([]string, len(regencies))
+	for i, regency := range regencies {
+		regencyNames[i] = regency.Name
+	}
+	m.regionCache.SetRegencies(provinceCode, regencyNames)
+
+	log.WithFields(log.Fields{
+		"province":     provinceName,
+		"provinceCode": provinceCode,
+		"regencyCount": len(regencyNames),
+	}).InfoWithCtx(ctx, "[UserUseCases.updateRegionCache] Cache updated successfully")
 }

@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/fileutils"
 	"github.com/nocturna-ta/golib/http/filehandler"
@@ -19,7 +20,7 @@ import (
 // @Description Get All KPU Provinsi
 // @Tags kpu_provinsi
 // @Param X-User-Id header string false "User"
-// @Param X-Address-Id header string false "Address"
+// @Param X-Address header string false "Address"
 // @Param X-Role header string false "Role"
 // @Accept json
 // @Produce json
@@ -28,6 +29,16 @@ import (
 func (api *API) GetAllKPUProvinsi(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetAllKPUProvinsi")
 	defer span.End()
+
+	// Extract and print headers
+	userID := req.Header("X-User-Id")
+	addressID := req.Header("X-Address-Id")
+	role := req.Header("X-Role")
+
+	// Print the headers
+	fmt.Printf("X-User-Id: %s\n", userID)
+	fmt.Printf("X-Address-Id: %s\n", addressID)
+	fmt.Printf("X-Role: %s\n", role)
 
 	res, err := api.kpuProvinsiUc.GetAllKPUProvinsi(ctx)
 	if err != nil {

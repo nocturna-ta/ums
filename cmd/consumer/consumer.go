@@ -43,6 +43,15 @@ func run(cmd *cobra.Command, args []string) error {
 		ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
 	}, sql.DriverPostgres)
 
+	databaseClickhouse := sql.New(sql.DBConfig{
+		SlaveDSN:        cfg.DatabaseClickhouse.SlaveDSN,
+		MasterDSN:       cfg.DatabaseClickhouse.MasterDSN,
+		RetryInterval:   cfg.DatabaseClickhouse.RetryInterval,
+		MaxIdleConn:     cfg.DatabaseClickhouse.MaxIdleConn,
+		MaxConn:         cfg.DatabaseClickhouse.MaxConn,
+		ConnMaxLifetime: cfg.DatabaseClickhouse.ConnMaxLifetime,
+	}, sql.DriverClickHouse)
+
 	client, err := ethreum.GetEthereumClient(&cfg.Blockchain)
 	if err != nil {
 		return err
@@ -51,10 +60,11 @@ func run(cmd *cobra.Command, args []string) error {
 	defer client.Close()
 
 	appContainer := newContainer(&options{
-		Cfg:       cfg,
-		Publisher: publisher,
-		DB:        database,
-		Client:    client,
+		Cfg:          cfg,
+		Publisher:    publisher,
+		DB:           database,
+		DBClickhouse: databaseClickhouse,
+		Client:       client,
 	})
 
 	consumer, err := kafka.NewConsumer(context.Background(), cfg.Kafka.Consumer, &appContainer.EventHandler)
@@ -68,6 +78,12 @@ func run(cmd *cobra.Command, args []string) error {
 			ConsumerGroup:     cfg.Kafka.Consumer.ConsumerGroup,
 			ErrorHandlerLevel: cfg.Kafka.Topics.VoteProcessed.ErrorHandler,
 			WithBackOff:       cfg.Kafka.Topics.VoteProcessed.WithBackOff,
+		},
+		event.TopicName(cfg.Kafka.Topics.UserLogs.Value): {
+			ConsumerGroup:     cfg.Kafka.Consumer.ConsumerGroup,
+			ErrorHandlerLevel: cfg.Kafka.Topics.UserLogs.ErrorHandler,
+			Handler:           appContainer.ConsumerUc.InsertUserLog,
+			WithBackOff:       cfg.Kafka.Topics.UserLogs.WithBackOff,
 		},
 	}
 

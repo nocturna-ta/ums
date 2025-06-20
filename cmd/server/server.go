@@ -41,6 +41,15 @@ func run(cmd *cobra.Command, args []string) error {
 		ConnMaxLifetime: cfg.Database.ConnMaxLifetime,
 	}, sql.DriverPostgres)
 
+	databaseClickhouse := sql.New(sql.DBConfig{
+		SlaveDSN:        cfg.DatabaseClickhouse.SlaveDSN,
+		MasterDSN:       cfg.DatabaseClickhouse.MasterDSN,
+		RetryInterval:   cfg.DatabaseClickhouse.RetryInterval,
+		MaxIdleConn:     cfg.DatabaseClickhouse.MaxIdleConn,
+		MaxConn:         cfg.DatabaseClickhouse.MaxConn,
+		ConnMaxLifetime: cfg.DatabaseClickhouse.ConnMaxLifetime,
+	}, sql.DriverClickHouse)
+
 	client, err := ethreum.GetEthereumClient(&cfg.Blockchain)
 	if err != nil {
 		return err
@@ -55,18 +64,21 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	appContainer := newContainer(&options{
-		Cfg:       cfg,
-		DB:        database,
-		Client:    client,
-		Publisher: publisher,
+		Cfg:          cfg,
+		DB:           database,
+		DBClickhouse: databaseClickhouse,
+		Client:       client,
+		Publisher:    publisher,
 	})
 
 	server := api.New(&api.Options{
-		Cfg:           appContainer.Cfg,
-		VoterUc:       appContainer.VoterUc,
-		UserUc:        appContainer.UserUc,
-		KpuProvinsiUc: appContainer.KpuProvinsi,
-		KpuKotaUc:     appContainer.KpuKota,
+		Cfg:             appContainer.Cfg,
+		VoterUc:         appContainer.VoterUc,
+		UserUc:          appContainer.UserUc,
+		KpuProvinsiUc:   appContainer.KpuProvinsi,
+		KpuKotaUc:       appContainer.KpuKota,
+		UserLogUc:       appContainer.UserLogUc,
+		UserStatisticUc: appContainer.UserStatisticUc,
 	})
 
 	go server.Run()
