@@ -271,8 +271,6 @@ func (m *Module) GetProvinceInformationDPTStatistic(ctx context.Context) ([]*res
 				return nil, err
 			}
 
-			fmt.Println("Total DPT in city:", city, "->", totalDPT)
-
 			votedCount, err := m.userStatisticRepo.GetDPTVoted(ctx, &city)
 			if err != nil {
 				log.WithFields(log.Fields{

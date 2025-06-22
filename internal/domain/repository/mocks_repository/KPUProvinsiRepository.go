@@ -17,23 +17,23 @@ type KPUProvinsiRepository struct {
 }
 
 // GetAllKPUProvinsi provides a mock function with given fields: ctx
-func (_m *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]model.KPUProvinsi, error) {
+func (_m *KPUProvinsiRepository) GetAllKPUProvinsi(ctx context.Context) ([]*model.KPUProvinsi, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllKPUProvinsi")
 	}
 
-	var r0 []model.KPUProvinsi
+	var r0 []*model.KPUProvinsi
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]model.KPUProvinsi, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*model.KPUProvinsi, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []model.KPUProvinsi); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []*model.KPUProvinsi); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.KPUProvinsi)
+			r0 = ret.Get(0).([]*model.KPUProvinsi)
 		}
 	}
 
