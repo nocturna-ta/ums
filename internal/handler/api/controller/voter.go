@@ -178,3 +178,47 @@ func (api *API) GetVoterKTPPhoto(ctx context.Context, req *router.Request) (*res
 		SetFileName(file.FileName).
 		SetContentType(contentType), nil
 }
+
+// GetVoterByProvince godoc
+// @Summary Get Voter by Province
+// @Description Get Voter by Province
+// @Tags voters
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
+// @Produce octet-stream
+// @Success 200
+// @Router /v1/voter/province [get]
+func (api *API) GetVoterByProvince(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetVoteByProvince")
+	defer span.End()
+
+	res, err := api.voterUc.GetVoterByProvince(ctx)
+	if err != nil {
+		return custresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}
+
+// GetVoterByKPUKoota godoc
+// @Summary Get Voter by Province
+// @Description Get Voter by Province
+// @Tags voters
+// @Param X-User-Id header string false "User"
+// @Param X-Address-Id header string false "Address"
+// @Param X-Role header string false "Role"
+// @Produce json
+// @Success 200
+// @Router /v1/voter/kpu-kota [get]
+func (api *API) GetVoterByKPUKoota(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetVoterByKPUKoota")
+	defer span.End()
+
+	res, err := api.voterUc.GetVoterByKPUKota(ctx)
+	if err != nil {
+		return custresp.CustomErrorResponse(err)
+	}
+
+	return rest.NewJSONResponse().SetData(res), nil
+}

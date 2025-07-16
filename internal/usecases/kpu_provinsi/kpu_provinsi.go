@@ -379,12 +379,52 @@ func (m *Module) GetKPUProvinsiPhoto(ctx context.Context) (*http.File, string, e
 	return file, contentType, nil
 }
 
+func (m *Module) GetKPUProvinsiPhotoUseID(ctx context.Context, id uuid.UUID) (*http.File, string, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiUseCases.GetKPUProvinsiPhoto")
+	defer span.End()
+
+	_, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+
+	provinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, id)
+	if err != nil {
+		return nil, "", &custerr.ErrChain{
+			Message: "KPU Provinsi not found",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	if provinsi.PhotoPath == "" {
+		return nil, "", &custerr.ErrChain{
+			Message: "No photo available for this KPU Provinsi",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+		}
+	}
+
+	file, contentType, err := filehandler.GetFileFromPath(ctx, provinsi.PhotoPath, filehandler.DisplayModeInline)
+	if err != nil {
+		return nil, "", &custerr.ErrChain{
+			Message: "Failed to retrieve photo",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	return file, contentType, nil
+}
+
 func (m *Module) UpdateKPUProvinsi(ctx context.Context, updateRequest *request.KPUProvinsiUpdateRequest) (*response.KPUProvinsiResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiUseCases.UpdateKPUProvinsi")
 	defer span.End()
 
 	var (
-		existing *model.KPUProvinsi
+		existing model.KPUProvinsi
 	)
 
 	reqCtx, err := libCtx.GetRequestContext(ctx)
@@ -393,7 +433,7 @@ func (m *Module) UpdateKPUProvinsi(ctx context.Context, updateRequest *request.K
 	}
 
 	transaction := func(txCtx context.Context) (any, error) {
-		existing, errTx := m.kpuProvinsiRepo.GetKPUProvinsiByAddress(ctx, reqCtx.GetAddress())
+		existing, errTx := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, reqCtx.GetUserId())
 		if errTx != nil {
 			return nil, &custerr.ErrChain{
 				Message: "KPU Provinsi not found",
@@ -412,19 +452,6 @@ func (m *Module) UpdateKPUProvinsi(ctx context.Context, updateRequest *request.K
 				"error": errTx,
 				"id":    existing.ID,
 			}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UpdateKPUProvinsi] Failed to update kpu provinsi")
-			return nil, errTx
-		}
-
-		txHash, errTx := m.kpuProvinsiRepo.SendTxKPUProvinsiBlockchain(ctx, updateRequest.SignedTransaction)
-		if errTx != nil {
-			log.WithFields(log.Fields{
-				"error": errTx,
-				"id":    existing.ID,
-			}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.UpdateKPUProvinsi] Failed to send transaction to blockchain")
-			return nil, errTx
-		}
-
-		if txHash == "" {
 			return nil, errTx
 		}
 
@@ -548,12 +575,7 @@ func (m *Module) GetKPUPusatByUserID(ctx context.Context) (*response.KPUProvinsi
 			"id":      kpuProvinsi.ID,
 			"user_id": reqCtx.GetUserId(),
 		}).ErrorWithCtx(ctx, "[KPUProvinsiUseCases.GetKPUProvinsiByUserID] Failed to get kpu provinsi by User ID")
-		return nil, &custerr.ErrChain{
-			Message: "KPU Provinsi not found",
-			Code:    404,
-			Type:    response2.ErrNotFound,
-			Cause:   err,
-		}
+		return nil, err
 	}
 
 	res := &response.KPUProvinsiResponse{

@@ -17,23 +17,23 @@ type KPUKotaRepository struct {
 }
 
 // GetAllKPUKota provides a mock function with given fields: ctx
-func (_m *KPUKotaRepository) GetAllKPUKota(ctx context.Context) ([]model.KPUKota, error) {
+func (_m *KPUKotaRepository) GetAllKPUKota(ctx context.Context) (*[]model.KPUKota, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllKPUKota")
 	}
 
-	var r0 []model.KPUKota
+	var r0 *[]model.KPUKota
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]model.KPUKota, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*[]model.KPUKota, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []model.KPUKota); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) *[]model.KPUKota); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.KPUKota)
+			r0 = ret.Get(0).(*[]model.KPUKota)
 		}
 	}
 

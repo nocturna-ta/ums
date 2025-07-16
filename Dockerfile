@@ -1,55 +1,58 @@
-# Use a multi-stage build to keep the final image size smaller
-FROM golang:1.23.6-bookworm AS builder
+# Build stage
+FROM golang:1.23.9 AS builder
 
-# Install git and other required packages
-RUN apt-get update && apt-get install -y git gcc build-essential
-
-# Set working directory
 WORKDIR /app
 
-# Copy go mod and sum files
+# Pass the GitHub token as a build argument
+ARG GITHUB_TOKEN
+
+# Configure Git to use the token for authentication
+RUN echo "machine github.com login ${GITHUB_TOKEN}" > ~/.netrc
+
+# Copy go.mod and go.sum files
 COPY go.mod go.sum ./
 
-# Set up GitHub authentication for private repositories
-ARG GITHUB_TOKEN
-RUN git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
-
-# Set GOPRIVATE for private repositories
-ENV GOPRIVATE=github.com/nocturna-ta/*
-
-# Download all dependencies
+# Download dependencies
 RUN go mod download
 
 # Copy the source code
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ums .
+# Install swag for Swagger documentation
+RUN go install github.com/swaggo/swag/cmd/swag@latest
 
-# Copy the source code
-COPY . .
+# Generate Swagger documentation
+RUN swag init
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ums .
+# Build the binary
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/user-management-service main.go
 
-# Create a minimal image for running the application
-FROM alpine:latest
+# Final stage
+FROM alpine:3.18
 
+# Install ca-certificates for HTTPS support
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /app/
+WORKDIR /app
 
 # Copy the binary from the builder stage
-COPY --from=builder /app/ums /app/
-COPY --from=builder /app/config /app/config
+COPY --from=builder /app/bin/user-management-service .
 
-# Create the config directory in case it doesn't exist
-RUN mkdir -p /app/config/files
+# Copy the Swagger docs directory
+COPY --from=builder /app/docs ./docs
 
-# Expose the service port
+RUN mkdir -p /app/config
+
+# Copy the migration files
+COPY --from=builder /app/db /app/db
+
+COPY --from=builder /app/uploads ./uploads
+
+# Expose the default API port
 EXPOSE 8900
-EXPOSE 35000
 
-# Run the binary
-ENTRYPOINT ["/app/ums"]
-CMD ["server-http"]
+# Set the entrypoint to the binary
+ENTRYPOINT ["/app/user-management-service"]
+
+# Default command to run the API server
+CMD ["serve-http"]

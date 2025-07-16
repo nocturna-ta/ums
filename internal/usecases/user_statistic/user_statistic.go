@@ -3,11 +3,11 @@ package user_statistic
 import (
 	"context"
 	"fmt"
+	libCtx "github.com/nocturna-ta/golib/context"
 	"github.com/nocturna-ta/golib/log"
 	"github.com/nocturna-ta/golib/tracing"
 	"github.com/nocturna-ta/ums/internal/domain/model"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
-	"github.com/nocturna-ta/ums/pkg/utils"
 )
 
 func (m *Module) GetApprovedDPTStatistic(ctx context.Context, region string) (*response.ApprovedDPTResponse, error) {
@@ -229,7 +229,7 @@ func (m *Module) GetPendingDPTStatistic(ctx context.Context, region string) (*re
 	}, nil
 }
 
-func (m *Module) GetProvinceInformationDPTStatistic(ctx context.Context) ([]*response.DPTInformationResponse, error) {
+func (m *Module) GetProvinceInformationDPTStatistic(ctx context.Context) (*[]response.DPTInformationResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "UserStatisticUseCases.GetInformationDPTStatistic")
 	defer span.End()
 
@@ -240,8 +240,14 @@ func (m *Module) GetProvinceInformationDPTStatistic(ctx context.Context) ([]*res
 		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetInformationDPTStatistic] GetAllKPUProvinsi failed")
 		return nil, err
 	}
-	var dptInfoResponses []*response.DPTInformationResponse
+
+	provinceMap := make(map[string]model.KPUProvinsi)
 	for _, province := range provinces {
+		provinceMap[province.Region] = *province
+	}
+
+	var dptInfoResponses []response.DPTInformationResponse
+	for _, province := range provinceMap {
 		cities, err := m.getCitiesInProvince(ctx, province.Region)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -250,6 +256,9 @@ func (m *Module) GetProvinceInformationDPTStatistic(ctx context.Context) ([]*res
 			}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetInformationDPTStatistic] getCitiesInProvince failed")
 			return nil, err
 		}
+
+		fmt.Println(cities)
+
 		staffCount, err := m.userStatisticRepo.GetKPUProvinsiStaff(ctx, &province.Region)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -257,8 +266,6 @@ func (m *Module) GetProvinceInformationDPTStatistic(ctx context.Context) ([]*res
 			}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetInformationDPTStatistic] GetKPUProvinsiStaff failed")
 			return nil, err
 		}
-
-		fmt.Println("Cities in province:", province.Name, "->", cities)
 
 		var dpt, votecount int
 
@@ -290,33 +297,67 @@ func (m *Module) GetProvinceInformationDPTStatistic(ctx context.Context) ([]*res
 			votedPercentage = 0
 		}
 
-		dptInfoResponses = append(dptInfoResponses, &response.DPTInformationResponse{
-			KPURegion:          province.Name,
+		dptInfoResponses = append(dptInfoResponses, response.DPTInformationResponse{
+			KPURegion:          province.Region,
 			StaffCount:         staffCount,
 			DPTVotedPercentage: votedPercentage,
 			TotalDPT:           dpt,
 		})
-
 	}
 
-	return dptInfoResponses, nil
+	return &dptInfoResponses, nil
 }
 
-func (m *Module) GetKotaInformationDPTStatistic(ctx context.Context) ([]*response.DPTInformationResponse, error) {
+func (m *Module) GetKotaInformationDPTStatistic(ctx context.Context) (*[]response.DPTInformationResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "UserStatisticUseCases.GetKotaInformationDPTStatistic")
 	defer span.End()
 
-	kotas, err := m.kpuKotaRepo.GetAllKPUKota(ctx)
+	reqCtx, err := libCtx.GetRequestContext(ctx)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
-		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetKotaInformationDPTStatistic] GetAllKPUKota failed")
+		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetKotaInformationDPTStatistic] GetRequestContext failed")
 		return nil, err
 	}
 
-	var dptInfoResponses []*response.DPTInformationResponse
-	for _, kota := range kotas {
-		staffCount, err := m.userStatisticRepo.GetKPUKotaStaff(ctx, &kota.Region)
+	kpuProvinsi, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, reqCtx.GetUserId())
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetKotaInformationDPTStatistic] GetKPUProvinsiByUserID failed")
+		return nil, err
+	}
+
+	cities, err := m.getCitiesInProvince(ctx, kpuProvinsi.Region)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetKotaInformationDPTStatistic] getCitiesInProvince failed")
+		return nil, err
+	}
+
+	voters, err := m.voterRepo.GetAllVoter(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.GetKotaInformationDPTStatistic] Get All Voter Failed")
+		return nil, err
+	}
+
+	var filteredCities []string
+	for _, city := range cities {
+		for _, voter := range voters {
+			if voter.Region == city {
+				filteredCities = append(filteredCities, city)
+				break // No need to check other voters for this city
+			}
+		}
+
+	}
+
+	var dptInfoResponses []response.DPTInformationResponse
+	for _, kota := range filteredCities {
+		staffCount, err := m.userStatisticRepo.GetKPUKotaStaff(ctx, &kota)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -324,7 +365,7 @@ func (m *Module) GetKotaInformationDPTStatistic(ctx context.Context) ([]*respons
 			return nil, err
 		}
 
-		totalDPT, err := m.userStatisticRepo.GetDPTTotal(ctx, &kota.Region)
+		totalDPT, err := m.userStatisticRepo.GetDPTTotal(ctx, &kota)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -332,7 +373,7 @@ func (m *Module) GetKotaInformationDPTStatistic(ctx context.Context) ([]*respons
 			return nil, err
 		}
 
-		votedCount, err := m.userStatisticRepo.GetDPTVoted(ctx, &kota.Region)
+		votedCount, err := m.userStatisticRepo.GetDPTVoted(ctx, &kota)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -345,15 +386,15 @@ func (m *Module) GetKotaInformationDPTStatistic(ctx context.Context) ([]*respons
 			votedPercentage = float64(votedCount) / float64(totalDPT) * 100
 		}
 
-		dptInfoResponses = append(dptInfoResponses, &response.DPTInformationResponse{
-			KPURegion:          kota.Name,
+		dptInfoResponses = append(dptInfoResponses, response.DPTInformationResponse{
+			KPURegion:          kota,
 			StaffCount:         staffCount,
 			DPTVotedPercentage: votedPercentage,
 			TotalDPT:           totalDPT,
 		})
 	}
 
-	return dptInfoResponses, nil
+	return &dptInfoResponses, nil
 }
 
 func (m *Module) GetVotedStatistic(ctx context.Context, region string) (*response.VotedStatisticResponse, error) {
@@ -414,8 +455,7 @@ func (m *Module) getCitiesInProvince(ctx context.Context, province string) ([]st
 
 	kpuKotaMap := make(map[string]model.KPUKota)
 	for _, kota := range allKpuKota {
-		normalizedRegion := utils.NormalizeRegionName(kota.Region)
-		kpuKotaMap[normalizedRegion] = kota
+		kpuKotaMap[kota.Region] = *kota
 	}
 
 	var citiesToAdd []string

@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"github.com/google/uuid"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/fileutils"
 	"github.com/nocturna-ta/golib/http/filehandler"
@@ -29,16 +29,6 @@ import (
 func (api *API) GetAllKPUProvinsi(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetAllKPUProvinsi")
 	defer span.End()
-
-	// Extract and print headers
-	userID := req.Header("X-User-Id")
-	addressID := req.Header("X-Address-Id")
-	role := req.Header("X-Role")
-
-	// Print the headers
-	fmt.Printf("X-User-Id: %s\n", userID)
-	fmt.Printf("X-Address-Id: %s\n", addressID)
-	fmt.Printf("X-Role: %s\n", role)
 
 	res, err := api.kpuProvinsiUc.GetAllKPUProvinsi(ctx)
 	if err != nil {
@@ -162,6 +152,38 @@ func (api *API) GetKPUProvinsiPhoto(ctx context.Context, req *router.Request) (*
 	defer span.End()
 
 	file, contentType, err := api.kpuProvinsiUc.GetKPUProvinsiPhoto(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return rest.NewAttachmentResponse().
+		SetFile(file).
+		SetFileName(file.FileName).
+		SetContentType(contentType), nil
+}
+
+// GetKPUProvinsiPhotoUseID godoc
+// @Summary Get photo for KPU Provinsi
+// @Description Get the photo for a KPU Provinsi
+// @Tags kpu_provinsi
+// @Param X-User-Id header string true "User ID"
+// @Param X-Address-Id header string false "Public Address"
+// @Param X-Role header string false "Role"
+// @Param id path string true "KPU Provinsi ID"
+// @Produce octet-stream
+// @Success 200
+// @Router /v1/kpu-provinsi/photo/{id} [get]
+func (api *API) GetKPUProvinsiPhotoUseID(ctx context.Context, req *router.Request) (*rest.AttachmentResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetKPUProvinsiPhoto")
+	defer span.End()
+
+	id := req.Params("id")
+	uuidID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	file, contentType, err := api.kpuProvinsiUc.GetKPUProvinsiPhotoUseID(ctx, uuidID)
 	if err != nil {
 		return nil, err
 	}

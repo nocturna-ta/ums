@@ -9,16 +9,16 @@ API:
   EnableSwagger: true
 
 Database:
-  SlaveDSN: "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable"
-  MasterDSN: "postgres://postgres:1235813@localhost:5433/ums?sslmode=disable"
+  SlaveDSN: "postgres://postgres:changeme@localhost:5432/ums?sslmode=disable"
+  MasterDSN: "postgres://postgres:changeme@localhost:5432/ums?sslmode=disable"
   RetryInterval: 10
   MaxIdleConn: 10
   MaxConn: 10
   ConnMaxLifetime: 10s
 
 DatabaseClickhouse:
-  SlaveDSN: "clickhouse://default:changeme@localhost:19000/user_logs"
-  MasterDSN: "clickhouse://default:changeme@localhost:19000/user_logs"
+  SlaveDSN: "clickhouse://default:changeme@localhost:9000/user_logs"
+  MasterDSN: "clickhouse://default:changeme@localhost:9000/user_logs"
   RetryInterval: 10
   MaxIdleConn: 10
   MaxConn: 10

@@ -94,6 +94,11 @@ func (m *Module) GetAllKPUKota(ctx context.Context) (*[]response.KPUKotaResponse
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaUseCases.GetAllKPUKota")
 	defer span.End()
 
+	_, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	kpuKotaList, err := m.kpuKotaRepo.GetAllKPUKota(ctx)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -375,6 +380,46 @@ func (m *Module) GetKPUKotaPhoto(ctx context.Context) (*http.File, string, error
 	return file, contentType, nil
 }
 
+func (m *Module) GetKPUKotaPhotoUseID(ctx context.Context, id uuid.UUID) (*http.File, string, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "KPUProvinsiUseCases.GetKPUProvinsiPhoto")
+	defer span.End()
+
+	_, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+
+	provinsi, err := m.kpuKotaRepo.GetKPUKotaByUserID(ctx, id)
+	if err != nil {
+		return nil, "", &custerr.ErrChain{
+			Message: "KPU Provinsi not found",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	if provinsi.PhotoPath == "" {
+		return nil, "", &custerr.ErrChain{
+			Message: "No photo available for this KPU Provinsi",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+		}
+	}
+
+	file, contentType, err := filehandler.GetFileFromPath(ctx, provinsi.PhotoPath, filehandler.DisplayModeInline)
+	if err != nil {
+		return nil, "", &custerr.ErrChain{
+			Message: "Failed to retrieve photo",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	return file, contentType, nil
+}
+
 func (m *Module) UpdateKPUKota(ctx context.Context, updateRequest *request.KPUKotaUpdateRequest) (*response.KPUKotaResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaUseCases.UpdateKPUKota")
 	defer span.End()
@@ -385,11 +430,11 @@ func (m *Module) UpdateKPUKota(ctx context.Context, updateRequest *request.KPUKo
 	}
 
 	var (
-		existing *model.KPUKota
+		existing model.KPUKota
 	)
 
 	transaction := func(txCtx context.Context) (any, error) {
-		existing, errTx := m.kpuKotaRepo.GetKPUKotaByAddress(ctx, reqCtx.GetAddress())
+		existing, errTx := m.kpuKotaRepo.GetKPUKotaByUserID(ctx, reqCtx.GetUserId())
 		if errTx != nil {
 			if errors.Is(errTx, dao.ErrNoUpdateHappened) {
 				return nil, &custerr.ErrChain{
@@ -411,31 +456,6 @@ func (m *Module) UpdateKPUKota(ctx context.Context, updateRequest *request.KPUKo
 				"id":    existing.ID,
 				"req":   updateRequest,
 			}).ErrorWithCtx(ctx, "[KPUKotaUseCases.UpdateKPUKota] Failed to update kpu kota")
-		}
-
-		if errTx != nil {
-			if errors.Is(errTx, dao.ErrNoUpdateHappened) {
-				return nil, &custerr.ErrChain{
-					Message: "No update happened, KPU Kota may not exist",
-					Code:    404,
-					Type:    response2.ErrNotFound,
-				}
-			}
-			return nil, errTx
-		}
-
-		txHash, err := m.kpuKotaRepo.SendTxKPUKotaBlockchain(ctx, updateRequest.SignedTransaction)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-				"id":    existing.ID,
-				"req":   updateRequest,
-			}).ErrorWithCtx(ctx, "[KPUKotaUseCases.UpdateKPUKota] Failed to send transaction to blockchain")
-			return nil, err
-		}
-
-		if txHash == "" {
-			return nil, err
 		}
 
 		errTx = m.publisher.Publish(ctx, m.topics.MasterDataKPUProvinsi.Value, existing.ID.String(), existing.ToMessageModel(), map[string]any{

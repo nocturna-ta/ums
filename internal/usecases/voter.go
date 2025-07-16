@@ -16,4 +16,6 @@ type VoterUseCases interface {
 	GetAllVoter(ctx context.Context) (*[]response.VoterResponse, error)
 	GetVoterKTPPhoto(ctx context.Context, id uuid.UUID) (*http.File, string, error)
 	GetVoterByUserID(ctx context.Context) (*response.VoterResponse, error)
+	GetVoterByProvince(ctx context.Context) (*[]response.VoterResponse, error)
+	GetVoterByKPUKota(ctx context.Context) (*[]response.VoterResponse, error)
 }

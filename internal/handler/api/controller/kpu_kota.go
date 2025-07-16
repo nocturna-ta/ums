@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/nocturna-ta/golib/custerr"
 	"github.com/nocturna-ta/golib/fileutils"
 	"github.com/nocturna-ta/golib/http/filehandler"
@@ -23,7 +24,7 @@ import (
 // @Param X-Role header string false "Role"
 // @Accept json
 // @Produce json
-// @Success 200 {object} jsonResponse{data=response.KPUKotaResponse}
+// @Success 200 {object} jsonResponse{data=[]response.KPUKotaResponse}
 // @Router /v1/kpu-kota [get]
 func (api *API) GetAllKPUKota(ctx context.Context, req *router.Request) (*rest.JSONResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetAllKPUKota")
@@ -151,6 +152,38 @@ func (api *API) GetKPUKotaPhoto(ctx context.Context, req *router.Request) (*rest
 	defer span.End()
 
 	file, contentType, err := api.kpuKotaUc.GetKPUKotaPhoto(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return rest.NewAttachmentResponse().
+		SetFile(file).
+		SetFileName(file.FileName).
+		SetContentType(contentType), nil
+}
+
+// GetKPUKotaPhotoUseID godoc
+// @Summary Get photo for KPU Kota
+// @Description Get the photo for a KPU Kota
+// @Tags kpu_kota
+// @Param X-User-Id header string true "User ID"
+// @Param X-Address-Id header string false "Public Address"
+// @Param X-Role header string false "Role"
+// @Param id path string true "KPU Kota ID"
+// @Produce octet-stream
+// @Success 200
+// @Router /v1/kpu-kota/photo/{id} [get]
+func (api *API) GetKPUKotaPhotoUseID(ctx context.Context, req *router.Request) (*rest.AttachmentResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "Controller.GetKPUKotaPhotoUseID")
+	defer span.End()
+
+	id := req.Params("id")
+	uuidID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	file, contentType, err := api.kpuKotaUc.GetKPUKotaPhotoUseID(ctx, uuidID)
 	if err != nil {
 		return nil, err
 	}

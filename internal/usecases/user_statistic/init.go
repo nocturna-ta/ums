@@ -10,6 +10,7 @@ type Module struct {
 	userStatisticRepo repository.UserStatisticRepository
 	kpuProvinsiRepo   repository.KPUProvinsiRepository
 	kpuKotaRepo       repository.KPUKotaRepository
+	voterRepo         repository.VoterRepository
 	wilayahAPIClient  *wilayah.WilayahAPIClient
 }
 
@@ -17,6 +18,7 @@ type Opts struct {
 	UserStatisticRepo repository.UserStatisticRepository
 	KPUProvinsiRepo   repository.KPUProvinsiRepository
 	KPUKotaRepo       repository.KPUKotaRepository
+	VoterRepo         repository.VoterRepository
 	WilayahAPIClient  *wilayah.WilayahAPIClient
 }
 
@@ -29,6 +31,7 @@ func New(opts *Opts) usecases.UserStatisticUseCases {
 		userStatisticRepo: opts.UserStatisticRepo,
 		kpuProvinsiRepo:   opts.KPUProvinsiRepo,
 		kpuKotaRepo:       opts.KPUKotaRepo,
+		voterRepo:         opts.VoterRepo,
 		wilayahAPIClient:  wilayahClient,
 	}
 }

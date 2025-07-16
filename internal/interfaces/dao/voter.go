@@ -37,8 +37,8 @@ func NewVoterRepository(opts *OptsVoterRepository) repository.VoterRepository {
 const (
 	insertVoter = `INSERT INTO voters (id, user_id, nik, full_name, gender, birth_place, 
                     birth_date, residential_address, region, voter_address, is_registered, 
-                    ktp_photo_path,has_voted, voted_at, last_login, created_at, updated_at)
-					VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10, $11, $12, $13, $14, $15, $16, $17)`
+                    ktp_photo_path,telephone,has_voted, voted_at, last_login, created_at, updated_at)
+					VALUES($1, $2, $3, $4, $5, $6, $7,$8,$9, $10, $11, $12, $13, $14, $15, $16, $17,$18)`
 	selectVoter = `SELECT %s FROM voters %s WHERE TRUE %s`
 	updateVoter = `UPDATE voters SET %s WHERE TRUE %s`
 )
@@ -65,6 +65,7 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter) e
 			voter.VoterAddress,
 			voter.IsRegistered,
 			voter.KTPPhotoPath,
+			voter.Telephone,
 			voter.HasVoted,
 			voter.VotedAt,
 			voter.LastLogin,
@@ -85,6 +86,7 @@ func (v *VoterRepository) InsertVoter(ctx context.Context, voter *model.Voter) e
 			voter.VoterAddress,
 			voter.IsRegistered,
 			voter.KTPPhotoPath,
+			voter.Telephone,
 			voter.HasVoted,
 			voter.VotedAt,
 			voter.LastLogin,
@@ -152,7 +154,7 @@ func (v *VoterRepository) GetAllVoter(ctx context.Context) ([]model.Voter, error
 	)
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path, telephone,
 			has_voted, voted_at, last_login, created_at, updated_at`
 	whereQuery := " AND voters.is_deleted = false"
 	joinQuery := ""
@@ -186,7 +188,7 @@ func (v *VoterRepository) GetVoterByNIK(ctx context.Context, nik string) (*model
 	)
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path, telephone,
 			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.nik = $1"
@@ -222,7 +224,7 @@ func (v *VoterRepository) GetVoterByAddress(ctx context.Context, address string)
 	)
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path, telephone,
 			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.voter_address = $1"
@@ -259,10 +261,10 @@ func (v *VoterRepository) GetVoterByRegion(ctx context.Context, region string) (
 	)
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path, telephone,
 			has_voted, voted_at, last_login, created_at, updated_at`
 
-	whereQuery := " AND voters.is_deleted = false AND voters.region = $1"
+	whereQuery := " AND is_deleted = false AND region = $1"
 	joinQuery := ""
 	args = append(args, region)
 
@@ -295,7 +297,7 @@ func (v *VoterRepository) GetVoterByID(ctx context.Context, id uuid.UUID) (*mode
 	)
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path, telephone,
 			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.id = $1"
@@ -379,7 +381,7 @@ func (v *VoterRepository) GetVoterByUserID(ctx context.Context, userID uuid.UUID
 	)
 
 	selectQuery := `id, user_id, nik, full_name, gender, birth_place, 
-			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path,
+			birth_date, residential_address, region, voter_address, is_registered, ktp_photo_path, telephone,
 			has_voted, voted_at, last_login, created_at, updated_at`
 
 	whereQuery := " AND voters.is_deleted = false AND voters.user_id = $1"

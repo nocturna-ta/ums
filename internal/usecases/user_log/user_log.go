@@ -9,7 +9,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/usecases/response"
 )
 
-func (m *Module) GetAllUserLog(ctx context.Context, limit, offset int) ([]response.UserLogResponse, error) {
+func (m *Module) GetAllUserLog(ctx context.Context, limit, offset int) (*[]response.UserLogResponse, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "UserLogUseCases.GetAllUserLog")
 	defer span.End()
 
@@ -56,5 +56,5 @@ func (m *Module) GetAllUserLog(ctx context.Context, limit, offset int) ([]respon
 		}
 	}
 
-	return userLogResponses, nil
+	return &userLogResponses, nil
 }

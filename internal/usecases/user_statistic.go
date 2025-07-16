@@ -12,7 +12,7 @@ type UserStatisticUseCases interface {
 	GetTotalDPTStatistic(ctx context.Context, region string) (*response.TotalDPTResponse, error)
 	GetStaffKPUProvinceStatistic(ctx context.Context, region string) (*response.StaffKPUResponse, error)
 	GetStaffKPUKotaStatistic(ctx context.Context, region string) (*response.StaffKPUResponse, error)
-	GetProvinceInformationDPTStatistic(ctx context.Context) ([]*response.DPTInformationResponse, error)
-	GetKotaInformationDPTStatistic(ctx context.Context) ([]*response.DPTInformationResponse, error)
+	GetProvinceInformationDPTStatistic(ctx context.Context) (*[]response.DPTInformationResponse, error)
+	GetKotaInformationDPTStatistic(ctx context.Context) (*[]response.DPTInformationResponse, error)
 	GetVotedStatistic(ctx context.Context, region string) (*response.VotedStatisticResponse, error)
 }

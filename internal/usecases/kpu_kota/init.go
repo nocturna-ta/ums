@@ -36,11 +36,16 @@ type Opts struct {
 
 func New(opts *Opts) usecases.KPUKotaUseCases {
 	var contractInterface interfaces.KpuManagerInterface
-	contract, err := kpuManager2.NewKpuManager(opts.ContractAddress, opts.Client.GetEthClient())
-	if err != nil {
-		return nil
+
+	if opts.KpuContract != nil {
+		contractInterface = opts.KpuContract
+	} else {
+		contract, err := kpuManager2.NewKpuManager(opts.ContractAddress, opts.Client.GetEthClient())
+		if err != nil {
+			return nil
+		}
+		contractInterface = contract
 	}
-	contractInterface = contract
 	return &Module{
 		kpuKotaRepo: opts.KpuKotaRepo,
 		jwtSvc:      opts.JwtSvc,

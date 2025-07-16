@@ -160,7 +160,7 @@ func (m *Module) RegisterUser(ctx context.Context, req *request.UserRegistration
 			UserID:   reqCtx.GetUserId().String(),
 			Address:  reqCtx.GetAddress(),
 			Role:     reqCtx.Role,
-			Activity: "User Registered With ID " + user.ID.String(),
+			Activity: "User Registered With Public Address " + req.Address,
 		}, map[string]any{
 			constants.MetaDataOperation: constants.Create,
 		})
@@ -720,6 +720,7 @@ func (m *Module) ApproveUserVerification(ctx context.Context, req *request.UserV
 				VoterAddress:       voterData.VoterAddress,
 				Region:             voterData.Region,
 				KTPPhotoPath:       voterData.KTPPhotoPath,
+				Telephone:          voterData.Telephone,
 				IsRegistered:       true,
 				HasVoted:           false,
 				VotedAt:            nil,
@@ -1110,7 +1111,7 @@ func (m *Module) GetPendingVerificationsByRole(ctx context.Context) (*[]response
 						continue
 					}
 
-					if utils.NormalizeRegionName(voterRegion) == utils.NormalizeRegionName(kpuKota.Region) {
+					if voterRegion == kpuKota.Region {
 						filteredUsers = append(filteredUsers, user)
 						log.WithFields(log.Fields{
 							"kpuKotaRegion": kpuKota.Region,

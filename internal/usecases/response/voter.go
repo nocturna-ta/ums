@@ -2,6 +2,7 @@ package response
 
 type VoterResponse struct {
 	ID                 string `json:"id"`
+	Email              string `json:"email"`
 	UserID             string `json:"user_id"`
 	NIK                string `json:"nik"`
 	FullName           string `json:"full_name"`
@@ -13,6 +14,7 @@ type VoterResponse struct {
 	Region             string `json:"region"`
 	IsRegistered       bool   `json:"is_registered"`
 	HasVoted           bool   `json:"has_voted"`
+	Telephone          string `json:"telephone"`
 }
 
 type VoterRegistrationResponse struct {

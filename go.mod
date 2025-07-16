@@ -10,10 +10,12 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nocturna-ta/api-gateway-grpc-lib v1.0.0
 	github.com/nocturna-ta/common-model v1.7.3
-	github.com/nocturna-ta/golib v1.3.1
-	github.com/nocturna-ta/votechain-contract v1.2.3
+	github.com/nocturna-ta/golib v1.3.6
+	github.com/nocturna-ta/votechain-contract v1.2.6
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/swag v1.16.4
@@ -79,7 +81,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/newrelic/go-agent/v3 v3.35.1 // indirect
 	github.com/newrelic/go-agent/v3/integrations/nrgrpc v1.4.4 // indirect

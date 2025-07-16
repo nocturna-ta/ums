@@ -1,67 +1,125 @@
 package controller
 
 import (
-	"context"
+	"encoding/json"
+	"github.com/google/uuid"
+	"github.com/mitchellh/mapstructure"
+	libCtx "github.com/nocturna-ta/golib/context"
+	"github.com/nocturna-ta/golib/custerr"
+	response2 "github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/response/rest"
-	"github.com/nocturna-ta/golib/router"
-	"github.com/nocturna-ta/ums/internal/usecases"
-	"reflect"
+	"github.com/nocturna-ta/ums/internal/usecases/mocks_usecases"
+	"github.com/nocturna-ta/ums/internal/usecases/response"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
 
 func TestAPI_GetLogs(t *testing.T) {
-	type fields struct {
-		prefix          string
-		port            uint
-		readTimeout     time.Duration
-		writeTimeout    time.Duration
-		requestTimeout  time.Duration
-		enableSwagger   bool
-		voterUc         usecases.VoterUseCases
-		userUc          usecases.UserUseCases
-		kpuProvinsiUc   usecases.KPUProvinsiUseCases
-		kpuKotaUc       usecases.KPUKotaUseCases
-		userLogUc       usecases.UserLogUseCases
-		userStatisticUc usecases.UserStatisticUseCases
+	mockedUserLogUc := &mocks_usecases.UserLogUseCases{}
+
+	opts := &Options{
+		ReadTimeout:    time.Minute,
+		WriteTimeout:   time.Minute,
+		RequestTimeout: time.Minute,
+		UserLogUc:      mockedUserLogUc,
 	}
+
+	userID := uuid.NewString()
+	role := "kpu_provinsi"
+	address := "0x1234567890abcdef1234567890abcdef12345678"
+	var res []response.UserLogResponse
+
+	server = initServer(opts)
+
 	type args struct {
-		ctx context.Context
-		req *router.Request
+		req any
 	}
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *rest.JSONResponse
-		wantErr bool
+		name     string
+		args     args
+		fn       func()
+		assertFn func(t *testing.T, resp *http.Response)
 	}{
-		// TODO: Add test cases.
+		{
+			name: "SuccessGetValue",
+			args: args{
+				req: "",
+			},
+			fn: func() {
+				mockedUserLogUc.Mock.On("GetAllUserLog", mock.Anything, mock.Anything, mock.Anything).Return(&res, nil).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				mockedUserLogUc.AssertExpectations(t)
+				require.Equalf(t, 200, resp.StatusCode, "Want status '%d', got '%d'", 200, resp.StatusCode)
+
+				var jsonResp rest.JSONResponse
+				err := json.NewDecoder(resp.Body).Decode(&jsonResp)
+				require.NoError(t, err)
+
+				var result []response.UserLogResponse
+				config := &mapstructure.DecoderConfig{
+					TagName: "json",
+				}
+				config.Result = &result
+				config.DecodeHook = mapstructure.ComposeDecodeHookFunc(toTimeHookFunc())
+				decoder, _ := mapstructure.NewDecoder(config)
+				err = decoder.Decode(jsonResp.Data)
+				require.NoError(t, err)
+
+				require.Equal(t, res, result)
+			},
+		},
+		{
+			name: "ShouldError_WhenFailedGet",
+			args: args{
+				req: "",
+			},
+			fn: func() {
+				mockedUserLogUc.Mock.On("GetAllUserLog", mock.Anything, mock.Anything, mock.Anything).Return(nil, &custerr.ErrChain{
+					Message: "not found",
+					Type:    response2.ErrBadRequest,
+				}).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equalf(t, 400, resp.StatusCode, "Want status '%d', got '%d'", 400, resp.StatusCode)
+				mockedUserLogUc.AssertExpectations(t)
+			},
+		},
+		{
+			name: "ShouldBadRequest_WhenInvalidId",
+			args: args{
+				req: "12asf34",
+			},
+			fn: func() {
+				mockedUserLogUc.Mock.On("GetAllUserLog", mock.Anything, mock.Anything, mock.Anything).Return(nil, &custerr.ErrChain{
+					Message: "invalid user ID",
+					Type:    response2.ErrBadRequest,
+				}).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equalf(t, 400, resp.StatusCode, "Want status '%d', got '%d'", 400, resp.StatusCode)
+				mockedUserLogUc.AssertExpectations(t)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			api := &API{
-				prefix:          tt.fields.prefix,
-				port:            tt.fields.port,
-				readTimeout:     tt.fields.readTimeout,
-				writeTimeout:    tt.fields.writeTimeout,
-				requestTimeout:  tt.fields.requestTimeout,
-				enableSwagger:   tt.fields.enableSwagger,
-				voterUc:         tt.fields.voterUc,
-				userUc:          tt.fields.userUc,
-				kpuProvinsiUc:   tt.fields.kpuProvinsiUc,
-				kpuKotaUc:       tt.fields.kpuKotaUc,
-				userLogUc:       tt.fields.userLogUc,
-				userStatisticUc: tt.fields.userStatisticUc,
-			}
-			got, err := api.GetLogs(tt.args.ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetLogs() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetLogs() got = %v, want %v", got, tt.want)
-			}
+			tt.fn()
+
+			req := httptest.NewRequest("GET", "/v1/user-logs?limit=abc&offset=10", nil)
+
+			req.Header.Add(libCtx.XUserId, userID)
+			req.Header.Add(libCtx.XRole, role)
+			req.Header.Add(libCtx.XAddressId, address)
+
+			resp, err := server.Test(req)
+			require.NoError(t, err)
+			tt.assertFn(t, resp)
 		})
 	}
 }

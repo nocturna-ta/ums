@@ -88,13 +88,16 @@ func newContainer(opts *options) *container {
 	})
 
 	voterUc := voter.New(&voter.Opts{
+		UserRepo:        usersRepo,
 		VoterRepo:       voterRepo,
+		KPUKotaRepo:     kpuKotaRepo,
+		KPUProvinsiRepo: kpuProvinsiRepo,
 		TxMgr:           txMgr,
 		JwtSvc:          jwtSvc,
 		Publisher:       opts.Publisher,
 		Topics:          opts.Cfg.Kafka.Topics,
-		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.VoterManagerAddress),
 		Client:          opts.Client,
+		ContractAddress: common.HexToAddress(opts.Cfg.Blockchain.VoterManagerAddress),
 	})
 
 	kpuKotaUc := kpu_kota.New(&kpu_kota.Opts{
@@ -137,6 +140,7 @@ func newContainer(opts *options) *container {
 		UserStatisticRepo: userStatisticRepo,
 		KPUProvinsiRepo:   kpuProvinsiRepo,
 		KPUKotaRepo:       kpuKotaRepo,
+		VoterRepo:         voterRepo,
 	})
 
 	authUc := auth.New(&auth.Opts{

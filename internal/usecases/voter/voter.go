@@ -19,6 +19,7 @@ import (
 	"github.com/nocturna-ta/ums/internal/usecases/request"
 	"github.com/nocturna-ta/ums/internal/usecases/response"
 	"github.com/nocturna-ta/ums/pkg/constants"
+	"github.com/nocturna-ta/ums/pkg/utils"
 	"time"
 )
 
@@ -157,6 +158,7 @@ func (m *Module) GetVoterByNIK(ctx context.Context, nik string) (*response.Voter
 		Region:             voter.Region,
 		IsRegistered:       voter.IsRegistered,
 		HasVoted:           voter.HasVoted,
+		Telephone:          voter.Telephone,
 	}, err
 }
 
@@ -222,7 +224,67 @@ func (m *Module) GetVoterByAddress(ctx context.Context) (*response.VoterResponse
 		Region:             voter.Region,
 		IsRegistered:       voter.IsRegistered,
 		HasVoted:           voter.HasVoted,
+		Telephone:          voter.Telephone,
 	}, err
+}
+
+func (m *Module) GetVoterByKPUKota(ctx context.Context) (*[]response.VoterResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "VoterUseCases.GetVoterByKPUKota")
+	defer span.End()
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	kpuKota, err := m.kpuKotaRepo.GetKPUKotaByUserID(ctx, reqCtx.GetUserId())
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err,
+			"userID": reqCtx.GetUserId(),
+		}).ErrorWithCtx(ctx, "[VoterUseCases.GetVoterByKPUKota] Failed to get KPU Kota by user ID")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get KPU Kota by user ID",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	voters, err := m.voterRepo.GetVoterByRegion(ctx, kpuKota.Region)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err,
+			"region": kpuKota.Region,
+		}).ErrorWithCtx(ctx, "[VoterUseCases.GetVoterByKPUKota] Failed to get voter by region")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get voter by region",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	var res []response.VoterResponse
+	for _, voter := range voters {
+		res = append(res, response.VoterResponse{
+			ID:                 voter.ID.String(),
+			UserID:             voter.UserID.String(),
+			NIK:                voter.NIK,
+			FullName:           voter.FullName,
+			Gender:             voter.Gender,
+			BirthPlace:         voter.BirthPlace,
+			BirthDate:          voter.BirthDate.Format("2006-01-02"),
+			ResidentialAddress: voter.ResidentialAddress,
+			VoterAddress:       voter.VoterAddress,
+			Region:             voter.Region,
+			IsRegistered:       voter.IsRegistered,
+			HasVoted:           voter.HasVoted,
+			Telephone:          voter.Telephone,
+		})
+	}
+
+	return &res, err
 }
 
 func (m *Module) GetVoterByRegion(ctx context.Context, region string) (*[]response.VoterResponse, error) {
@@ -243,43 +305,24 @@ func (m *Module) GetVoterByRegion(ctx context.Context, region string) (*[]respon
 		}
 	}
 
-	voterContract, err := m.voterContract.GetVoterByRegion(nil, region)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error":  err,
-			"region": region,
-		}).ErrorWithCtx(ctx, "[VoterUseCases.GetVoterByRegion] Failed to get voter by region from contract")
-		return nil, &custerr.ErrChain{
-			Message: "Failed to get voter by region from contract",
-			Code:    500,
-			Type:    response2.ErrInternalServerError,
-			Cause:   err,
-		}
-	}
-
-	regions := make(map[string]bool)
-	for _, voter := range voterContract {
-		regions[voter.Region] = true
-	}
-
 	var res []response.VoterResponse
 	for _, voter := range voters {
-		if regions[voter.Region] {
-			res = append(res, response.VoterResponse{
-				ID:                 voter.ID.String(),
-				UserID:             voter.UserID.String(),
-				NIK:                voter.NIK,
-				FullName:           voter.FullName,
-				Gender:             voter.Gender,
-				BirthPlace:         voter.BirthPlace,
-				BirthDate:          voter.BirthDate.Format("2006-01-02"),
-				ResidentialAddress: voter.ResidentialAddress,
-				VoterAddress:       voter.VoterAddress,
-				Region:             voter.Region,
-				IsRegistered:       voter.IsRegistered,
-				HasVoted:           voter.HasVoted,
-			})
-		}
+		res = append(res, response.VoterResponse{
+			ID:                 voter.ID.String(),
+			UserID:             voter.UserID.String(),
+			NIK:                voter.NIK,
+			FullName:           voter.FullName,
+			Gender:             voter.Gender,
+			BirthPlace:         voter.BirthPlace,
+			BirthDate:          voter.BirthDate.Format("2006-01-02"),
+			ResidentialAddress: voter.ResidentialAddress,
+			VoterAddress:       voter.VoterAddress,
+			Region:             voter.Region,
+			IsRegistered:       voter.IsRegistered,
+			HasVoted:           voter.HasVoted,
+			Telephone:          voter.Telephone,
+		})
+
 	}
 	return &res, err
 }
@@ -329,6 +372,7 @@ func (m *Module) GetAllVoter(ctx context.Context) (*[]response.VoterResponse, er
 				Region:             voter.Region,
 				IsRegistered:       voter.IsRegistered,
 				HasVoted:           voter.HasVoted,
+				Telephone:          voter.Telephone,
 			})
 		}
 	}
@@ -433,5 +477,140 @@ func (m *Module) GetVoterByUserID(ctx context.Context) (*response.VoterResponse,
 		Region:             voter.Region,
 		IsRegistered:       voter.IsRegistered,
 		HasVoted:           voter.HasVoted,
+		Telephone:          voter.Telephone,
 	}, err
+}
+
+func (m *Module) GetVoterByProvince(ctx context.Context) (*[]response.VoterResponse, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "VoterUseCases.GetVoterByProvince")
+	defer span.End()
+
+	reqCtx, err := libCtx.GetRequestContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	province, err := m.kpuProvinsiRepo.GetKPUProvinsiByUserID(ctx, reqCtx.GetUserId())
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err,
+			"userID": reqCtx.GetUserId(),
+		}).ErrorWithCtx(ctx, "[VoterUseCases.GetVoterByProvince] Failed to get province by user ID")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get province by user ID",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+			Cause:   err,
+		}
+	}
+
+	cities, err := m.getCitiesInProvince(ctx, province.Region)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":    err,
+			"province": province.Region,
+		}).ErrorWithCtx(ctx, "[VoterUseCases.GetVoterByProvince] Failed to get cities in province")
+		return nil, &custerr.ErrChain{
+			Message: "Failed to get cities in province",
+			Code:    500,
+			Type:    response2.ErrInternalServerError,
+			Cause:   err,
+		}
+	}
+
+	var voterResponses []response.VoterResponse
+	for _, city := range cities {
+		voters, err := m.voterRepo.GetVoterByRegion(ctx, city)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":  err,
+				"region": city,
+			}).ErrorWithCtx(ctx, "[VoterUseCases.GetVoterByProvince] Failed to get voter by region")
+			return nil, &custerr.ErrChain{
+				Message: "Failed to get voter by region",
+				Code:    500,
+				Type:    response2.ErrInternalServerError,
+				Cause:   err,
+			}
+		}
+
+		for _, voter := range voters {
+
+			user, err := m.userRepo.GetById(ctx, voter.UserID)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error":  err,
+					"userID": voter.UserID,
+				}).ErrorWithCtx(ctx, "[VoterUseCases.GetVoterByProvince] Failed to get user by ID")
+				return nil, &custerr.ErrChain{
+					Message: "Failed to get user by ID",
+					Code:    500,
+					Type:    response2.ErrInternalServerError,
+					Cause:   err,
+				}
+			}
+			voterResponse := response.VoterResponse{
+				ID:                 voter.ID.String(),
+				Email:              user.Email,
+				UserID:             voter.UserID.String(),
+				NIK:                voter.NIK,
+				FullName:           voter.FullName,
+				Gender:             voter.Gender,
+				BirthPlace:         voter.BirthPlace,
+				BirthDate:          voter.BirthDate.Format("2006-01-02"),
+				ResidentialAddress: voter.ResidentialAddress,
+				VoterAddress:       voter.VoterAddress,
+				Region:             voter.Region,
+				IsRegistered:       voter.IsRegistered,
+				HasVoted:           voter.HasVoted,
+				Telephone:          voter.Telephone,
+			}
+
+			voterResponses = append(voterResponses, voterResponse)
+		}
+	}
+	if len(voterResponses) == 0 {
+		return nil, &custerr.ErrChain{
+			Message: "No voters found in the province",
+			Code:    404,
+			Type:    response2.ErrNotFound,
+		}
+	}
+
+	return &voterResponses, nil
+}
+
+func (m *Module) getCitiesInProvince(ctx context.Context, province string) ([]string, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "UserStatisticUseCases.getCitiesInProvince")
+	defer span.End()
+
+	cities, err := m.wilayahAPIClient.GetRegenciesByProvinceName(ctx, province)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":    err,
+			"province": province,
+		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.getCitiesInProvince] GetRegenciesByProvinceName failed")
+	}
+
+	allKpuKota, err := m.kpuKotaRepo.GetAllKPUKota(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).ErrorWithCtx(ctx, "[UserStatisticUseCases.getCitiesInProvince] GetAllKPUKota failed")
+		return nil, err
+	}
+
+	kpuKotaMap := make(map[string]model.KPUKota)
+	for _, kota := range allKpuKota {
+		normalizedRegion := utils.NormalizeRegionName(kota.Region)
+		kpuKotaMap[normalizedRegion] = *kota
+	}
+
+	var citiesToAdd []string
+
+	for _, city := range cities {
+		citiesToAdd = append(citiesToAdd, city.Name)
+	}
+
+	return citiesToAdd, nil
 }

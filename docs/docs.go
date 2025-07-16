@@ -111,7 +111,10 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.KPUKotaResponse"
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.KPUKotaResponse"
+                                            }
                                         }
                                     }
                                 }
@@ -272,6 +275,51 @@ const docTemplate = `{
                                 }
                             ]
                         }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-kota/photo/{id}": {
+            "get": {
+                "description": "Get the photo for a KPU Kota",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "kpu_kota"
+                ],
+                "summary": "Get photo for KPU Kota",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Public Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "KPU Kota ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     }
                 }
             }
@@ -547,6 +595,51 @@ const docTemplate = `{
                                 }
                             ]
                         }
+                    }
+                }
+            }
+        },
+        "/v1/kpu-provinsi/photo/{id}": {
+            "get": {
+                "description": "Get the photo for a KPU Provinsi",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "kpu_provinsi"
+                ],
+                "summary": "Get photo for KPU Provinsi",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "X-User-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Public Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "KPU Provinsi ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     }
                 }
             }
@@ -2029,6 +2122,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/voter/kpu-kota": {
+            "get": {
+                "description": "Get Voter by Province",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "voters"
+                ],
+                "summary": "Get Voter by Province",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/v1/voter/nik/{nik}": {
             "get": {
                 "description": "Get Voter By NIK",
@@ -2087,6 +2217,43 @@ const docTemplate = `{
                                 }
                             ]
                         }
+                    }
+                }
+            }
+        },
+        "/v1/voter/province": {
+            "get": {
+                "description": "Get Voter by Province",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "voters"
+                ],
+                "summary": "Get Voter by Province",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User",
+                        "name": "X-User-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "X-Address-Id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role",
+                        "name": "X-Role",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     }
                 }
             }
@@ -2298,10 +2465,10 @@ const docTemplate = `{
                 "region": {
                     "type": "string"
                 },
-                "signed_transaction": {
+                "telephone": {
                     "type": "string"
                 },
-                "telephone": {
+                "username": {
                     "type": "string"
                 }
             }
@@ -2315,10 +2482,10 @@ const docTemplate = `{
                 "region": {
                     "type": "string"
                 },
-                "signed_transaction": {
+                "telephone": {
                     "type": "string"
                 },
-                "telephone": {
+                "username": {
                     "type": "string"
                 }
             }
@@ -2730,6 +2897,9 @@ const docTemplate = `{
                 "birth_place": {
                     "type": "string"
                 },
+                "email": {
+                    "type": "string"
+                },
                 "full_name": {
                     "type": "string"
                 },
@@ -2752,6 +2922,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "residential_address": {
+                    "type": "string"
+                },
+                "telephone": {
                     "type": "string"
                 },
                 "user_id": {

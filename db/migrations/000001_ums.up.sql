@@ -71,6 +71,7 @@ CREATE TABLE "voters" (
     is_registered BOOL NOT NULL DEFAULT FALSE,
     has_voted BOOL NOT NULL DEFAULT FALSE,
     ktp_photo_path VARCHAR(255) DEFAULT NULL,
+    telephone (VARCHAR(20) DEFAULT '',
     voted_at TIMESTAMP(6) WITH TIME ZONE,
     last_login TIMESTAMP(6) WITH TIME ZONE,
     created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT now(),

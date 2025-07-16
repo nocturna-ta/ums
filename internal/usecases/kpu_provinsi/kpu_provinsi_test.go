@@ -148,12 +148,10 @@ func TestModule_GetAllKPUProvinsi(t *testing.T) {
 				require.NotNil(t, got)
 				require.Len(t, *got, 2)
 
-				// Check first KPU Provinsi
 				require.Equal(t, kpuID1.String(), (*got)[0].ID)
 				require.Equal(t, "KPU Provinsi Jakarta", (*got)[0].Name)
 				require.Contains(t, (*got)[0].PhotoURL, "/v1/kpu-provinsi/")
 
-				// Check second KPU Provinsi (no photo)
 				require.Equal(t, kpuID2.String(), (*got)[1].ID)
 				require.Equal(t, "KPU Provinsi Bandung", (*got)[1].Name)
 				require.Equal(t, "", (*got)[1].PhotoURL)

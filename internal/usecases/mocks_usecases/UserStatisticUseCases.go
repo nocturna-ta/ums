@@ -45,23 +45,23 @@ func (_m *UserStatisticUseCases) GetApprovedDPTStatistic(ctx context.Context, re
 }
 
 // GetKotaInformationDPTStatistic provides a mock function with given fields: ctx
-func (_m *UserStatisticUseCases) GetKotaInformationDPTStatistic(ctx context.Context) ([]*response.DPTInformationResponse, error) {
+func (_m *UserStatisticUseCases) GetKotaInformationDPTStatistic(ctx context.Context) (*[]response.DPTInformationResponse, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetKotaInformationDPTStatistic")
 	}
 
-	var r0 []*response.DPTInformationResponse
+	var r0 *[]response.DPTInformationResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]*response.DPTInformationResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*[]response.DPTInformationResponse, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []*response.DPTInformationResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) *[]response.DPTInformationResponse); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*response.DPTInformationResponse)
+			r0 = ret.Get(0).(*[]response.DPTInformationResponse)
 		}
 	}
 
@@ -105,23 +105,23 @@ func (_m *UserStatisticUseCases) GetPendingDPTStatistic(ctx context.Context, reg
 }
 
 // GetProvinceInformationDPTStatistic provides a mock function with given fields: ctx
-func (_m *UserStatisticUseCases) GetProvinceInformationDPTStatistic(ctx context.Context) ([]*response.DPTInformationResponse, error) {
+func (_m *UserStatisticUseCases) GetProvinceInformationDPTStatistic(ctx context.Context) (*[]response.DPTInformationResponse, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProvinceInformationDPTStatistic")
 	}
 
-	var r0 []*response.DPTInformationResponse
+	var r0 *[]response.DPTInformationResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]*response.DPTInformationResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*[]response.DPTInformationResponse, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []*response.DPTInformationResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) *[]response.DPTInformationResponse); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*response.DPTInformationResponse)
+			r0 = ret.Get(0).(*[]response.DPTInformationResponse)
 		}
 	}
 

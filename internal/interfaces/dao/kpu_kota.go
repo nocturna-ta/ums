@@ -105,13 +105,13 @@ func (K *KPUKotaRepository) SendTxKPUKotaBlockchain(ctx context.Context, signedT
 	return txHash, nil
 }
 
-func (K *KPUKotaRepository) GetAllKPUKota(ctx context.Context) ([]model.KPUKota, error) {
+func (K *KPUKotaRepository) GetAllKPUKota(ctx context.Context) ([]*model.KPUKota, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "KPUKotaRepository.GetAllKPUKota")
 	defer span.End()
 
 	sqlTrx := utils.GetSqlTx(ctx)
 	var (
-		kpuKota []model.KPUKota
+		kpuKota []*model.KPUKota
 		err     error
 	)
 

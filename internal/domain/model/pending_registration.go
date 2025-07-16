@@ -40,6 +40,7 @@ type VoterData struct {
 	VoterAddress string `json:"voter_address"`
 	Region       string `json:"region"`
 	KTPPhotoPath string `json:"ktp_photo_path"`
+	Telephone    string `json:"telephone"`
 }
 
 func NewPendingRegist(userID uuid.UUID, role string, data interface{}) (*PendingRegistration, error) {

@@ -6,5 +6,5 @@ import (
 )
 
 type UserLogUseCases interface {
-	GetAllUserLog(ctx context.Context, limit, offset int) ([]response.UserLogResponse, error)
+	GetAllUserLog(ctx context.Context, limit, offset int) (*[]response.UserLogResponse, error)
 }

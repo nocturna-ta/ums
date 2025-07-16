@@ -15,23 +15,23 @@ type UserLogUseCases struct {
 }
 
 // GetAllUserLog provides a mock function with given fields: ctx, limit, offset
-func (_m *UserLogUseCases) GetAllUserLog(ctx context.Context, limit int, offset int) ([]response.UserLogResponse, error) {
+func (_m *UserLogUseCases) GetAllUserLog(ctx context.Context, limit int, offset int) (*[]response.UserLogResponse, error) {
 	ret := _m.Called(ctx, limit, offset)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllUserLog")
 	}
 
-	var r0 []response.UserLogResponse
+	var r0 *[]response.UserLogResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) ([]response.UserLogResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) (*[]response.UserLogResponse, error)); ok {
 		return rf(ctx, limit, offset)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) []response.UserLogResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) *[]response.UserLogResponse); ok {
 		r0 = rf(ctx, limit, offset)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]response.UserLogResponse)
+			r0 = ret.Get(0).(*[]response.UserLogResponse)
 		}
 	}
 

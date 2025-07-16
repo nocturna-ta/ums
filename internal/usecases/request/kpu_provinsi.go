@@ -16,10 +16,10 @@ type KPUProvinsiRegistrationRequest struct {
 }
 
 type KPUProvinsiUpdateRequest struct {
-	Name              string `json:"name"`
-	Region            string `json:"region"`
-	Telephone         string `json:"telephone"`
-	SignedTransaction string `json:"signed_transaction"`
+	Name      string `json:"name"`
+	Username  string `json:"username"`
+	Region    string `json:"region"`
+	Telephone string `json:"telephone"`
 }
 
 func (req *KPUProvinsiRegistrationRequest) ValidateRegistrationRequest() error {
@@ -46,14 +46,6 @@ func (req *KPUProvinsiUpdateRequest) ValidateUpdateRequest() error {
 	if req.Name == constants.EmptyString || req.Region == constants.EmptyString || req.Telephone == constants.EmptyString {
 		return &custerr.ErrChain{
 			Message: "Name and region cannot be empty",
-			Code:    400,
-			Type:    response.ErrBadRequest,
-		}
-	}
-
-	if req.SignedTransaction == constants.EmptyString {
-		return &custerr.ErrChain{
-			Message: "Signed transaction is required",
 			Code:    400,
 			Type:    response.ErrBadRequest,
 		}

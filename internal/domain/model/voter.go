@@ -21,6 +21,7 @@ type Voter struct {
 	Region             string     `db:"region"`
 	IsRegistered       bool       `db:"is_registered"`
 	KTPPhotoPath       string     `db:"ktp_photo_path"`
+	Telephone          string     `db:"telephone"`
 	HasVoted           bool       `db:"has_voted"`
 	VotedAt            *time.Time `db:"voted_at"`
 	LastLogin          *time.Time `db:"last_login"`

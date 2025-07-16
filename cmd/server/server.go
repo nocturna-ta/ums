@@ -16,7 +16,7 @@ import (
 
 var (
 	serverHTTPCmd = &cobra.Command{
-		Use:   "server-http",
+		Use:   "serve-http",
 		Short: "User Management Service HTTP",
 		Long:  "User Management Service HTTP",
 		RunE:  run,

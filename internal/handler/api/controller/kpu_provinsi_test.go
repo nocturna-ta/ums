@@ -1,335 +1,456 @@
 package controller
 
 import (
-	"context"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"github.com/google/uuid"
+	"github.com/mitchellh/mapstructure"
+	libCtx "github.com/nocturna-ta/golib/context"
+	"github.com/nocturna-ta/golib/custerr"
+	http2 "github.com/nocturna-ta/golib/http"
+	response2 "github.com/nocturna-ta/golib/response"
 	"github.com/nocturna-ta/golib/response/rest"
-	"github.com/nocturna-ta/golib/router"
-	"github.com/nocturna-ta/ums/internal/usecases"
-	"reflect"
+	"github.com/nocturna-ta/ums/internal/usecases/mocks_usecases"
+	"github.com/nocturna-ta/ums/internal/usecases/response"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
 
 func TestAPI_GetAllKPUProvinsi(t *testing.T) {
-	type fields struct {
-		prefix         string
-		port           uint
-		readTimeout    time.Duration
-		writeTimeout   time.Duration
-		requestTimeout time.Duration
-		enableSwagger  bool
-		corsConfig     *router.CorsConfig
-		voterUc        usecases.VoterUseCases
-		userUc         usecases.UserUseCases
-		kpuProvinsiUc  usecases.KPUProvinsiUseCases
-		kpuKotaUc      usecases.KPUKotaUseCases
-	}
-	type args struct {
-		ctx context.Context
-		req *router.Request
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *rest.JSONResponse
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			api := &API{
-				prefix:         tt.fields.prefix,
-				port:           tt.fields.port,
-				readTimeout:    tt.fields.readTimeout,
-				writeTimeout:   tt.fields.writeTimeout,
-				requestTimeout: tt.fields.requestTimeout,
-				enableSwagger:  tt.fields.enableSwagger,
-				corsConfig:     tt.fields.corsConfig,
-				voterUc:        tt.fields.voterUc,
-				userUc:         tt.fields.userUc,
-				kpuProvinsiUc:  tt.fields.kpuProvinsiUc,
-				kpuKotaUc:      tt.fields.kpuKotaUc,
-			}
-			got, err := api.GetAllKPUProvinsi(tt.args.ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetAllKPUProvinsi() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAllKPUProvinsi() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+	mockedKPUProvinsiUC := &mocks_usecases.KPUProvinsiUseCases{}
 
-func TestAPI_GetAllKPUProvinsi1(t *testing.T) {
-	type fields struct {
-		prefix         string
-		port           uint
-		readTimeout    time.Duration
-		writeTimeout   time.Duration
-		requestTimeout time.Duration
-		enableSwagger  bool
-		corsConfig     *router.CorsConfig
-		voterUc        usecases.VoterUseCases
-		userUc         usecases.UserUseCases
-		kpuProvinsiUc  usecases.KPUProvinsiUseCases
-		kpuKotaUc      usecases.KPUKotaUseCases
+	opts := &Options{
+		ReadTimeout:    time.Minute,
+		WriteTimeout:   time.Minute,
+		RequestTimeout: time.Minute,
+		KpuProvinsiUc:  mockedKPUProvinsiUC,
 	}
+
+	userID := uuid.NewString()
+	role := "kpu_provinsi"
+	address := "0x1234567890abcdef1234567890abcdef12345678"
+	var res []response.KPUProvinsiResponse
+
+	server = initServer(opts)
+
 	type args struct {
-		ctx context.Context
-		req *router.Request
+		req any
 	}
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *rest.JSONResponse
-		wantErr bool
+		name     string
+		args     args
+		fn       func()
+		assertFn func(t *testing.T, resp *http.Response)
 	}{
-		// TODO: Add test cases.
+		{
+			name: "SuccessGetValue",
+			args: args{
+				req: "",
+			},
+			fn: func() {
+				mockedKPUProvinsiUC.Mock.On("GetAllKPUProvinsi", mock.Anything).Return(&res, nil).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				mockedKPUProvinsiUC.AssertExpectations(t)
+				require.Equalf(t, 200, resp.StatusCode, "Want status '%d', got '%d'", 200, resp.StatusCode)
+
+				var jsonResp rest.JSONResponse
+				err := json.NewDecoder(resp.Body).Decode(&jsonResp)
+				require.NoError(t, err)
+
+				var result []response.KPUProvinsiResponse
+				config := &mapstructure.DecoderConfig{
+					TagName: "json",
+				}
+				config.Result = &result
+				config.DecodeHook = mapstructure.ComposeDecodeHookFunc(toTimeHookFunc())
+				decoder, _ := mapstructure.NewDecoder(config)
+				err = decoder.Decode(jsonResp.Data)
+				require.NoError(t, err)
+
+				require.Equal(t, res, result)
+			},
+		},
+		{
+			name: "ShouldError_WhenFailedGet",
+			args: args{
+				req: "",
+			},
+			fn: func() {
+				mockedKPUProvinsiUC.Mock.On("GetAllKPUProvinsi", mock.Anything).Return(nil, &custerr.ErrChain{
+					Message: "not found",
+					Type:    response2.ErrBadRequest,
+				}).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equalf(t, 400, resp.StatusCode, "Want status '%d', got '%d'", 400, resp.StatusCode)
+				mockedKPUProvinsiUC.AssertExpectations(t)
+			},
+		},
+		{
+			name: "ShouldBadRequest_WhenInvalidId",
+			args: args{
+				req: "12asf34",
+			},
+			fn: func() {
+				mockedKPUProvinsiUC.Mock.On("GetAllKPUProvinsi", mock.Anything).Return(nil, &custerr.ErrChain{
+					Message: "invalid user ID",
+					Type:    response2.ErrBadRequest,
+				}).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equalf(t, 400, resp.StatusCode, "Want status '%d', got '%d'", 500, resp.StatusCode)
+				mockedKPUProvinsiUC.AssertExpectations(t)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			api := &API{
-				prefix:         tt.fields.prefix,
-				port:           tt.fields.port,
-				readTimeout:    tt.fields.readTimeout,
-				writeTimeout:   tt.fields.writeTimeout,
-				requestTimeout: tt.fields.requestTimeout,
-				enableSwagger:  tt.fields.enableSwagger,
-				corsConfig:     tt.fields.corsConfig,
-				voterUc:        tt.fields.voterUc,
-				userUc:         tt.fields.userUc,
-				kpuProvinsiUc:  tt.fields.kpuProvinsiUc,
-				kpuKotaUc:      tt.fields.kpuKotaUc,
-			}
-			got, err := api.GetAllKPUProvinsi(tt.args.ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetAllKPUProvinsi() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAllKPUProvinsi() got = %v, want %v", got, tt.want)
-			}
+			tt.fn()
+
+			req := httptest.NewRequest("GET", "/v1/kpu-provinsi", nil)
+
+			req.Header.Add(libCtx.XUserId, userID)
+			req.Header.Add(libCtx.XRole, role)
+			req.Header.Add(libCtx.XAddressId, address)
+
+			resp, err := server.Test(req)
+			require.NoError(t, err)
+			tt.assertFn(t, resp)
 		})
 	}
 }
 
 func TestAPI_GetKPUProvinsiByUserID(t *testing.T) {
-	type fields struct {
-		prefix         string
-		port           uint
-		readTimeout    time.Duration
-		writeTimeout   time.Duration
-		requestTimeout time.Duration
-		enableSwagger  bool
-		corsConfig     *router.CorsConfig
-		voterUc        usecases.VoterUseCases
-		userUc         usecases.UserUseCases
-		kpuProvinsiUc  usecases.KPUProvinsiUseCases
-		kpuKotaUc      usecases.KPUKotaUseCases
+	mockedKPUProvinsiUC := &mocks_usecases.KPUProvinsiUseCases{}
+
+	opts := &Options{
+		ReadTimeout:    time.Minute,
+		WriteTimeout:   time.Minute,
+		RequestTimeout: time.Minute,
+		KpuProvinsiUc:  mockedKPUProvinsiUC,
 	}
+
+	userID := uuid.NewString()
+	role := "kpu_provinsi"
+	address := "0x1234567890abcdef1234567890abcdef12345678"
+	var res response.KPUProvinsiResponse
+
+	server = initServer(opts)
+
 	type args struct {
-		ctx context.Context
-		req *router.Request
+		req any
 	}
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *rest.JSONResponse
-		wantErr bool
+		name     string
+		args     args
+		fn       func()
+		assertFn func(t *testing.T, resp *http.Response)
 	}{
-		// TODO: Add test cases.
+		{
+			name: "SuccessGetValue",
+			args: args{
+				req: "",
+			},
+			fn: func() {
+				mockedKPUProvinsiUC.Mock.On("GetKPUProvinsiByUserID", mock.Anything).Return(&res, nil).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				mockedKPUProvinsiUC.AssertExpectations(t)
+				require.Equalf(t, 200, resp.StatusCode, "Want status '%d', got '%d'", 200, resp.StatusCode)
+
+				var jsonResp rest.JSONResponse
+				err := json.NewDecoder(resp.Body).Decode(&jsonResp)
+				require.NoError(t, err)
+
+				var result response.KPUProvinsiResponse
+				config := &mapstructure.DecoderConfig{
+					TagName: "json",
+				}
+				config.Result = &result
+				config.DecodeHook = mapstructure.ComposeDecodeHookFunc(toTimeHookFunc())
+				decoder, _ := mapstructure.NewDecoder(config)
+				err = decoder.Decode(jsonResp.Data)
+				require.NoError(t, err)
+
+				require.Equal(t, res, result)
+			},
+		},
+		{
+			name: "ShouldError_WhenFailedGet",
+			args: args{
+				req: "",
+			},
+			fn: func() {
+				mockedKPUProvinsiUC.Mock.On("GetKPUProvinsiByUserID", mock.Anything).Return(nil, &custerr.ErrChain{
+					Message: "not found",
+					Type:    response2.ErrBadRequest,
+				}).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equalf(t, 400, resp.StatusCode, "Want status '%d', got '%d'", 400, resp.StatusCode)
+				mockedKPUProvinsiUC.AssertExpectations(t)
+			},
+		},
+		{
+			name: "ShouldBadRequest_WhenInvalidId",
+			args: args{
+				req: "12asf34",
+			},
+			fn: func() {
+				mockedKPUProvinsiUC.Mock.On("GetKPUProvinsiByUserID", mock.Anything).Return(nil, &custerr.ErrChain{
+					Message: "invalid user ID",
+					Type:    response2.ErrBadRequest,
+				}).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equalf(t, 400, resp.StatusCode, "Want status '%d', got '%d'", 500, resp.StatusCode)
+				mockedKPUProvinsiUC.AssertExpectations(t)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			api := &API{
-				prefix:         tt.fields.prefix,
-				port:           tt.fields.port,
-				readTimeout:    tt.fields.readTimeout,
-				writeTimeout:   tt.fields.writeTimeout,
-				requestTimeout: tt.fields.requestTimeout,
-				enableSwagger:  tt.fields.enableSwagger,
-				corsConfig:     tt.fields.corsConfig,
-				voterUc:        tt.fields.voterUc,
-				userUc:         tt.fields.userUc,
-				kpuProvinsiUc:  tt.fields.kpuProvinsiUc,
-				kpuKotaUc:      tt.fields.kpuKotaUc,
-			}
-			got, err := api.GetKPUProvinsiByUserID(tt.args.ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetKPUProvinsiByUserID() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetKPUProvinsiByUserID() got = %v, want %v", got, tt.want)
-			}
+			tt.fn()
+
+			req := httptest.NewRequest("GET", "/v1/kpu-provinsi/id", nil)
+
+			req.Header.Add(libCtx.XUserId, userID)
+			req.Header.Add(libCtx.XRole, role)
+			req.Header.Add(libCtx.XAddressId, address)
+
+			resp, err := server.Test(req)
+			require.NoError(t, err)
+			tt.assertFn(t, resp)
 		})
 	}
 }
 
 func TestAPI_GetKPUProvinsiPhoto(t *testing.T) {
-	type fields struct {
-		prefix         string
-		port           uint
-		readTimeout    time.Duration
-		writeTimeout   time.Duration
-		requestTimeout time.Duration
-		enableSwagger  bool
-		corsConfig     *router.CorsConfig
-		voterUc        usecases.VoterUseCases
-		userUc         usecases.UserUseCases
-		kpuProvinsiUc  usecases.KPUProvinsiUseCases
-		kpuKotaUc      usecases.KPUKotaUseCases
-	}
-	type args struct {
-		ctx context.Context
-		req *router.Request
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *rest.AttachmentResponse
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			api := &API{
-				prefix:         tt.fields.prefix,
-				port:           tt.fields.port,
-				readTimeout:    tt.fields.readTimeout,
-				writeTimeout:   tt.fields.writeTimeout,
-				requestTimeout: tt.fields.requestTimeout,
-				enableSwagger:  tt.fields.enableSwagger,
-				corsConfig:     tt.fields.corsConfig,
-				voterUc:        tt.fields.voterUc,
-				userUc:         tt.fields.userUc,
-				kpuProvinsiUc:  tt.fields.kpuProvinsiUc,
-				kpuKotaUc:      tt.fields.kpuKotaUc,
-			}
-			got, err := api.GetKPUProvinsiPhoto(tt.args.ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetKPUProvinsiPhoto() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetKPUProvinsiPhoto() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+	mockedKPUProvinsiUc := &mocks_usecases.KPUProvinsiUseCases{}
 
-func TestAPI_UpdateKPUProvinsi(t *testing.T) {
-	type fields struct {
-		prefix         string
-		port           uint
-		readTimeout    time.Duration
-		writeTimeout   time.Duration
-		requestTimeout time.Duration
-		enableSwagger  bool
-		corsConfig     *router.CorsConfig
-		voterUc        usecases.VoterUseCases
-		userUc         usecases.UserUseCases
-		kpuProvinsiUc  usecases.KPUProvinsiUseCases
-		kpuKotaUc      usecases.KPUKotaUseCases
+	opts := &Options{
+		ReadTimeout:    time.Minute,
+		WriteTimeout:   time.Minute,
+		RequestTimeout: time.Minute,
+		KpuProvinsiUc:  mockedKPUProvinsiUc,
 	}
-	type args struct {
-		ctx context.Context
-		req *router.Request
-	}
+
+	userID := uuid.NewString()
+	role := "kpu_provinsi"
+	address := "0x1234567890abcdef1234567890abcdef12345678"
+
+	server = initServer(opts)
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *rest.JSONResponse
-		wantErr bool
+		name     string
+		fn       func()
+		assertFn func(t *testing.T, resp *http.Response)
 	}{
-		// TODO: Add test cases.
+		{
+			name: "SuccessGetValue",
+			fn: func() {
+				fileContent := []byte("fake-image-bytes")
+				reader := bytes.NewReader(fileContent)
+
+				file := &http2.File{
+					Reader:      reader,
+					FileName:    "kpu_photo.jpg",
+					DisplayMode: "inline",
+				}
+
+				mockedKPUProvinsiUc.Mock.On("GetKPUProvinsiPhoto", mock.Anything).Return(file, "image/jpeg", nil).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				defer resp.Body.Close()
+
+				require.Equal(t, 200, resp.StatusCode)
+				require.Equal(t, "image/jpeg", resp.Header.Get("Content-Type"))
+				require.Contains(t, resp.Header.Get("Content-Disposition"), `filename="kpu_photo.jpg"`)
+
+				body, err := io.ReadAll(resp.Body)
+				require.NoError(t, err)
+				require.Equal(t, []byte("fake-image-bytes"), body)
+			},
+		},
+		{
+			name: "ShouldError_WhenFailedGet",
+			fn: func() {
+				mockedKPUProvinsiUc.Mock.On("GetKPUProvinsiPhoto", mock.Anything).Return(nil, "", &custerr.ErrChain{
+					Message: "not found",
+					Type:    response2.ErrBadRequest,
+				}).Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equalf(t, 400, resp.StatusCode, "Want status '%d', got '%d'", 400, resp.StatusCode)
+				mockedKPUProvinsiUc.AssertExpectations(t)
+			},
+		},
+		{
+			name: "ShouldError_WhenInternalFailure",
+			fn: func() {
+				mockedKPUProvinsiUc.Mock.
+					On("GetKPUProvinsiPhoto", mock.Anything).
+					Return(nil, "", errors.New("something went wrong")).
+					Once()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, 500, resp.StatusCode)
+				mockedKPUProvinsiUc.AssertExpectations(t)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			api := &API{
-				prefix:         tt.fields.prefix,
-				port:           tt.fields.port,
-				readTimeout:    tt.fields.readTimeout,
-				writeTimeout:   tt.fields.writeTimeout,
-				requestTimeout: tt.fields.requestTimeout,
-				enableSwagger:  tt.fields.enableSwagger,
-				corsConfig:     tt.fields.corsConfig,
-				voterUc:        tt.fields.voterUc,
-				userUc:         tt.fields.userUc,
-				kpuProvinsiUc:  tt.fields.kpuProvinsiUc,
-				kpuKotaUc:      tt.fields.kpuKotaUc,
-			}
-			got, err := api.UpdateKPUProvinsi(tt.args.ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("UpdateKPUProvinsi() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UpdateKPUProvinsi() got = %v, want %v", got, tt.want)
-			}
+			t.Run(tt.name, func(t *testing.T) {
+				tt.fn()
+
+				req := httptest.NewRequest("GET", "/v1/kpu-provinsi/photo", nil)
+
+				req.Header.Add(libCtx.XUserId, userID)
+				req.Header.Add(libCtx.XRole, role)
+				req.Header.Add(libCtx.XAddressId, address)
+
+				resp, err := server.Test(req)
+				require.NoError(t, err)
+				tt.assertFn(t, resp)
+			})
 		})
 	}
 }
 
 func TestAPI_UploadKPUProvinsiPhoto(t *testing.T) {
-	type fields struct {
-		prefix         string
-		port           uint
-		readTimeout    time.Duration
-		writeTimeout   time.Duration
-		requestTimeout time.Duration
-		enableSwagger  bool
-		corsConfig     *router.CorsConfig
-		voterUc        usecases.VoterUseCases
-		userUc         usecases.UserUseCases
-		kpuProvinsiUc  usecases.KPUProvinsiUseCases
-		kpuKotaUc      usecases.KPUKotaUseCases
+	mockedKPUProvinsiUc := &mocks_usecases.KPUProvinsiUseCases{}
+	opts := &Options{
+		ReadTimeout:    time.Minute,
+		WriteTimeout:   time.Minute,
+		RequestTimeout: time.Minute,
+		KpuProvinsiUc:  mockedKPUProvinsiUc,
 	}
-	type args struct {
-		ctx context.Context
-		req *router.Request
-	}
+
+	userID := uuid.NewString()
+	role := "kpu_provinsi"
+	address := "0x1234567890abcdef1234567890abcdef12345678"
+
+	server = initServer(opts)
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *rest.JSONResponse
-		wantErr bool
+		name     string
+		fn       func()
+		reqBody  func() (*bytes.Buffer, string)
+		assertFn func(t *testing.T, resp *http.Response)
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success_UploadPhoto",
+			fn: func() {
+				mockedKPUProvinsiUc.
+					Mock.
+					On("UploadKPUProvinsiPhoto", mock.Anything, mock.Anything, "test.jpg").
+					Return(nil).
+					Once()
+			},
+			reqBody: func() (*bytes.Buffer, string) {
+				body := &bytes.Buffer{}
+				writer := multipart.NewWriter(body)
+
+				part, _ := writer.CreateFormFile("photo", "test.jpg")
+				part.Write([]byte("fake image data"))
+				writer.Close()
+
+				return body, writer.FormDataContentType()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+				defer resp.Body.Close()
+
+				var jsonResp rest.JSONResponse
+				err := json.NewDecoder(resp.Body).Decode(&jsonResp)
+				require.NoError(t, err)
+				require.Equal(t, "Photo uploaded successfully", jsonResp.Data)
+			},
+		},
+		{
+			name: "Fail_NoFileProvided",
+			fn:   func() {}, // no UC call
+			reqBody: func() (*bytes.Buffer, string) {
+				body := &bytes.Buffer{}
+				writer := multipart.NewWriter(body)
+				writer.Close()
+				return body, writer.FormDataContentType()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+			},
+		},
+		{
+			name: "Fail_InvalidFileFormat",
+			fn:   func() {},
+			reqBody: func() (*bytes.Buffer, string) {
+				body := &bytes.Buffer{}
+				writer := multipart.NewWriter(body)
+
+				part, _ := writer.CreateFormFile("photo", "malicious.exe")
+				part.Write([]byte("not a valid image"))
+				writer.Close()
+
+				return body, writer.FormDataContentType()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+			},
+		},
+		{
+			name: "Fail_InternalUploadError",
+			fn: func() {
+				mockedKPUProvinsiUc.
+					Mock.
+					On("UploadKPUProvinsiPhoto", mock.Anything, mock.Anything, "test.jpg").
+					Return(&custerr.ErrChain{
+						Message: "storage failed",
+						Type:    response2.ErrInternalServerError,
+					}).
+					Once()
+			},
+			reqBody: func() (*bytes.Buffer, string) {
+				body := &bytes.Buffer{}
+				writer := multipart.NewWriter(body)
+
+				part, _ := writer.CreateFormFile("photo", "test.jpg")
+				part.Write([]byte("fake image data"))
+				writer.Close()
+
+				return body, writer.FormDataContentType()
+			},
+			assertFn: func(t *testing.T, resp *http.Response) {
+				require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			api := &API{
-				prefix:         tt.fields.prefix,
-				port:           tt.fields.port,
-				readTimeout:    tt.fields.readTimeout,
-				writeTimeout:   tt.fields.writeTimeout,
-				requestTimeout: tt.fields.requestTimeout,
-				enableSwagger:  tt.fields.enableSwagger,
-				corsConfig:     tt.fields.corsConfig,
-				voterUc:        tt.fields.voterUc,
-				userUc:         tt.fields.userUc,
-				kpuProvinsiUc:  tt.fields.kpuProvinsiUc,
-				kpuKotaUc:      tt.fields.kpuKotaUc,
-			}
-			got, err := api.UploadKPUProvinsiPhoto(tt.args.ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("UploadKPUProvinsiPhoto() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UploadKPUProvinsiPhoto() got = %v, want %v", got, tt.want)
-			}
+			tt.fn()
+
+			body, contentType := tt.reqBody()
+
+			req := httptest.NewRequest("POST", "/v1/kpu-provinsi/photo", body)
+
+			req.Header.Set("Content-Type", contentType)
+			req.Header.Add(libCtx.XUserId, userID)
+			req.Header.Add(libCtx.XRole, role)
+			req.Header.Add(libCtx.XAddressId, address)
+
+			resp, err := server.Test(req)
+			require.NoError(t, err)
+			tt.assertFn(t, resp)
 		})
 	}
 }
